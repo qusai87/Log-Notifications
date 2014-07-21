@@ -3,23 +3,56 @@
 GLOBALS = {};
 _console = console;
 
+// shallow copy object, thanks to http://geniuscarrier.com/copy-object-in-javascript/
+function shallowCopy(oldObj) {
+    var newObj = {};
+    for(var i in oldObj) {
+        //if(oldObj.hasOwnProperty(i)) {
+            newObj[i] = oldObj[i];
+        //}
+    }
+    return newObj;
+}
+//return null;
+
+Array.prototype.toString =  function() {
+  return '[object Array]';
+};
+
+
+
 window.log = function(){
   log.history = log.history || [];   // store logs to an array for reference
-  log.history.push(arguments);
+  //log.history.push(arguments);
   /*if(this.console){
     console.log( Array.prototype.slice.call(arguments) );
   }*/
 
   // use old log
   //oldLog(Array.prototype.slice.call(arguments));
-  _console.info.call(_console,Array.prototype.slice.call(arguments).join(' '))
+  //_console.info.call(_console,Array.prototype.slice.call(arguments).join(' '));
+  console.info.apply(_console,arguments);
 };
 
 // Completelety overrride log console.
 // http://stackoverflow.com/questions/7042611/override-console-log-for-production
 // 
 
-var console = {};
+var console = shallowCopy(window.console || {});
+console.info = function () {
+    return _console.info.apply(_console,arguments);
+};
+
+console.table = function () {
+    return _console.table.apply(_console,arguments);
+};
+console.dir = function () {
+    return _console.dir.apply(_console,arguments);
+};
+console.warn = function () {
+    return _console.warn.apply(_console,arguments);
+};
+
 console.log = function(){
     var args = Array.prototype.slice.call(arguments, 0);
     //alert(args);
@@ -38,7 +71,12 @@ console.log = function(){
     //argumnetsWithColor.unshift('color:red');
     //argumnetsWithColor.unshift('%css'/*+GLOBALS.message*/);
     //oldLog(argumnetsWithColor);
-    _log(GLOBALS.message);
+    if (GLOBALS.message == "[object Object]")
+        console.dir.apply(null,args); 
+    else if (GLOBALS.message == "[object Array]")
+       console.table.apply(null,args);
+   else 
+        _log.apply(null,args);
     // console.info('%c'+GLOBALS.message,'color:red')
     //console.info.call(this,argumnetsColorer)
 

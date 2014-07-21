@@ -1,6 +1,6 @@
 {
   "name": "Log Notifications",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "manifest_version": 2,
   "description": "show console logs and alerts as chrome notifications",
   "homepage_url": "http://about.me/qusai87",
