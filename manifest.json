@@ -3,7 +3,7 @@
   "version": "0.0.5",
   "manifest_version": 2,
   "description": "show console logs and alerts as chrome notifications",
-  "homepage_url": "http://about.me/qusai87",
+  "homepage_url": "https://chrome.google.com/webstore/detail/log-notifications/dkebpeehodefnopcpggkdgeljadommmm?utm_source=plus",
   "icons": {
     "16": "icons/icon.png",
     "48": "icons/icon.png",

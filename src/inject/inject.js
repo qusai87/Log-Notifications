@@ -38,7 +38,7 @@ window.log = function(){
 // http://stackoverflow.com/questions/7042611/override-console-log-for-production
 // 
 
-var console = shallowCopy(window.console || {});
+var console = shallowCopy(_console || {});
 console.info = function () {
     return _console.info.apply(_console,arguments);
 };
