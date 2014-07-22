@@ -1,6 +1,7 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
 // 
 GLOBALS = {};
+GLOBALS.messages = [];
 _console = console;
 
 // shallow copy object, thanks to http://geniuscarrier.com/copy-object-in-javascript/
@@ -50,32 +51,43 @@ console.dir = function () {
     return _console.dir.apply(_console,arguments);
 };
 console.warn = function () {
-    return _console.warn.apply(_console,arguments);
-};
-
-console.log = function(){
     var args = Array.prototype.slice.call(arguments, 0);
     //alert(args);
-    GLOBALS.message = args.join(' ');
+    GLOBALS.messages.push(args);
     //console.log('Sending message');
    
-    
     setTimeout(function() {
         /* Example: Send data to your Chrome extension*/
         document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension', {
             detail: GLOBALS // Some variable from Gmail.
         }));
     }, 0);
-    var argumnetsWithColor = [];
 
+    return _console.warn.apply(_console,arguments);
+
+};
+
+console.log = function(){
+    var args = Array.prototype.slice.call(arguments, 0);
+    //alert(args);
+    GLOBALS.messages.push(args);
+    //console.log('Sending message');
+   
+    /* Example: Send data to your Chrome extension*/
+    document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension', {
+        detail: GLOBALS // Some variable from Gmail.
+    }));
+
+    //var argumnetsWithColor = [];
     //argumnetsWithColor.unshift('color:red');
     //argumnetsWithColor.unshift('%css'/*+GLOBALS.message*/);
     //oldLog(argumnetsWithColor);
-    if (GLOBALS.message == "[object Object]")
+    /*if (GLOBALS.message == "[object Object]")
         console.dir.apply(null,args); 
-    else if (GLOBALS.message == "[object Array]")
+    else*/ 
+    if (args.join(' ') == "[object Array]")
        console.table.apply(null,args);
-   else 
+    else 
         _log.apply(null,args);
     // console.info('%c'+GLOBALS.message,'color:red')
     //console.info.call(this,argumnetsColorer)
@@ -123,7 +135,7 @@ var _log = (function (undefined) {
             args = args.concat([suffix["@"]]);
         // via @paulirish console wrapper
         //oldLog(args.join('\t\t\t\t\t\t\t\t\t\t\t\t'));
-        window.log(args.join('\t\t\t\t\t\t\t\t\t\t\t\t'));
+        window.log.apply(window.log,args);
         
     };
     var extractLineNumberFromStack = function (stack) {

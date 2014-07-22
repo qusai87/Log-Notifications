@@ -1,6 +1,6 @@
 {
   "name": "Log Notifications",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "manifest_version": 2,
   "description": "show console logs and alerts as chrome notifications",
   "homepage_url": "https://chrome.google.com/webstore/detail/log-notifications/dkebpeehodefnopcpggkdgeljadommmm?utm_source=plus",

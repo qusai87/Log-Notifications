@@ -12,7 +12,7 @@ s.onload = function() {
 // 
 // Event listener
 document.addEventListener('Msg_LogNotificationExtension', function(e) {
-     chrome.runtime.sendMessage({msg: e.detail.message}, function(response) {
+     chrome.runtime.sendMessage({msg: e.detail.messages.pop()}, function(response) {
     });
 });
 
