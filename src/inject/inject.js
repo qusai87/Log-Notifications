@@ -1,8 +1,8 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
 // 
-GLOBALS = {};
-GLOBALS.messages = [];
+
 _console = console;
+console.log('Log notifications v.0.8');
 
 // shallow copy object, thanks to http://geniuscarrier.com/copy-object-in-javascript/
 function shallowCopy(oldObj) {
@@ -14,25 +14,8 @@ function shallowCopy(oldObj) {
     }
     return newObj;
 }
-//return null;
-
 Array.prototype.toString =  function() {
   return '[object Array]';
-};
-
-
-
-window.log = function(){
-  log.history = log.history || [];   // store logs to an array for reference
-  //log.history.push(arguments);
-  /*if(this.console){
-    console.log( Array.prototype.slice.call(arguments) );
-  }*/
-
-  // use old log
-  //oldLog(Array.prototype.slice.call(arguments));
-  //_console.info.call(_console,Array.prototype.slice.call(arguments).join(' '));
-  console.info.apply(_console,arguments);
 };
 
 // Completelety overrride log console.
@@ -40,78 +23,11 @@ window.log = function(){
 // 
 
 var console = shallowCopy(_console || {});
-console.info = function () {
-    return _console.info.apply(_console,arguments);
-};
+console.GLOBALS = {};
+console.GLOBALS.messages = [];
+console.GLOBALS.dispatchTimer = -1;
 
-console.table = function () {
-    return _console.table.apply(_console,arguments);
-};
-console.dir = function () {
-    return _console.dir.apply(_console,arguments);
-};
-console.warn = function () {
-    var args = Array.prototype.slice.call(arguments, 0);
-    //alert(args);
-    GLOBALS.messages.push(args);
-    //console.log('Sending message');
-   
-    setTimeout(function() {
-        /* Example: Send data to your Chrome extension*/
-        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension', {
-            detail: GLOBALS // Some variable from Gmail.
-        }));
-    }, 0);
-
-    return _console.warn.apply(_console,arguments);
-
-};
-
-console.log = function(){
-    var args = Array.prototype.slice.call(arguments, 0);
-    //alert(args);
-    GLOBALS.messages.push(args);
-    //console.log('Sending message');
-   
-    /* Example: Send data to your Chrome extension*/
-    document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension', {
-        detail: GLOBALS // Some variable from Gmail.
-    }));
-
-    //var argumnetsWithColor = [];
-    //argumnetsWithColor.unshift('color:red');
-    //argumnetsWithColor.unshift('%css'/*+GLOBALS.message*/);
-    //oldLog(argumnetsWithColor);
-    /*if (GLOBALS.message == "[object Object]")
-        console.dir.apply(null,args); 
-    else*/ 
-    if (args.join(' ') == "[object Array]")
-       console.table.apply(null,args);
-    else 
-        _log.apply(null,args);
-    // console.info('%c'+GLOBALS.message,'color:red')
-    //console.info.call(this,argumnetsColorer)
-
-};
-
-/*
-console.log = function() {
-	
-}.bind(console.log);*/
-
-(function() {
-  var proxied = console.log;
-  window.alert = function() {
-    // do something here
-    var args = Array.prototype.slice.call(arguments, 0);
-    args.unshift("[ALERT]");
-    return proxied.apply(this, args);
-  };
-})();
-
-
-
-var _log = (function (undefined) {
+console.addLogStackNumber = (function (undefined) {
     var Log = Error; // does this do anything?  proper inheritance...?
     Log.prototype.write = function (args) {
         /// <summary>
@@ -133,10 +49,7 @@ var _log = (function (undefined) {
         };
         if (suffix["@"].indexOf('chrome-extension')==-1)
             args = args.concat([suffix["@"]]);
-        // via @paulirish console wrapper
-        //oldLog(args.join('\t\t\t\t\t\t\t\t\t\t\t\t'));
-        window.log.apply(window.log,args);
-        
+        return args;
     };
     var extractLineNumberFromStack = function (stack) {
         /// <summary>
@@ -164,7 +77,91 @@ var _log = (function (undefined) {
        //if (typeof DEBUGMODE === typeof undefined || !DEBUGMODE) return;
 
         // call handler extension which provides stack trace
-        Log().write(Array.prototype.slice.call(arguments, 0)); // turn into proper array
+        return Log().write(Array.prototype.slice.call(arguments, 0)); // turn into proper array
     };//--  fn  returned
 
-})();//--- _log*/
+})();//--- logWrapper*/
+
+console.log = function(){
+    var args = Array.prototype.slice.call(arguments, 0);
+    //alert(args);
+    console.GLOBALS.messages.push(args);
+    console.startLogDispatchTimer();
+    //var argumnetsWithColor = [];
+    //argumnetsWithColor.unshift('color:red');
+    //argumnetsWithColor.unshift('%css'/*+GLOBALS.message*/);
+    //oldLog(argumnetsWithColor);
+    /*if (GLOBALS.message == "[object Object]")
+        console.dir.apply(null,args); 
+    else*/ 
+    if (args.join(' ') == "[object Array]")
+       console.table.apply(null,args);
+    else {
+        var output = console.addLogStackNumber.apply(null,args);
+        console.info.apply(null,output);
+    }
+    // console.info('%c'+GLOBALS.message,'color:red')
+    //console.info.call(this,argumnetsColorer)
+
+};
+console.info = function () {
+    return _console.info.apply(_console,arguments);
+};
+
+console.table = function () {
+    return _console.table.apply(_console,arguments);
+};
+console.dir = function () {
+    return _console.dir.apply(_console,arguments);
+};
+console.warn = function () {
+    var args = Array.prototype.slice.call(arguments, 0);
+
+    console.GLOBALS.messages.push(args);
+    console.startLogDispatchTimer();
+     var output = console.addLogStackNumber.apply(null,arguments);
+    return _console.warn.apply(_console,output);
+
+};
+console.startLogDispatchTimer = function () {
+    if (console.GLOBALS &&  console.GLOBALS.dispatchTimer == -1) {
+        console.GLOBALS.dispatchTimer = setTimeout(function () {
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension', {
+              detail: console.GLOBALS
+            }));
+            console.GLOBALS.dispatchTimer = -1;
+        },100);
+    }
+}
+
+document.addEventListener('Msg_LogNotificationExtension', function(e) {
+    if (console.GLOBALS.messages.length) {
+        console.GLOBALS.messages.shift();
+        if (console.GLOBALS.messages.length) {
+            console.GLOBALS.dispatchTimer = -1;
+            console.startLogDispatchTimer();
+        }
+
+    }
+});
+/*
+console.log = function() {
+	
+}.bind(console.log);*/
+
+/*(function() {
+  var proxied = console.log;
+  window.alert = function() {
+    // do something here
+    var args = Array.prototype.slice.call(arguments, 0);
+    args.unshift("[ALERT]");
+    return proxied.apply(this, args);
+  };
+})();*/
+
+window.alert = function() {
+    // do something here
+    var args = Array.prototype.slice.call(arguments, 0);
+    args.unshift("[ALERT]");
+    return console.log.apply(this, args);
+  };

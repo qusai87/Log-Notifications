@@ -8,7 +8,7 @@
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    var msg = ""; /*JSON.stringify(request.msg)*/
+    var msg = "";;
     for (var i=0;i<request.msg.length;i++)
       if (typeof request.msg[i] == "object")
         msg += "Object "+ JSON.stringify(request.msg[i])+" ";
@@ -16,7 +16,8 @@ chrome.runtime.onMessage.addListener(
         msg += request.msg[i]+" ";
 
     console.log('message received: ',msg);
-    chrome.notifications.create( {
+    
+    chrome.notifications.create('', {
       type: "basic",
       title: "Log Notification",
       message: msg,

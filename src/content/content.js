@@ -11,8 +11,11 @@ s.onload = function() {
 // Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
 // 
 // Event listener
+
 document.addEventListener('Msg_LogNotificationExtension', function(e) {
-     chrome.runtime.sendMessage({msg: e.detail.messages.pop()}, function(response) {
+	var msg = e.detail.messages[0];
+
+     chrome.runtime.sendMessage({msg: msg}, function(response) {
     });
 });
 
