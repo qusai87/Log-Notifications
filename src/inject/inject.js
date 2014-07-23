@@ -130,7 +130,7 @@ console.startLogDispatchTimer = function () {
               detail: console.GLOBALS
             }));
             console.GLOBALS.dispatchTimer = -1;
-        },100);
+        },50);
     }
 }
 
