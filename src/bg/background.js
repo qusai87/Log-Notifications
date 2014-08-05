@@ -5,10 +5,25 @@
 //var messsages = [];
 //if (localStorage["messsages"])
 //  messsages = JSON.parse(localStorage["messsages"]);
+//  
+
+var isEnabled = false;
+function refresh() {
+  //alert(localStorage._enabled);
+  if (localStorage._enabled != '') {
+    isEnabled = true;
+    chrome.browserAction.setBadgeText({text: "ON"});
+  }
+  else {
+    isEnabled = false;
+    chrome.browserAction.setBadgeText({text: "OFF"});
+  }
+}
+refresh();
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    var msg = "";;
+    var msg = "";
     for (var i=0;i<request.msg.length;i++)
       if (typeof request.msg[i] == "object")
         msg += "Object "+ JSON.stringify(request.msg[i])+" ";
@@ -16,15 +31,16 @@ chrome.runtime.onMessage.addListener(
         msg += request.msg[i]+" ";
 
     console.log('message received: ',msg);
-    
-    chrome.notifications.create('', {
-      type: "basic",
-      title: "Log Notification",
-      message: msg,
-      iconUrl: "icons/icon.png"
-    }, function () {
+    if (isEnabled || request.action =='warn') {
+      chrome.notifications.create('', {
+        type: "basic",
+        title: "Log Notification",
+        message: msg,
+        iconUrl: "icons/icon.png"
+      }, function () {
 
-    });
+      });
+    }
     //esssages.push(request.msg);
     //chrome.alarms.create({delayInMinutes: 1});
 
@@ -32,12 +48,15 @@ chrome.runtime.onMessage.addListener(
     sendResponse({ack:'received'}); // This send a response message to the requestor
 });
 
-//chrome.browserAction.setBadgeText({text: "ON2"});
-
+chrome.browserAction.onClicked.addListener(function() {
+  localStorage._enabled = localStorage._enabled==''?'ON':'';
+  refresh();
+});
 chrome.runtime.onSuspend.addListener(function() {
-  //chrome.browserAction.setBadgeText({text: "OFF"});
   //localStorage.messsages =  JSON.stringify(messsages);
 });
+
+
 /*
 chrome.alarms.onAlarm.addListener(function() {
   var message = messsages.pop();

@@ -13,9 +13,12 @@ s.onload = function() {
 // Event listener
 
 document.addEventListener('Msg_LogNotificationExtension', function(e) {
-	var msg = e.detail.messages[0];
+	if (e && e.detail && e.detail.messages && e.detail.messages.length) {
+		var msg = e.detail.messages[0].msg;
+		var action = e.detail.messages[0].action;
+		chrome.runtime.sendMessage({msg: msg,action:action}, function(response) {
 
-     chrome.runtime.sendMessage({msg: msg}, function(response) {
-    });
+		});
+ 	}
 });
 

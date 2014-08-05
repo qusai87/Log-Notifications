@@ -2,7 +2,7 @@
 // 
 
 _console = console;
-console.log('Log notifications v.0.8');
+//console.log('Log notifications v.0.9');
 
 // shallow copy object, thanks to http://geniuscarrier.com/copy-object-in-javascript/
 function shallowCopy(oldObj) {
@@ -85,7 +85,7 @@ console.addLogStackNumber = (function (undefined) {
 console.log = function(){
     var args = Array.prototype.slice.call(arguments, 0);
     //alert(args);
-    console.GLOBALS.messages.push(args);
+    console.GLOBALS.messages.push({msg:args,action:'log'});
     console.startLogDispatchTimer();
     //var argumnetsWithColor = [];
     //argumnetsWithColor.unshift('color:red');
@@ -117,7 +117,7 @@ console.dir = function () {
 console.warn = function () {
     var args = Array.prototype.slice.call(arguments, 0);
 
-    console.GLOBALS.messages.push(args);
+    console.GLOBALS.messages.push({msg:args,action:'warn'});
     console.startLogDispatchTimer();
      var output = console.addLogStackNumber.apply(null,arguments);
     return _console.warn.apply(_console,output);
@@ -163,5 +163,5 @@ window.alert = function() {
     // do something here
     var args = Array.prototype.slice.call(arguments, 0);
     args.unshift("[ALERT]");
-    return console.log.apply(this, args);
+    return console.warn.apply(this, args);
   };
