@@ -1,6 +1,6 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
 // 
-
+//console.log('inject.js started!');
 _console = console;
 //console.log('Log notifications v.0.9');
 
@@ -22,10 +22,11 @@ Array.prototype.toString =  function() {
 // http://stackoverflow.com/questions/7042611/override-console-log-for-production
 // 
 
-var console = shallowCopy(_console || {});
-console.GLOBALS = {};
-console.GLOBALS.messages = [];
-console.GLOBALS.dispatchTimer = -1;
+console = shallowCopy(_console || {});
+console.__data__ = {};
+console.__data__.messages = [];
+console.__data__.history = [];
+console.__data__.dispatchTimer = -1;
 
 console.addLogStackNumber = (function (undefined) {
     var Log = Error; // does this do anything?  proper inheritance...?
@@ -84,24 +85,12 @@ console.addLogStackNumber = (function (undefined) {
 
 console.log = function(){
     var args = Array.prototype.slice.call(arguments, 0);
-    //alert(args);
-    console.GLOBALS.messages.push({msg:args,action:'log'});
+    console.__data__.messages.push({msg:args,action:'log'});
     console.startLogDispatchTimer();
-    //var argumnetsWithColor = [];
-    //argumnetsWithColor.unshift('color:red');
-    //argumnetsWithColor.unshift('%css'/*+GLOBALS.message*/);
-    //oldLog(argumnetsWithColor);
-    /*if (GLOBALS.message == "[object Object]")
-        console.dir.apply(null,args); 
-    else*/ 
     if (args.join(' ') == "[object Array]")
-       console.table.apply(null,args);
-    else {
-        var output = console.addLogStackNumber.apply(null,args);
-        console.info.apply(null,output);
-    }
-    // console.info('%c'+GLOBALS.message,'color:red')
-    //console.info.call(this,argumnetsColorer)
+       return _console.table.apply(_console,arguments);
+
+    return _console.log.apply(_console,arguments);
 
 };
 console.info = function () {
@@ -117,28 +106,28 @@ console.dir = function () {
 console.warn = function () {
     var args = Array.prototype.slice.call(arguments, 0);
 
-    console.GLOBALS.messages.push({msg:args,action:'warn'});
+    console.__data__.messages.push({msg:args,action:'warn'});
     console.startLogDispatchTimer();
      var output = console.addLogStackNumber.apply(null,arguments);
     return _console.warn.apply(_console,output);
 
 };
 console.startLogDispatchTimer = function () {
-    if (console.GLOBALS &&  console.GLOBALS.dispatchTimer == -1) {
-        console.GLOBALS.dispatchTimer = setTimeout(function () {
-            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension', {
-              detail: console.GLOBALS
+    if (console.__data__ &&  console.__data__.dispatchTimer == -1) {
+        console.__data__.dispatchTimer = setTimeout(function () {
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_found', {
+              detail: console.__data__
             }));
-            console.GLOBALS.dispatchTimer = -1;
+            console.__data__.dispatchTimer = -1;
         },50);
     }
 }
 
-document.addEventListener('Msg_LogNotificationExtension', function(e) {
-    if (console.GLOBALS.messages.length) {
-        console.GLOBALS.messages.shift();
-        if (console.GLOBALS.messages.length) {
-            console.GLOBALS.dispatchTimer = -1;
+document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
+    if (console.__data__.messages.length) {
+        console.__data__.history.push(console.__data__.messages.shift());
+        if (console.__data__.messages.length) {
+            console.__data__.dispatchTimer = -1;
             console.startLogDispatchTimer();
         }
 

@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <title>JQuery Console Demo</title>
+    <meta name="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="jquery.console.js"></script>
+    <!-- Everything beyond this point is user-customized -->
+    <script type="text/javascript">
+      $(document).ready(function(){
+         controller2 = $('.console2').console({
+           promptLabel: '> ',
+           commandValidate:function(line){
+             if (line == "") return false;
+             else return true;
+           },
+           commandHandle:function(line){
+               try { var ret = eval(line);
+                     if (typeof ret != 'undefined') return ret.toString();
+                     else return true; }
+               catch (e) { return e.toString(); }
+           },
+           animateScroll:true,
+           promptHistory:true,
+           welcomeMessage:'current console logs:'
+         });
+         controller2.report('console log 1');
+         controller2.report('console log 2');
+         controller2.promptText('');
+       });
+    </script>
+    <style type="text/css" media="screen">
+      div.console2 { word-wrap: break-word; }      
+      /* Second console */
+      div.console2 { font-size: 14px; margin-top:1em }
+      div.console2 div.jquery-console-inner
+       { width:90%; height:200px; background:#efefef; padding:1%;
+         overflow:auto }
+      div.console2 div.jquery-console-prompt-box
+       { color:#444; font-family:monospace; }
+      div.console2 div.jquery-console-focus span.jquery-console-cursor
+       { background:#333; color:#eee; font-weight:bold }
+      div.console2 div.jquery-console-message-error
+       { color:#ef0505; font-family:sans-serif; font-weight:bold;
+         padding:0.1em; }
+      div.console2 div.jquery-console-message-success
+       { color:#187718; font-family:monospace;
+         padding:0.1em; }
+      div.console2 span.jquery-console-prompt-label { font-weight:bold }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <p>
+        <strong>Please enable JavaScript or upgrade your browser.</strong>
+      </p>
+    </noscript>
+    <h1>Console Preview : </h1>
+    <div class="console2">
+    </div>
+  </body>
+</html>

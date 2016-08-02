@@ -1,0 +1,53 @@
+#mainPopup {
+	padding: 10px;
+	height: 200px;
+	width: 400px;
+	font-family: Helvetica, Ubuntu, Arial, sans-serif;
+}
+h1 {
+	font-size: 1em;
+}
+
+div.console { 
+	word-wrap: break-word; 
+}      
+div.console { 
+	font-size: 14px; 
+	margin-top:1em
+}
+div.console div.jquery-console-inner
+{ 
+	width:98%; 
+	height:150px; 
+	background:#efefef; 
+	padding:1%;
+ 	overflow:auto;
+ 	margin-bottom: 20px;
+}
+div.console div.jquery-console-prompt-box
+{ 
+	color:#444; 
+	font-family:monospace; 
+}
+div.console div.jquery-console-focus span.jquery-console-cursor
+{ 
+	background:#333; 
+	color:#eee; 
+	font-weight:bold 
+}
+div.console div.jquery-console-message-error
+{ 
+	color:#ef0505; 
+	font-family:sans-serif; 
+	font-weight:bold;
+	padding:0.1em; 
+}
+div.console div.jquery-console-message-success
+{ 
+	color:#187718; 
+	font-family:monospace;
+	padding:0.1em; 
+}
+div.console span.jquery-console-prompt-label { 
+	font-weight:bold;
+}
