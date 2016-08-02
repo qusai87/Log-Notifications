@@ -1,6 +1,6 @@
 // SAMPLE
 this.manifest = {
-    "name": "My Extension",
+    "name": "Console Preview & Log Notifications Options",
     "icon": "icon.png",
     "settings": [
         {

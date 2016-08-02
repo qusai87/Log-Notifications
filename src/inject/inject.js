@@ -4,8 +4,10 @@
 _console = console;
 //console.log('Log notifications v.0.9');
 
+var dispatchTimer = -1;
+
 // shallow copy object, thanks to http://geniuscarrier.com/copy-object-in-javascript/
-function shallowCopy(oldObj) {
+var shallowCopy = function (oldObj) {
     var newObj = {};
     for(var i in oldObj) {
         //if(oldObj.hasOwnProperty(i)) {
@@ -13,6 +15,17 @@ function shallowCopy(oldObj) {
         //}
     }
     return newObj;
+}
+
+var startLogDispatchTimer = function () {
+    if (dispatchTimer == -1) {
+        dispatchTimer = setTimeout(function () {
+            dispatchTimer = -1;
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_found', {
+              detail: console.__data__.messages
+            }));
+        },50);
+    }
 }
 Array.prototype.toString =  function() {
   return '[object Array]';
@@ -26,7 +39,7 @@ console = shallowCopy(_console || {});
 console.__data__ = {};
 console.__data__.messages = [];
 console.__data__.history = [];
-console.__data__.dispatchTimer = -1;
+
 
 console.addLogStackNumber = (function (undefined) {
     var Log = Error; // does this do anything?  proper inheritance...?
@@ -86,53 +99,80 @@ console.addLogStackNumber = (function (undefined) {
 console.log = function(){
     var args = Array.prototype.slice.call(arguments, 0);
     console.__data__.messages.push({msg:args,action:'log'});
-    console.startLogDispatchTimer();
+    startLogDispatchTimer();
+
     if (args.join(' ') == "[object Array]")
        return _console.table.apply(_console,arguments);
 
-    return _console.log.apply(_console,arguments);
+    _console.log.apply(_console,arguments);
 
 };
 console.info = function () {
-    return _console.info.apply(_console,arguments);
+    var args = Array.prototype.slice.call(arguments, 0);
+    console.__data__.messages.push({msg:args,action:'info'});
+    startLogDispatchTimer();
+
+    _console.info.apply(_console,arguments);
 };
 
 console.table = function () {
-    return _console.table.apply(_console,arguments);
+    _console.table.apply(_console,arguments);
 };
 console.dir = function () {
-    return _console.dir.apply(_console,arguments);
+    _console.dir.apply(_console,arguments);
 };
 console.warn = function () {
     var args = Array.prototype.slice.call(arguments, 0);
-
     console.__data__.messages.push({msg:args,action:'warn'});
-    console.startLogDispatchTimer();
-     var output = console.addLogStackNumber.apply(null,arguments);
-    return _console.warn.apply(_console,output);
+    startLogDispatchTimer();
 
+    var output = console.addLogStackNumber.apply(null,arguments);
+    _console.warn.apply(_console,output);
 };
-console.startLogDispatchTimer = function () {
-    if (console.__data__ &&  console.__data__.dispatchTimer == -1) {
-        console.__data__.dispatchTimer = setTimeout(function () {
-            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_found', {
-              detail: console.__data__
-            }));
-            console.__data__.dispatchTimer = -1;
-        },50);
-    }
-}
+
 
 document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
     if (console.__data__.messages.length) {
         console.__data__.history.push(console.__data__.messages.shift());
         if (console.__data__.messages.length) {
-            console.__data__.dispatchTimer = -1;
-            console.startLogDispatchTimer();
+            startLogDispatchTimer();
         }
 
     }
 });
+
+document.addEventListener('Msg_LogNotificationExtension_get_history', function(e) {
+    if (console.__data__.history) {
+        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_history_found', {
+          detail: JSON.stringify(console.__data__.history)
+        }));
+    }
+});
+
+document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression', function(e) {
+    var results = '';
+    try {
+        results = eval(e.detail);
+    } catch (err) {
+        results = err.toString();
+    }
+    try {
+        if (results && typeof results !=='function') {
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
+              detail: JSON.stringify(results)
+            }));
+        } else {
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
+              detail:  JSON.stringify(typeof results !=='function' ? 'undefined': 'Function')
+            }));
+        }
+    } catch (err) {
+        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
+          detail: JSON.stringify(err.toString())
+        }));
+    }
+});        
+
 /*
 console.log = function() {
 	
@@ -147,10 +187,10 @@ console.log = function() {
     return proxied.apply(this, args);
   };
 })();*/
-
 window.alert = function() {
     // do something here
     var args = Array.prototype.slice.call(arguments, 0);
-    args.unshift("[ALERT]");
-    return console.warn.apply(this, args);
+    
+    console.__data__.messages.push({msg:args,action:'alert'});
+    startLogDispatchTimer();
   };

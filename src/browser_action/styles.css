@@ -5,9 +5,13 @@
 	font-family: Helvetica, Ubuntu, Arial, sans-serif;
 }
 h1 {
-	font-size: 1em;
+	font-size: 1.5em;
 }
 
+#expression {
+	width: 200px;
+	margin-right: 20px;
+}
 div.console { 
 	word-wrap: break-word; 
 }      
@@ -34,6 +38,9 @@ div.console div.jquery-console-focus span.jquery-console-cursor
 	background:#333; 
 	color:#eee; 
 	font-weight:bold 
+}
+div.console div.jquery-console-message {
+	background: #FFF0F0;
 }
 div.console div.jquery-console-message-error
 { 

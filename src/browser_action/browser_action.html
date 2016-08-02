@@ -1,15 +1,22 @@
 <!doctype html>
- <link rel="stylesheet" href="./styles.css" media="screen">
+<link rel="stylesheet" href="./styles.css" media="screen">
 <script src="/js/jquery/jquery.min.js"></script>
 <script src="./jquery.console.js"></script>
-<script src="./history.js"></script>
+<script src="./popup.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="./switchable.css" />
+  <script type="text/javascript" src="./switchable.min.js"></script>
+
 <div id="mainPopup">
 	<noscript>
 		<p>
-			<strong>Please enable JavaScript or upgrade your browser.</strong>
+			<strong>Please enable JavaScript!</strong>
 		</p>
     </noscript>
-    <h1>Console: </h1>
+    <h1>Mini Console : <span> Commands: clear,logs</span></h1>
+	<input type="checkbox" id="myswitch" checked value="checked" data-label="Disable Notificaitons">
     <div class="console">
+    	Pleae wait, or reopen this popup again!
     </div>
+    <p> Note: you can write global JS variable/expression to debug it!</p>
 </div>

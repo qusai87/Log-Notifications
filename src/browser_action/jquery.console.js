@@ -168,6 +168,7 @@
       extern.showCompletion = showCompletion;
       extern.clearScreen = clearScreen;
       extern.commandResult = commandResult;
+      extern.addToHistory = addToHistory;
     })();
 
     ////////////////////////////////////////////////////////////////////////

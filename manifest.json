@@ -24,7 +24,7 @@
     "default_popup": "src/browser_action/browser_action.html"
   },
   "permissions": [
-    "notifications"
+    "notifications","tabs", "storage"
   ],
   "content_scripts": [
     {
