@@ -1,4 +1,36 @@
-var expression;
+// GLOBAL Variables
+_history = '';
+logs = [];
+timer = -1;
+expression = '';
+commandHistory = [];
+enabled = true;
+
+
+
+function loadCommandsHistory() {
+	chrome.storage.sync.get('commandsHistory', function (result) {
+	    if (result.commandsHistory && result.commandsHistory.length) {
+	    	for (var key in result.commandsHistory) {
+            	var value = result.commandsHistory[key];
+				controller.addToHistory(value);
+			}
+	    }
+	});
+}
+
+function addToHistory(command) {
+	if (command) {
+		if (controller) {
+			controller.addToHistory(command)
+		}
+		chrome.runtime.sendMessage({
+			from: 'popup',
+			subject: 'save_command_to_history',
+			command: command
+		}, function(response) {});
+	}
+}
 function evaluateJSExpression(_expression) {
 	expression = _expression;
 	// ...query for the active tab...
@@ -22,44 +54,55 @@ function init(historyJSON) {
 	}, function(response) {});
 	_history = JSON.parse(historyJSON);
 	
-	logs = [];
-	$.each(_history, function(index, value) {
+	for (var key in _history) {
+		var value = _history[key];
 		if (value.action) {
 			logs.push({
 				msg: value.msg,
-				className: "jquery-console-message-success"
+				className: "jquery-console-message-log"
 			});
 		}
-	});
+	}
 	
 	if (logs.length) {
 		controller.commandResult(logs);
+	} else {
+		controller.commandResult('');
 	}
 }
 
 // Once the DOM is ready...
 window.addEventListener('DOMContentLoaded', function() {
 	$(function () {
-		$('#myswitch').switchable({
-            click: function( event)
-            {
-                var checked = $(event.currentTarget).parent().hasClass('switchable-checked');
-                chrome.runtime.sendMessage({
-					from: 'popup',
-					subject: 'disable_notification',
-					enabled: checked
-				}, function(response) {});
-            }
-        });
+		chrome.storage.sync.get('enabled', function(result) {
+			enabled = result.enabled;
+			if (enabled) {
+				$('#myswitch').prop('checked','checked');
+			}
+			$('#myswitch').val(enabled?'checked':'');
+			debugger;
+			$('#myswitch').switchable({
+	            click: function( event)
+	            {
+	                var checked = $(event.currentTarget).parent().hasClass('switchable-checked');
+	                chrome.runtime.sendMessage({
+						from: 'popup',
+						subject: 'disable_notification',
+						enabled: checked
+					}, function(response) {});
+	            }
+	        });
+		});
+		
 
         controller = $('.console').empty().console({
 			promptLabel: '> ',
 			commandValidate: function(line) {
 				if (line === 'clear' || line === 'clear()') {
-					controller.addToHistory(line);
+					addToHistory(line);
 					controller.clearScreen();
 				} else if (line === 'logs' || line === 'logs()') {
-					controller.addToHistory(line);
+					addToHistory(line);
 					controller.commandResult(logs);
 				} else if (line) {
 					evaluateJSExpression(line);
@@ -81,6 +124,7 @@ window.addEventListener('DOMContentLoaded', function() {
 			promptHistory: true,
 			welcomeMessage: 'current console logs:'
 		});
+		loadCommandsHistory();
 
 	});
 	// update console history from current active tab
@@ -103,7 +147,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		init(request.historyJSON);
 	} else if (request.from === 'content' && request.subject === 'expression_found') {
 		var data = JSON.parse(request.output);
-		controller.addToHistory(expression);
-		controller.commandResult(JSON.stringify(data, null, 4));
+		addToHistory(expression);
+		controller.commandResult(JSON.stringify(data, null, 4),'jquery-console-message-value');
 	}
 });

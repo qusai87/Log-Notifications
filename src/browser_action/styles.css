@@ -1,15 +1,29 @@
 #mainPopup {
 	padding: 10px;
-	height: 200px;
+	height: 500px;
 	width: 400px;
 	font-family: Helvetica, Ubuntu, Arial, sans-serif;
 }
 h1 {
 	font-size: 1.5em;
+	margin-top: 0;
 }
 
+.switchable-wrapper {
+    float: right;
+}
+
+.header {
+	float: left;
+	padding: 0 10px 10px 0;
+}
+
+.note {
+	color: #9e9c9c;
+	font-style: italic;
+}
 #expression {
-	width: 200px;
+	width: 300px;
 	margin-right: 20px;
 }
 div.console { 
@@ -22,11 +36,12 @@ div.console {
 div.console div.jquery-console-inner
 { 
 	width:98%; 
-	height:150px; 
+	height:400px; 
 	background:#efefef; 
-	padding:1%;
+	padding: 0;
  	overflow:auto;
  	margin-bottom: 20px;
+ 	border: 1px #eee solid;
 }
 div.console div.jquery-console-prompt-box
 { 
@@ -39,22 +54,47 @@ div.console div.jquery-console-focus span.jquery-console-cursor
 	color:#eee; 
 	font-weight:bold 
 }
-div.console div.jquery-console-message {
-	background: #FFF0F0;
+div.console div.jquery-console-message 
+{
+	background: #fff;
+	border-bottom: 1px #dedede solid;
+}
+
+div.console div.jquery-console-welcome 
+{
+    padding: 3px;
+    margin: 0;
+    color: #187718;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+div.console div.jquery-console-message-value 
+{
+	padding: 7px;
+	font-weight:bold;
+	color: #a74646;
+}
+
+div.console div.jquery-console-message-log 
+{
+	padding: 7px;
+	color: #9e9c9c;
 }
 div.console div.jquery-console-message-error
 { 
 	color:#ef0505; 
 	font-family:sans-serif; 
 	font-weight:bold;
-	padding:0.1em; 
+	padding:7px;
 }
 div.console div.jquery-console-message-success
 { 
 	color:#187718; 
 	font-family:monospace;
-	padding:0.1em; 
+	padding:7px;
 }
-div.console span.jquery-console-prompt-label { 
+div.console span.jquery-console-prompt-label 
+{ 
 	font-weight:bold;
 }

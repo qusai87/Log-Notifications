@@ -1,12 +1,35 @@
-var isEnabled = true || localStorage.isEnabled;
-chrome.storage.sync.set({'enabled': isEnabled}, function() {
-  console.log('Settings saved');
+//console.log('background.js started!');
+var isEnabled;
+var counters = [];
+var all_logs_history = [];
+var commands_history = [];
+var tabId = '0:0';
+
+chrome.storage.sync.get('enabled', function (result) {
+    if (typeof result.enabled === 'boolean') {
+        isEnabled = result.enabled;
+    }
+    else {
+        isEnabled =  true || localStorage.isEnabled;
+        chrome.storage.sync.set({'enabled': isEnabled}, function() {
+          console.log('enabled saved');
+        });
+    }
 });
 
-//console.log('background.js started!');
-var counters = [];
-var _history = [];
-var tabId = 0;
+chrome.storage.sync.get('commandsHistory', function (result) {
+    if (result.commandsHistory && result.commandsHistory.length) {
+        for (var key in result.commandsHistory) {
+            var value = result.commandsHistory[key];
+            commands_history.push(value);
+        }
+    } else if (!result.commandsHistory) {
+        chrome.storage.sync.set({'commandsHistory': []}, function() {
+          console.log('commandsHistory saved');
+        });
+    }
+});
+
 function refreshBadge() {
     if (!isEnabled) {
         chrome.browserAction.setBadgeText({
@@ -37,7 +60,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             else
                 msg += request.msg[i] + " ";
 
-        _history.push(request);
+        all_logs_history.push(request);
+        if (all_logs_history.length> 300) {
+            all_logs_history = all_logs_history.slice(Math.max(all_logs_history.length - 300, 1));
+        }
         if (request.action == 'warn') {
             chrome.notifications.create('', {
                 type: "basic",
@@ -78,14 +104,18 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         refreshBadge();
 
         chrome.storage.sync.set({'enabled': isEnabled}, function() {
-          console.log('Settings saved');
+          console.log('enabled saved');
         });
+    } else if ((request.from === 'popup') && (request.subject === 'save_command_to_history')) {
+        commands_history.push(request.command);
+        if (commands_history> 100)
+            commands_history = commands_history.slice(Math.max(commands_history.length - 100, 1));
+        chrome.storage.sync.set({'commandsHistory': commands_history});
     }
 });
 
 chrome.tabs.onActivated.addListener(function(tabInfo) {
-    console.log(tabInfo);
-    tabId = tabInfo.tabId;
+    tabId = tabInfo.windowId  + ':' + tabInfo.tabId;
     if (!counters[tabId]) {
         counters[tabId] = 0;
     }

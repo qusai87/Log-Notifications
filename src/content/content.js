@@ -1,8 +1,8 @@
 // Stackoverflow : http://stackoverflow.com/questions/9515704/building-a-chrome-extension-inject-code-in-a-page-using-a-content-script/9517879#9517879
 //console.log('content.js started!');
 // Read it from the storage
-chrome.storage.sync.get(['enabled'], function(items) {
-	if(items.enabled) {
+chrome.storage.sync.get('enabled', function(result) {
+	if(result.enabled) {
 		injectFilesToPage();
 	}
 });

@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+
+<style type="text/css">
+	.tree-leaf{position:relative}.tree-leaf .tree-child-leaves{display:block;margin-left:15px}.tree-leaf .hidden{display:none;visibility:hidden}.tree-leaf .tree-expando{background:#ddd;border-radius:3px;cursor:pointer;float:left;height:10px;line-height:10px;position:relative;text-align:center;top:5px;width:10px}.tree-leaf .tree-expando:hover{background:#aaa}.tree-leaf .tree-leaf-text{cursor:pointer;float:left;margin-left:5px}.tree-leaf .tree-leaf-text:hover{color:#00f}.tree-leaf .tree-leaf-content:after,.tree-leaf .tree-leaf-content:before{content:" ";display:table}.tree-leaf .tree-leaf-content:after{clear:both}
+</style>
+<body>
+	<div id="tree"></div>
+	<button id="expandAll">Expand All</button>
+	<button id="collapseAll">Collapse All</button>
+	<script src="./treeView.js"></script>
+	<script type="text/javascript">
+
+(function(TreeView) {
+  var expandAll = document.getElementById('expandAll');
+  var collapseAll = document.getElementById('collapseAll');
+  var data = [{
+    name: 'Vegetables',
+    children: []
+  }, {
+    name: 'Fruits',
+    children: [{
+      name: 'Apple',
+      children: []
+    }, {
+      name: 'Orange',
+      children: []
+    }, {
+      name: 'Lemon',
+      children: []
+    }]
+  }, {
+    name: 'Candy',
+    children: [{
+      name: 'Gummies',
+      children: []
+    }, {
+      name: 'Chocolate',
+      children: [{
+        name: 'M & M\'s',
+        children: []
+      }, {
+        name: 'Hershey Bar',
+        children: []
+      }]
+    }, ]
+  }, {
+    name: 'Bread',
+    children: []
+  }];
+
+  var tree = new TreeView(data, 'tree');
+  
+  expandAll.onclick = function () {
+    tree.expandAll();
+  };
+  
+  collapseAll.onclick = function () {
+    tree.collapseAll();
+  };
+  
+  tree.on('select', function () { alert('select'); });
+  tree.on('expand', function () { alert('expand'); });
+  tree.on('expandAll', function () { alert('expand all'); });
+  tree.on('collapse', function () { alert('collapse'); });
+  tree.on('collapseAll', function () { alert('collapse all'); });
+
+}(window.TreeView));
+
+</script>
+</body>
+</html>

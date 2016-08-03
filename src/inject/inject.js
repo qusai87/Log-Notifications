@@ -41,7 +41,7 @@ console.__data__.messages = [];
 console.__data__.history = [];
 
 
-console.addLogStackNumber = (function (undefined) {
+var addLogStackNumber = (function (undefined) {
     var Log = Error; // does this do anything?  proper inheritance...?
     Log.prototype.write = function (args) {
         /// <summary>
@@ -126,7 +126,7 @@ console.warn = function () {
     console.__data__.messages.push({msg:args,action:'warn'});
     startLogDispatchTimer();
 
-    var output = console.addLogStackNumber.apply(null,arguments);
+    var output = addLogStackNumber.apply(null,arguments);
     _console.warn.apply(_console,output);
 };
 
