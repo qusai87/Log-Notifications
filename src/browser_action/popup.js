@@ -1,9 +1,7 @@
 // GLOBAL Variables
-_history = '';
 logs = [];
-timer = -1;
+respone_not_received_timer = -1;
 expression = '';
-commandHistory = [];
 enabled = true;
 
 
@@ -36,7 +34,8 @@ function loadCommandsHistory() {
 }
 
 function clearCommandsHistory() {
-	chrome.storage.sync.set('commandsHistory', []);
+	controller.clearHistory();
+	chrome.storage.sync.set({'commandsHistory': []});
 }
 
 function addToHistory(command) {
@@ -53,6 +52,9 @@ function addToHistory(command) {
 }
 function evaluateJSExpression(_expression) {
 	expression = _expression;
+	respone_not_received_timer = setTimeout(function () {
+		controller.commandResult('no response, refresh the page!','jquery-console-message-error');
+	},1000);
 	// ...query for the active tab...
 	chrome.tabs.query({
 		active: true,
@@ -63,19 +65,19 @@ function evaluateJSExpression(_expression) {
 			from: 'popup',
 			subject: 'evaluate_js_expression',
 			expression: _expression
-		}, function(response) {});
+		}, function() {});
 	});
 }
 
-function init(historyJSON) {
+function init(logsHistoryJSON) {
 	chrome.runtime.sendMessage({
 		from: 'popup',
 		subject: 'popup_opened'
 	}, function(response) {});
-	_history = JSON.parse(historyJSON);
+	var logs_history = JSON.parse(logsHistoryJSON);
 	
-	for (var key in _history) {
-		var value = _history[key];
+	for (var key in logs_history) {
+		var value = logs_history[key];
 		if (value.action) {
 			logs.push({
 				msg: value.msg,
@@ -122,7 +124,7 @@ window.addEventListener('DOMContentLoaded', function() {
 					addToHistory(line);
 					controller.clearScreen();
 					expression = '';
-				}if (line === 'clearHistory' || line === 'clearHistory()') {
+				} else if (line === 'clearHistory' || line === 'clearHistory()') {
 					addToHistory(line);
 					controller.commandResult('');
 					clearCommandsHistory();
@@ -176,16 +178,20 @@ window.addEventListener('DOMContentLoaded', function() {
 		chrome.tabs.sendMessage(tabs[0].id, {
 			from: 'popup',
 			subject: 'get_console_history'
-		}, function(response) {});
+		}, function(response) {
+			console.log(response);
+		});
 	});
 });
 
 // Listen for messages
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	// If the received message has the expected format...
-	if (request.from === 'content' && request.subject === 'history_found') {
-		init(request.historyJSON);
+	if (request.from === 'content' && request.subject === 'logs_history_found') {
+		init(request.logsHistoryJSON);
 	} else if (request.from === 'content' && request.subject === 'expression_found') {
+		clearTimeout(respone_not_received_timer);
+		respone_not_received_timer = -1;
 		var data = JSON.parse(request.output);
 		addToHistory(expression);
 		if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0 || data.indexOf('*SyntaxError') === 0)) {

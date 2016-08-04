@@ -169,6 +169,7 @@
       extern.clearScreen = clearScreen;
       extern.commandResult = commandResult;
       extern.addToHistory = addToHistory;
+      extern.clearHistory = clearHistory;
     })();
 
     ////////////////////////////////////////////////////////////////////////
@@ -396,6 +397,11 @@
     // Add something to the history ring
     function addToHistory(line){
       history.push(line);
+      restoreText = '';
+    };
+
+    function clearHistory(){
+      history = [];
       restoreText = '';
     };
 

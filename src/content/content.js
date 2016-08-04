@@ -32,6 +32,7 @@ document.addEventListener('Msg_LogNotificationExtension_found', function(e) {
 			msg: msg,
 			action: action
 		}, function(response) {
+			//console.log(response);
 			document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', {}));
 		});
 	}
@@ -41,9 +42,11 @@ document.addEventListener('Msg_LogNotificationExtension_history_found', function
 	if (e && e.detail) {
 		chrome.runtime.sendMessage({
 			from: 'content',
-			subject: 'history_found',
-			historyJSON: e.detail
-		}, function(response) {});
+			subject: 'logs_history_found',
+			logsHistoryJSON: e.detail
+		}, function(response) {
+			//console.log(response);
+		});
 	}
 });
 
