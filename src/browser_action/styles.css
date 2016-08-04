@@ -62,25 +62,45 @@ div.console div.jquery-console-message
 
 div.console div.jquery-console-welcome 
 {
-    padding: 3px;
+    padding: 5px;
     margin: 0;
-    color: #187718;
+    color: #fff;
     font-size: 14px;
+    background: black;
     font-weight: bold;
 }
 
 div.console div.jquery-console-message-value 
 {
 	padding: 7px;
-	font-weight:bold;
-	color: #a74646;
+	color: #00631f;
 }
 
 div.console div.jquery-console-message-log 
 {
 	padding: 7px;
 	color: #9e9c9c;
+	font-size: 12px;
 }
+div.console div.jquery-console-message-info 
+{
+	padding: 7px;
+	color: #4a48c1;
+
+}
+div.console div.jquery-console-message-warn 
+{
+	padding: 7px;
+	color: #ff0000;
+	font-weight: bold;
+	background: #fdfdd7;
+}
+div.console div.jquery-console-message-table 
+{
+	padding: 7px;
+	color: #9e9c9c;
+}
+
 div.console div.jquery-console-message-error
 { 
 	color:#ef0505; 

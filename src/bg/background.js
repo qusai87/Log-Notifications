@@ -30,6 +30,21 @@ chrome.storage.sync.get('commandsHistory', function (result) {
     }
 });
 
+function getUniqueArray(arr) {
+    var seen = {};
+    var out = [];
+    var len = arr.length;
+    var j = 0;
+    for(var i = 0; i < len; i++) {
+         var item = arr[i];
+         if(seen[item] !== 1) {
+               seen[item] = 1;
+               out[j++] = item;
+         }
+    }
+    return out;
+}
+
 function refreshBadge() {
     if (!isEnabled) {
         chrome.browserAction.setBadgeText({
@@ -110,7 +125,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         commands_history.push(request.command);
         if (commands_history> 100)
             commands_history = commands_history.slice(Math.max(commands_history.length - 100, 1));
-        chrome.storage.sync.set({'commandsHistory': commands_history});
+
+        chrome.storage.sync.set({'commandsHistory': getUniqueArray(commands_history)});
     }
 });
 

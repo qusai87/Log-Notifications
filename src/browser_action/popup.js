@@ -7,16 +7,36 @@ commandHistory = [];
 enabled = true;
 
 
+function getUniqueArray(arr) {
+    var seen = {};
+    var out = [];
+    var len = arr.length;
+    var j = 0;
+    for(var i = 0; i < len; i++) {
+         var item = arr[i];
+         if(seen[item] !== 1) {
+               seen[item] = 1;
+               out.push(item);
+         }
+    }
+    return out;
+}
 
 function loadCommandsHistory() {
 	chrome.storage.sync.get('commandsHistory', function (result) {
+		console.log('result.commandsHistory.length: ', result.commandsHistory.length)
 	    if (result.commandsHistory && result.commandsHistory.length) {
-	    	for (var key in result.commandsHistory) {
-            	var value = result.commandsHistory[key];
+	    	var uniqueHistory = getUniqueArray(result.commandsHistory);
+	    	for (var key in uniqueHistory) {
+            	var value = uniqueHistory[key];
 				controller.addToHistory(value);
 			}
 	    }
 	});
+}
+
+function clearCommandsHistory() {
+	chrome.storage.sync.set('commandsHistory', []);
 }
 
 function addToHistory(command) {
@@ -42,7 +62,7 @@ function evaluateJSExpression(_expression) {
 		chrome.tabs.sendMessage(tabs[0].id, {
 			from: 'popup',
 			subject: 'evaluate_js_expression',
-			expression: expression
+			expression: _expression
 		}, function(response) {});
 	});
 }
@@ -59,7 +79,7 @@ function init(historyJSON) {
 		if (value.action) {
 			logs.push({
 				msg: value.msg,
-				className: "jquery-console-message-log"
+				className: "jquery-console-message-"+value.action
 			});
 		}
 	}
@@ -80,7 +100,6 @@ window.addEventListener('DOMContentLoaded', function() {
 				$('#myswitch').prop('checked','checked');
 			}
 			$('#myswitch').val(enabled?'checked':'');
-			debugger;
 			$('#myswitch').switchable({
 	            click: function( event)
 	            {
@@ -98,16 +117,37 @@ window.addEventListener('DOMContentLoaded', function() {
         controller = $('.console').empty().console({
 			promptLabel: '> ',
 			commandValidate: function(line) {
+				console.log('validate',line);
 				if (line === 'clear' || line === 'clear()') {
 					addToHistory(line);
 					controller.clearScreen();
+					expression = '';
+				}if (line === 'clearHistory' || line === 'clearHistory()') {
+					addToHistory(line);
+					controller.commandResult('');
+					clearCommandsHistory();
 				} else if (line === 'logs' || line === 'logs()') {
 					addToHistory(line);
 					controller.commandResult(logs);
+					expression = '';
+				} else if (line === 'cookie') {
+					addToHistory(line);
+					evaluateJSExpression('($ || require && require("jquery")).cookie()');
+					expression = '';
+				} else if (line.indexOf('cookie(') === 0) {
+					addToHistory(line);
+					evaluateJSExpression('console.__data__.' + line);
+					expression = '';
+				} else if (line.indexOf('$') === 0) {
+					addToHistory(line);
+					evaluateJSExpression('console.__data__.'+line);
+					expression = '';
 				} else if (line) {
 					evaluateJSExpression(line);
+					expression = '';
 				} else {
 					controller.commandResult('');
+					expression = '';
 				}
 				return false; // disable it for now
 			},
@@ -148,6 +188,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	} else if (request.from === 'content' && request.subject === 'expression_found') {
 		var data = JSON.parse(request.output);
 		addToHistory(expression);
-		controller.commandResult(JSON.stringify(data, null, 4),'jquery-console-message-value');
+		if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0 || data.indexOf('*SyntaxError') === 0)) {
+			controller.commandResult(JSON.stringify(data, null, 4),'jquery-console-message-error');
+		} else {
+			controller.commandResult(JSON.stringify(data, null, 4),'jquery-console-message-value');
+			
+		}
 	}
 });
