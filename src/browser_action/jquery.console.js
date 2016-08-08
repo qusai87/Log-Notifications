@@ -394,9 +394,19 @@
       rotateHistory(1);
     };
 
+    function unique(arr) {
+      var results = [];
+      for ( i = 0; i < arr.length; i++ ) {
+          var current = arr[i];
+          if (arr.lastIndexOf(current) === i) 
+            results.push(current);
+      }
+      return results;
+    }
     // Add something to the history ring
     function addToHistory(line){
       history.push(line);
+      history  = unique(history);
       restoreText = '';
     };
 
@@ -575,13 +585,38 @@
       } else if ($.isArray(msg)) {
         for (var x in msg) {
           var ret = msg[x];
-          message(ret.msg,ret.className);
+          message(ret.msg || ret,ret.className);
         }
-      } else { // Assume it's a DOM node or jQuery object.
+      } else if (msg instanceof jQuery || msg.nodeName) { // Assume it's a DOM node or jQuery object.
         inner.append(msg);
+      } else if (typeof msg === 'object') {
+        var str = JSON.stringify(msg, undefined, 4);
+        var preEl = document.createElement('pre');
+        $(preEl).html(syntaxHighlight(str));
+        inner.append(preEl);
       }
       newPromptBox();
     };
+
+    function syntaxHighlight(json) {
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+          var cls = 'number';
+          if (/^"/.test(match)) {
+              if (/:$/.test(match)) {
+                  cls = 'key';
+              } else {
+                  cls = 'string';
+              }
+          } else if (/true|false/.test(match)) {
+              cls = 'boolean';
+          } else if (/null/.test(match)) {
+              cls = 'null';
+          }
+          return '<span class="' + cls + '">' + match + '</span>';
+      });
+  }
+
 
     ////////////////////////////////////////////////////////////////////////
     // Report some message into the console
@@ -597,7 +632,15 @@
     function message(msg,className) {
       var mesg = $('<div class="jquery-console-message"></div>');
       if (className) mesg.addClass(className);
-      mesg.filledText(msg).hide();
+
+      if (typeof msg === 'object') {
+        var str = JSON.stringify(msg, undefined, 4);
+        var preEl = document.createElement('pre');
+        $(preEl).html(syntaxHighlight(str));
+        mesg.append(preEl);
+      } else {
+        mesg.filledText(msg).hide();
+      }
       inner.append(mesg);
       mesg.show();
     };

@@ -2,8 +2,9 @@
 logs = [];
 respone_not_received_timer = -1;
 expression = '';
-enabled = true;
-
+enabled = false;
+notification_enabled = false;
+DEBUG = false;
 
 function getUniqueArray(arr) {
     var seen = {};
@@ -22,7 +23,8 @@ function getUniqueArray(arr) {
 
 function loadCommandsHistory() {
 	chrome.storage.sync.get('commandsHistory', function (result) {
-		console.log('result.commandsHistory.length: ', result.commandsHistory.length)
+		if (DEBUG)
+			console.log('result.commandsHistory.length: ', result.commandsHistory.length)
 	    if (result.commandsHistory && result.commandsHistory.length) {
 	    	var uniqueHistory = getUniqueArray(result.commandsHistory);
 	    	for (var key in uniqueHistory) {
@@ -35,13 +37,16 @@ function loadCommandsHistory() {
 
 function clearCommandsHistory() {
 	controller.clearHistory();
-	chrome.storage.sync.set({'commandsHistory': []});
+	chrome.runtime.sendMessage({
+		from: 'popup',
+		subject: 'clear_history',
+	}, function(response) {});
 }
 
 function addToHistory(command) {
 	if (command) {
 		if (controller) {
-			controller.addToHistory(command)
+			controller.addToHistory(command);
 		}
 		chrome.runtime.sendMessage({
 			from: 'popup',
@@ -53,7 +58,7 @@ function addToHistory(command) {
 function evaluateJSExpression(_expression) {
 	expression = _expression;
 	respone_not_received_timer = setTimeout(function () {
-		controller.commandResult('no response, refresh the page!','jquery-console-message-error');
+		controller.commandResult('can\'t access page!','jquery-console-message-error');
 	},1000);
 	// ...query for the active tab...
 	chrome.tabs.query({
@@ -69,6 +74,19 @@ function evaluateJSExpression(_expression) {
 	});
 }
 
+function reinit() {
+	chrome.tabs.query({
+		active: true,
+		currentWindow: true
+	}, function(tabs) {
+		chrome.tabs.sendMessage(tabs[0].id, {
+			from: 'popup',
+			subject: 'init',
+			enabled: enabled,
+			notification_enabled : notification_enabled
+		}, function(response) {});
+	});
+}
 function init(logsHistoryJSON) {
 	chrome.runtime.sendMessage({
 		from: 'popup',
@@ -79,10 +97,17 @@ function init(logsHistoryJSON) {
 	for (var key in logs_history) {
 		var value = logs_history[key];
 		if (value.action) {
-			logs.push({
-				msg: value.msg,
-				className: "jquery-console-message-"+value.action
-			});
+			if (value.msg && value.msg.length === 1) {
+				logs.push({
+					msg: value.msg[0],
+					className: "jquery-console-message-"+value.action
+				});
+			} else {
+				logs.push({
+					msg: value.msg,
+					className: "jquery-console-message-"+value.action
+				});
+			}
 		}
 	}
 	
@@ -99,27 +124,55 @@ window.addEventListener('DOMContentLoaded', function() {
 		chrome.storage.sync.get('enabled', function(result) {
 			enabled = result.enabled;
 			if (enabled) {
-				$('#myswitch').prop('checked','checked');
+				$('#enabledSwitch').prop('checked','checked');
 			}
-			$('#myswitch').val(enabled?'checked':'');
-			$('#myswitch').switchable({
+			$('#enabledSwitch').val(enabled?'checked':'');
+			$('#enabledSwitch').switchable({
 	            click: function( event)
 	            {
 	                var checked = $(event.currentTarget).parent().hasClass('switchable-checked');
-	                chrome.runtime.sendMessage({
-						from: 'popup',
-						subject: 'disable_notification',
-						enabled: checked
-					}, function(response) {});
+	                var id = $(event.currentTarget).closest('.switchable-wrapper').prev().get(0).id;
+
+	                if (id === 'notificationSwitch') {
+	                	notification_enabled = checked;
+	                	chrome.runtime.sendMessage({
+							from: 'popup',
+							subject: 'disable_notifications',
+							enabled: checked
+						}, function(response) {
+							reinit();
+						});
+	                } else {
+	                	enabled = checked; 
+	                	chrome.runtime.sendMessage({
+							from: 'popup',
+							subject: 'disable_extension',
+							enabled: checked
+						}, function(response) {
+							reinit();
+						});
+	                }
+	                
+	                
 	            }
 	        });
+
+	        chrome.storage.sync.get('notification_enabled', function(result) {
+				notification_enabled = result.notification_enabled;
+				if (notification_enabled && enabled) {
+					$('#notificationSwitch').prop('checked','checked');
+				}
+				$('#notificationSwitch').val((notification_enabled && enabled)?'checked':'');
+				$('#notificationSwitch').switchable();
+			});
 		});
 		
 
         controller = $('.console').empty().console({
 			promptLabel: '> ',
 			commandValidate: function(line) {
-				console.log('validate',line);
+				if (DEBUG)
+					console.log('validate',line);
 				if (line === 'clear' || line === 'clear()') {
 					addToHistory(line);
 					controller.clearScreen();
@@ -134,7 +187,7 @@ window.addEventListener('DOMContentLoaded', function() {
 					expression = '';
 				} else if (line === 'cookie') {
 					addToHistory(line);
-					evaluateJSExpression('($ || require && require("jquery")).cookie()');
+					evaluateJSExpression('console.__data__.cookie()');
 					expression = '';
 				} else if (line.indexOf('cookie(') === 0) {
 					addToHistory(line);
@@ -178,9 +231,7 @@ window.addEventListener('DOMContentLoaded', function() {
 		chrome.tabs.sendMessage(tabs[0].id, {
 			from: 'popup',
 			subject: 'get_console_history'
-		}, function(response) {
-			console.log(response);
-		});
+		}, function(response) {});
 	});
 });
 
@@ -194,11 +245,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		respone_not_received_timer = -1;
 		var data = JSON.parse(request.output);
 		addToHistory(expression);
-		if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0 || data.indexOf('*SyntaxError') === 0)) {
-			controller.commandResult(JSON.stringify(data, null, 4),'jquery-console-message-error');
+		if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0)) {
+			controller.commandResult(data,'jquery-console-message-error');
+		} else if (typeof data==='string' && (data.indexOf('*SyntaxError') === 0)) {
+			controller.commandResult(data,'jquery-console-message-error');
+		} else if (typeof data==='string' && (data.indexOf('*TypeError') === 0)) {
+			controller.commandResult(data,'jquery-console-message-error');
 		} else {
-			controller.commandResult(JSON.stringify(data, null, 4),'jquery-console-message-value');
-			
+			controller.commandResult(data,'jquery-console-message-value');
 		}
 	}
 });

@@ -1,8 +1,9 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
-// 
-//console.log('inject.js started!');
-_console = console;
-//console.log('Log notifications v.0.9');
+var DEBUG = false;
+
+if (DEBUG)
+    console.log('start console inject js');
+var _console = console;
 
 var dispatchTimer = -1;
 
@@ -36,41 +37,9 @@ Array.prototype.toString =  function() {
 // 
 
 console = shallowCopy(_console || {});
-console.__data__ = {};
+console.__data__ = console.__data__ || {};
 console.__data__.messages = [];
 console.__data__.history = [];
-
-
-
-if (typeof $ === 'function')
-    console.__data__.$ = $ 
-else if (typeof require === 'function') {
-    try {
-        console.__data__.$ = require('jquery');
-    } catch (e) {
-        
-    }
-}
-
-if (typeof console.__data__.$ === 'function' && typeof console.__data__.$.cookie === 'function') {
-    console.__data__.cookie =  console.__data__.$.cookie ;
-} else {
-    console.__data__.cookie = function (name) {
-        if (name) {
-            var nameEQ = name + "=";
-            var ca = document.cookie.split(';');
-            for(var i=0;i < ca.length;i++) {
-                var c = ca[i];
-                while (c.charAt(0)==' ') c = c.substring(1,c.length);
-                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-            }
-            return null;
-        } else {
-            return  document.cookie.split(';');
-        }
-    }
-}
-
 
 var addLogStackNumber = (function (undefined) {
     var Log = Error; // does this do anything?  proper inheritance...?
@@ -180,33 +149,9 @@ document.addEventListener('Msg_LogNotificationExtension_get_history', function(e
     }
 });
 
-document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression', function(e) {
-    var results = '';
-    try {
-        results = eval(e.detail);
-    } catch (err) {
-        results = '*'+err.toString();
-    }
-    try {
-        if (results && typeof results !=='function') {
-            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
-              detail: JSON.stringify(results)
-            }));
-        } else {
-            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
-              detail:  JSON.stringify(typeof results !=='function' ? 'undefined': 'Function')
-            }));
-        }
-    } catch (err) {
-        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
-          detail: JSON.stringify('*'+err.toString())
-        }));
-    }
-});        
-
 /*
 console.log = function() {
-	
+    
 }.bind(console.log);*/
 
 /*(function() {
@@ -225,3 +170,4 @@ window.alert = function() {
     console.__data__.messages.push({msg:args,action:'alert'});
     startLogDispatchTimer();
   };
+

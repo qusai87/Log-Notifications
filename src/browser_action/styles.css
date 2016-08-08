@@ -28,6 +28,7 @@ h1 {
 }
 div.console { 
 	word-wrap: break-word; 
+	clear: both;
 }      
 div.console { 
 	font-size: 14px; 
@@ -118,3 +119,10 @@ div.console span.jquery-console-prompt-label
 { 
 	font-weight:bold;
 }
+
+pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: red; }

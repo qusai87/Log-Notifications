@@ -1,5 +1,6 @@
 //console.log('background.js started!');
-var isEnabled;
+var isEnabled,isNotificationEnabled;
+
 var counters = [];
 var all_logs_history = [];
 var commands_history = [];
@@ -15,6 +16,20 @@ chrome.storage.sync.get('enabled', function (result) {
           console.log('enabled saved');
         });
     }
+    refreshBadge();
+});
+
+chrome.storage.sync.get('notification_enabled', function (result) {
+    if (typeof result.enabled === 'boolean') {
+        isNotificationEnabled = result.enabled;
+    }
+    else {
+        isNotificationEnabled =  true || localStorage.isNotificationEnabled;
+        chrome.storage.sync.set({'notification_enabled': isNotificationEnabled}, function() {
+          console.log('notification_enabled saved');
+        });
+    }
+    refreshBadge();
 });
 
 chrome.storage.sync.get('commandsHistory', function (result) {
@@ -30,25 +45,24 @@ chrome.storage.sync.get('commandsHistory', function (result) {
     }
 });
 
-function getUniqueArray(arr) {
-    var seen = {};
-    var out = [];
-    var len = arr.length;
-    var j = 0;
-    for(var i = 0; i < len; i++) {
-         var item = arr[i];
-         if(seen[item] !== 1) {
-               seen[item] = 1;
-               out[j++] = item;
-         }
+function unique(arr) {
+      var results = [];
+      for ( i = 0; i < arr.length; i++ ) {
+          var current = arr[i];
+          if (arr.lastIndexOf(current) === i) 
+            results.push(current);
+      }
+      return results;
     }
-    return out;
-}
 
 function refreshBadge() {
     if (!isEnabled) {
         chrome.browserAction.setBadgeText({
             text: 'off'
+        });    
+    } else if (!isNotificationEnabled) {
+        chrome.browserAction.setBadgeText({
+            text: 'muted'
         });    
     }
     else if (counters[tabId]) {
@@ -79,31 +93,33 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         if (all_logs_history.length> 300) {
             all_logs_history = all_logs_history.slice(Math.max(all_logs_history.length - 300, 1));
         }
-        if (request.action == 'warn') {
-            chrome.notifications.create('', {
-                type: "basic",
-                title: "Warning!",
-                message: msg,
-                iconUrl: "icons/icon.png"
-            }, function() {
+        if (isNotificationEnabled) {
+            if (request.action == 'warn') {
+                chrome.notifications.create('', {
+                    type: "basic",
+                    title: "Warning!",
+                    message: msg,
+                    iconUrl: "icons/icon.png"
+                }, function() {
 
-            });
-        } else if (request.action == 'alert') {
-            chrome.notifications.create('', {
-                type: "basic",
-                title: "Alert!",
-                message: msg,
-                iconUrl: "icons/icon.png"
-            }, function() {
+                });
+            } else if (request.action == 'alert') {
+                chrome.notifications.create('', {
+                    type: "basic",
+                    title: "Alert!",
+                    message: msg,
+                    iconUrl: "icons/icon.png"
+                }, function() {
 
-            });
-        } else {
-            if (!counters[tabId]) {
-                counters[tabId] = 0;
+                });
+            } else {
+                if (!counters[tabId]) {
+                    counters[tabId] = 0;
+                }
+
+                counters[tabId]++;
+                refreshBadge();
             }
-
-            counters[tabId]++;
-            refreshBadge();
         }
         sendResponse({
             success: true
@@ -114,19 +130,28 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         sendResponse({
             success: true
         });
-    } else if ((request.from === 'popup') && (request.subject === 'disable_notification')) {
+    } else if ((request.from === 'popup') && (request.subject === 'disable_extension')) {
         isEnabled = request.enabled;
         refreshBadge();
 
         chrome.storage.sync.set({'enabled': isEnabled}, function() {
           console.log('enabled saved');
         });
+    } else if ((request.from === 'popup') && (request.subject === 'disable_notifications')) {
+        isNotificationEnabled = request.enabled;
+        refreshBadge();
+
+        chrome.storage.sync.set({'notification_enabled': isNotificationEnabled}, function() {
+          console.log('notification_enabled saved');
+        });
     } else if ((request.from === 'popup') && (request.subject === 'save_command_to_history')) {
         commands_history.push(request.command);
         if (commands_history> 100)
             commands_history = commands_history.slice(Math.max(commands_history.length - 100, 1));
-
-        chrome.storage.sync.set({'commandsHistory': getUniqueArray(commands_history)});
+        chrome.storage.sync.set({'commandsHistory': unique(commands_history)});
+    } else if ((request.from === 'popup') && (request.subject === 'clear_history')) {
+        commands_history = [];
+        chrome.storage.sync.set({'commandsHistory': commands_history});
     }
 });
 
