@@ -20,37 +20,37 @@
   var collapseAll = document.getElementById('collapseAll');
   var data = [{
     name: 'Vegetables',
-    children: []
+    data: []
   }, {
     name: 'Fruits',
-    children: [{
+    data: [{
       name: 'Apple',
-      children: []
+      data: []
     }, {
       name: 'Orange',
-      children: []
+      data: []
     }, {
       name: 'Lemon',
-      children: []
+      data: []
     }]
   }, {
     name: 'Candy',
-    children: [{
+    data: [{
       name: 'Gummies',
-      children: []
+      data: []
     }, {
       name: 'Chocolate',
-      children: [{
+      data: [{
         name: 'M & M\'s',
-        children: []
+        data: []
       }, {
         name: 'Hershey Bar',
-        children: []
+        data: []
       }]
     }, ]
   }, {
     name: 'Bread',
-    children: []
+    data: []
   }];
 
   var tree = new TreeView(data, 'tree');

@@ -3,6 +3,7 @@ var DEBUG = false;
 if (DEBUG)
 	console.log('start evaluate inject js');
 
+var console = window.console;
 
 console.__data__ = console.__data__ || {};
 
@@ -32,6 +33,8 @@ console.__data__.cookie = function(name) {
 
 
 document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression', function(e) {
+    if (DEBUG)
+        console.log(e);
     var results = '';
     try {
         results = eval(e.detail);

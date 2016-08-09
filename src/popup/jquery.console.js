@@ -577,23 +577,25 @@
 
     ////////////////////////////////////////////////////////////////////////
     // Reset the prompt in invalid command
-    function commandResult(msg,className) {
+    function commandResult(msg,className,count) {
       column = -1;
       updatePromptDisplay();
       if (typeof msg == 'string') {
-        message(msg,className);
+        message(msg,className,count);
       } else if ($.isArray(msg)) {
         for (var x in msg) {
           var ret = msg[x];
-          message(ret.msg || ret,ret.className);
+          message(ret.msg || ret,ret.className, ret.count);
         }
       } else if (msg instanceof jQuery || msg.nodeName) { // Assume it's a DOM node or jQuery object.
         inner.append(msg);
       } else if (typeof msg === 'object') {
         var str = JSON.stringify(msg, undefined, 4);
-        var preEl = document.createElement('pre');
-        $(preEl).html(syntaxHighlight(str));
+        var preEl = $('<div class="jquery-console-message"><pre></pre></div>');
+        $(preEl).find('pre').html(syntaxHighlight(str));
         inner.append(preEl);
+      } else {
+        message(msg,className,count);
       }
       newPromptBox();
     };
@@ -629,10 +631,14 @@
 
     ////////////////////////////////////////////////////////////////////////
     // Display a message
-    function message(msg,className) {
+    function message(msg,className,count) {
       var mesg = $('<div class="jquery-console-message"></div>');
       if (className) mesg.addClass(className);
-
+      
+      if (_.isArray(msg) && msg.length === 1 ) {
+        msg = msg[0];
+      }
+      
       if (typeof msg === 'object') {
         var str = JSON.stringify(msg, undefined, 4);
         var preEl = document.createElement('pre');
@@ -641,6 +647,8 @@
       } else {
         mesg.filledText(msg).hide();
       }
+      if (count>1)
+        mesg.first().prepend('<span class="badge">'+count+'</span>');
       inner.append(mesg);
       mesg.show();
     };
@@ -822,6 +830,10 @@
         column = promptText.length;
         updatePromptDisplay();
       }
+      return promptText;
+    };
+
+    extern.getPromptText = function(){
       return promptText;
     };
 

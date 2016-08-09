@@ -1,0 +1,32 @@
+<!doctype html>
+<link rel="stylesheet" href="./styles.css" media="screen">
+<script src="./../lib/jquery/jquery.min.js"></script>
+<script src="./../lib/underscore.js"></script>
+<script src="./jquery.console.js"></script>
+<script src="./popup.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="./switchable.css" />
+  <script type="text/javascript" src="./../lib/switchable.min.js"></script>
+
+<div id="mainPopup">
+    <div class="header">
+    	<h1>Console :</h1>
+    </div>
+    <noscript>
+        <p>
+            <strong>Please enable JavaScript!</strong>
+        </p>
+    </noscript>
+    <input type="checkbox" id="enabledSwitch" value="" data-label="Enabled:">
+    <input type="checkbox" id="notificationSwitch" value="" data-label="Notificaitons:">
+    <div style="clear:both"> 
+        <small>Commands: <strong>$</strong>,<strong>cookie</strong>,<strong>cookie('name')</strong>,<strong>logs()</strong>,<strong>clear()</strong>& <strong>clearHistory()</strong></small>
+    </div>
+    <div>
+        <input type="text" id="filters" value="" placeholder="filter logs"></input>
+    </div>
+    <div class="console">
+    	Pleae wait, or reopen this popup again!
+    </div>
+    <p class="note"> Note: you can also debug global JS variables & expressions!</p>
+</div>

@@ -1,7 +1,7 @@
 // Stackoverflow : http://stackoverflow.com/questions/9515704/building-a-chrome-extension-inject-code-in-a-page-using-a-content-script/9517879#9517879
 // Read it from the storage
 var DEBUG = false;
-
+var console = window.console;
 if (DEBUG)
 	console.log('content.js started!');
 
@@ -30,6 +30,8 @@ function init(enabled,notificationEnabled) {
 		injectFile('src/inject/evaluate.js');
 		
 		document.addEventListener('Msg_LogNotificationExtension_js_expression_found', function(e) {
+			if (DEBUG)
+				console.log(e);
 			if (e && e.detail) {
 				chrome.runtime.sendMessage({
 					from: 'content',
@@ -82,6 +84,9 @@ function init(enabled,notificationEnabled) {
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
 	// First, validate the message's structure
+	if (DEBUG)
+		console.log(request);
+
 	if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
 		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_history', {}));
 	} 
@@ -91,8 +96,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
 		}));
 	}   
 	else if ((request.from === 'popup') && (request.subject === 'init')) {
-		if (DEBUG)
+		if (DEBUG) {
 			console.log('init')
+		}
 		init(request.enabled,request.notification_enabled);
 	}   
 });

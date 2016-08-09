@@ -1,10 +1,48 @@
 // GLOBAL Variables
-logs = [];
 respone_not_received_timer = -1;
 expression = '';
 enabled = false;
 notification_enabled = false;
 DEBUG = false;
+
+logs_history = null;
+
+function reinit() {
+	chrome.tabs.query({
+		active: true,
+		currentWindow: true
+	}, function(tabs) {
+		chrome.tabs.sendMessage(tabs[0].id, {
+			from: 'popup',
+			subject: 'init',
+			enabled: enabled,
+			notification_enabled : notification_enabled
+		}, function(response) {});
+	});
+}
+
+function init(logsHistoryJSON) {
+	var logs;
+	chrome.runtime.sendMessage({
+		from: 'popup',
+		subject: 'popup_opened'
+	}, function(response) {});
+	logs_history = JSON.parse(logsHistoryJSON);
+	showLogs();
+}
+
+function showNewLogs(logsHistoryJSON) {
+	var _old_logs = logs_history;
+	logs_history = JSON.parse(logsHistoryJSON);
+	var text = controller.getPromptText();
+	controller.clearScreen();
+	showLogs();
+	controller.promptText(text);
+	chrome.runtime.sendMessage({
+		from: 'popup',
+		subject: 'popup_opened'
+	}, function(response) {});
+}
 
 function getUniqueArray(arr) {
     var seen = {};
@@ -74,32 +112,53 @@ function evaluateJSExpression(_expression) {
 	});
 }
 
-function reinit() {
-	chrome.tabs.query({
-		active: true,
-		currentWindow: true
-	}, function(tabs) {
-		chrome.tabs.sendMessage(tabs[0].id, {
-			from: 'popup',
-			subject: 'init',
-			enabled: enabled,
-			notification_enabled : notification_enabled
-		}, function(response) {});
-	});
+
+function reduce(arr,filters) {
+	var results =[];
+	if (!arr) {
+		return null;
+	}
+	var count = 1;
+
+	for (var i=0;i<arr.length;i++) {
+		arr[i].count = 1;
+	}
+	for (var i=0;i<arr.length;i++) {
+		if (filters) {
+			var msg = arr[i].msg;
+			if (typeof arr[i].msg === 'object') {
+				msg = arr[i].msg.join('');
+			}
+			if (msg.indexOf(filters) === -1)
+				continue;
+		}
+		if (_.isEqual(arr[i+1],arr[i])) {
+			count++;
+			if (i<arr.length) {
+				continue;
+			}
+		}
+		if (count>1) {
+			results.push(_.extend(arr[i],{count: count}));
+		} else {
+			results.push(arr[i]);
+		}
+		count = 1;
+	}
+	return results;
 }
-function init(logsHistoryJSON) {
-	chrome.runtime.sendMessage({
-		from: 'popup',
-		subject: 'popup_opened'
-	}, function(response) {});
-	var logs_history = JSON.parse(logsHistoryJSON);
-	
-	for (var key in logs_history) {
-		var value = logs_history[key];
+
+function showLogs() {
+	var logs = [];
+	var filters = $('#filters').val();
+	var logs_history_filtered = reduce(logs_history,filters);
+	for (var key in logs_history_filtered) {
+		var value = logs_history_filtered[key];
 		if (value.action) {
 			if (value.msg && value.msg.length === 1) {
 				logs.push({
-					msg: value.msg[0],
+					msg: value.msg,
+					count: value.count,
 					className: "jquery-console-message-"+value.action
 				});
 			} else {
@@ -116,6 +175,7 @@ function init(logsHistoryJSON) {
 	} else {
 		controller.commandResult('');
 	}
+	controller.focus();
 }
 
 // Once the DOM is ready...
@@ -126,6 +186,10 @@ window.addEventListener('DOMContentLoaded', function() {
 			if (enabled) {
 				$('#enabledSwitch').prop('checked','checked');
 			}
+			$('#filters').change(function () {
+				controller.clearScreen();
+				showLogs();
+			})
 			$('#enabledSwitch').val(enabled?'checked':'');
 			$('#enabledSwitch').switchable({
 	            click: function( event)
@@ -183,7 +247,7 @@ window.addEventListener('DOMContentLoaded', function() {
 					clearCommandsHistory();
 				} else if (line === 'logs' || line === 'logs()') {
 					addToHistory(line);
-					controller.commandResult(logs);
+					showLogs();
 					expression = '';
 				} else if (line === 'cookie') {
 					addToHistory(line);
@@ -238,13 +302,32 @@ window.addEventListener('DOMContentLoaded', function() {
 // Listen for messages
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	// If the received message has the expected format...
-	if (request.from === 'content' && request.subject === 'logs_history_found') {
-		init(request.logsHistoryJSON);
+	if (request.from === 'content' && request.subject === 'console_action') {
+		chrome.tabs.query({
+			active: true,
+			currentWindow: true
+		}, function(tabs) {
+			if (sender.tab.id === tabs[0].id) {
+				chrome.tabs.sendMessage(tabs[0].id, {
+					from: 'popup',
+					subject: 'get_console_history'
+				}, function(response) {});
+			}
+		});
+	}
+	else if (request.from === 'content' && request.subject === 'logs_history_found') {
+		if (!logs_history) {
+			init(request.logsHistoryJSON);
+		}
+		else {
+			showNewLogs(request.logsHistoryJSON);
+		}
 	} else if (request.from === 'content' && request.subject === 'expression_found') {
 		clearTimeout(respone_not_received_timer);
 		respone_not_received_timer = -1;
 		var data = JSON.parse(request.output);
 		addToHistory(expression);
+
 		if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0)) {
 			controller.commandResult(data,'jquery-console-message-error');
 		} else if (typeof data==='string' && (data.indexOf('*SyntaxError') === 0)) {

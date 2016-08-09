@@ -4,7 +4,7 @@ var isEnabled,isNotificationEnabled;
 var counters = [];
 var all_logs_history = [];
 var commands_history = [];
-var tabId = '0:0';
+var activeTabId = '0:0';
 
 chrome.storage.sync.get('enabled', function (result) {
     if (typeof result.enabled === 'boolean') {
@@ -65,9 +65,9 @@ function refreshBadge() {
             text: 'muted'
         });    
     }
-    else if (counters[tabId]) {
+    else if (counters[activeTabId]) {
         chrome.browserAction.setBadgeText({
-            text: '' + counters[tabId]
+            text: '' + counters[activeTabId]
         });    
     } else {
         chrome.browserAction.setBadgeText({
@@ -78,6 +78,12 @@ function refreshBadge() {
 
 // Listener - Put this in the background script to listen to all the events.
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    var tabId;
+    if (sender && sender.tab) {
+        tabId = sender.tab.windowId + ':' + sender.tab.id;
+    } else {
+        tabId = activeTabId;
+    }
     // First, validate the message's structure
     if ((request.from === 'content') && (request.subject === 'console_action')) {
         if (!isEnabled)
@@ -125,6 +131,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             success: true
         });
     } else if ((request.from === 'popup') && (request.subject === 'popup_opened')) {
+        activeTabId = tabId;
         counters[tabId] = 0;
         refreshBadge();
         sendResponse({
@@ -156,10 +163,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 chrome.tabs.onActivated.addListener(function(tabInfo) {
-    tabId = tabInfo.windowId  + ':' + tabInfo.tabId;
-    if (!counters[tabId]) {
-        counters[tabId] = 0;
+    console.log('tab opened!',tabInfo);
+    if (tabInfo) {
+        var tabId = tabInfo.windowId  + ':' + tabInfo.tabId;
+        activeTabId  = tabId;
+        if (!counters[tabId]) {
+            counters[tabId] = 0;
+        }
+        counter = counters[tabId];
+        refreshBadge();
     }
-    counter = counters[tabId];
-    refreshBadge();
 });
