@@ -82,7 +82,8 @@ function init(enabled,notificationEnabled) {
 }
 
 // Listen for messages from the popup
-chrome.runtime.onMessage.addListener(function(request, sender, response) {
+chrome.runtime.onMessage.addListener(function(request, sender, response) 
+{
 	// First, validate the message's structure
 	if (DEBUG)
 		console.log(request);
@@ -102,4 +103,3 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
 		init(request.enabled,request.notification_enabled);
 	}   
 });
-

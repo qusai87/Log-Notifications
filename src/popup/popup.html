@@ -9,24 +9,27 @@
   <script type="text/javascript" src="./../lib/switchable.min.js"></script>
 
 <div id="mainPopup">
-    <div class="header">
-    	<h1>Console :</h1>
-    </div>
     <noscript>
         <p>
             <strong>Please enable JavaScript!</strong>
         </p>
     </noscript>
-    <input type="checkbox" id="enabledSwitch" value="" data-label="Enabled:">
-    <input type="checkbox" id="notificationSwitch" value="" data-label="Notificaitons:">
-    <div style="clear:both"> 
-        <small>Commands: <strong>$</strong>,<strong>cookie</strong>,<strong>cookie('name')</strong>,<strong>logs()</strong>,<strong>clear()</strong>& <strong>clearHistory()</strong></small>
+    <div class="header">
+        <h1>Console :</h1>
+        <div class="pull-right">
+            <input type="checkbox" id="enabledSwitch" value="" data-label="Enabled:">
+            <input type="checkbox" id="notificationSwitch" value="" data-label="Notificaitons:">
+            <input type="checkbox" id="allSessions" value="" data-label="All Sessions:">
+        </div>
     </div>
-    <div>
+    <div style="clear:both">
         <input type="text" id="filters" value="" placeholder="filter logs"></input>
     </div>
     <div class="console">
-    	Pleae wait, or reopen this popup again!
+        Pleae wait, or reopen this popup again!
     </div>
-    <p class="note"> Note: you can also debug global JS variables & expressions!</p>
+    <div style="clear:both"> 
+        <small>Commands: <strong>cookie</strong>,<strong>logs</strong>,<strong>clear</strong>& <strong>clearHistory</strong></small>
+        <div class="note"> Note: you can also debug global JS variables & expressions!</div>
+    </div>
 </div>

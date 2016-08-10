@@ -4,30 +4,28 @@
 	width: 400px;
 	font-family: Helvetica, Ubuntu, Arial, sans-serif;
 }
-#filter {
-	width: 95%;
+#filters {
+	width: 389px;
 }
 h1 {
 	font-size: 1.5em;
 	margin-top: 0;
 }
 
-.switchable-wrapper {
+.switchable-wrapper,.pull-right {
     float: right;
 }
 
 .header {
 	float: left;
 	padding: 0 10px 10px 0;
+	width: 100%;
 }
 
 .badge {
     display: inline-block;
     min-width: 10px;
     padding: 3px 5px;
-    /* font-size: 12px; */
-    /* font-weight: 700; */
-    /* line-height: 1; */
     color: #fff;
     text-align: center;
     white-space: nowrap;
@@ -40,6 +38,7 @@ h1 {
 .note {
 	color: #9e9c9c;
 	font-style: italic;
+	margin-bottom: 10px;
 }
 #expression {
 	width: 300px;
@@ -50,8 +49,8 @@ div.console {
 	clear: both;
 }      
 div.console { 
-	font-size: 14px; 
-	margin-top:1em
+	font-size: 12px; 
+	margin-top:1em;
 }
 div.console div.jquery-console-inner
 { 
@@ -60,7 +59,7 @@ div.console div.jquery-console-inner
 	background:#efefef; 
 	padding: 0;
  	overflow:auto;
- 	margin-bottom: 20px;
+ 	margin-bottom: 10px;
  	border: 1px #eee solid;
 }
 div.console div.jquery-console-prompt-box
@@ -71,8 +70,7 @@ div.console div.jquery-console-prompt-box
 div.console div.jquery-console-focus span.jquery-console-cursor
 { 
 	background:#333; 
-	color:#eee; 
-	font-weight:bold 
+	color:#eee;
 }
 div.console div.jquery-console-message 
 {
@@ -92,47 +90,47 @@ div.console div.jquery-console-welcome
 
 div.console div.jquery-console-message-value 
 {
-	padding: 7px;
+	padding: 5px;
 	color: #00631f;
 }
 
 div.console div.jquery-console-message-log 
 {
-	padding: 7px;
+	padding: 5px;
 	color: #9e9c9c;
 	font-size: 12px;
 }
 div.console div.jquery-console-message-info 
 {
-	padding: 7px;
+	padding: 5px;
 	color: #4a48c1;
 
 }
 div.console div.jquery-console-message-warn 
 {
-	padding: 7px;
+	padding: 5px;
 	color: #ff0000;
-	font-weight: bold;
 	background: #fdfdd7;
 }
 div.console div.jquery-console-message-table 
 {
-	padding: 7px;
+	padding: 5px;
 	color: #9e9c9c;
 }
 
 div.console div.jquery-console-message-error
 { 
 	color:#ef0505; 
+	background: #ffe7e7;
 	font-family:sans-serif; 
 	font-weight:bold;
-	padding:7px;
+	padding: 5px;
 }
 div.console div.jquery-console-message-success
 { 
 	color:#187718; 
 	font-family:monospace;
-	padding:7px;
+	padding: 5px;
 }
 div.console span.jquery-console-prompt-label 
 { 

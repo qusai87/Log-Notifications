@@ -2,7 +2,7 @@
 var DEBUG = false;
 
 if (DEBUG)
-    console.log('start console inject js');
+    console.log('console.js injected!');
 var _console = console;
 
 var dispatchTimer = -1;
@@ -130,6 +130,14 @@ console.warn = function () {
     _console.warn.apply(_console,output);
 };
 
+console.error = function () {
+    var args = Array.prototype.slice.call(arguments, 0);
+    console.__data__.messages.push({msg:args,action:'error'});
+    startLogDispatchTimer();
+
+    var output = addLogStackNumber.apply(null,arguments);
+    _console.error.apply(_console,output);
+};
 
 document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
     if (console.__data__.messages.length) {
@@ -149,25 +157,41 @@ document.addEventListener('Msg_LogNotificationExtension_get_history', function(e
     }
 });
 
-/*
-console.log = function() {
-    
-}.bind(console.log);*/
-
-/*(function() {
-  var proxied = console.log;
-  window.alert = function() {
-    // do something here
-    var args = Array.prototype.slice.call(arguments, 0);
-    args.unshift("[ALERT]");
-    return proxied.apply(this, args);
-  };
-})();*/
 window.alert = function() {
     // do something here
     var args = Array.prototype.slice.call(arguments, 0);
     
     console.__data__.messages.push({msg:args,action:'alert'});
     startLogDispatchTimer();
-  };
+};
 
+window.onerror = function(e, url, line) {
+    if (/Script error/.test(e)) {
+        console.__data__.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
+    } else {
+        console.__data__.messages.push({msg: 'error: ' + e , action: 'error'});
+    }
+    startLogDispatchTimer();
+    //_console.error.apply(_console,[e]);
+    return true; 
+}
+
+// handle uncaught errors
+window.addEventListener('error', function(e) {
+    if(e.filename) {
+        var detail = {
+            stack: e.error ? e.error.stack : null,
+            url: e.filename,
+            line: e.lineno,
+            col: e.colno,
+            message: e.message
+        }
+
+        if (/Script error/.test(detail.message)) {
+            console.__data__.messages.push({msg: 'unkown error: ' + detail.message , action: 'unknown'});
+        } else {
+            console.__data__.messages.push({msg: 'error: ' + detail.message , action: 'error'});
+        }
+        startLogDispatchTimer();
+    }
+});

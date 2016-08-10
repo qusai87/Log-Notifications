@@ -1,7 +1,7 @@
 var DEBUG = false;
 
 if (DEBUG)
-	console.log('start evaluate inject js');
+	console.log('evaluate.js injected!');
 
 var console = window.console;
 

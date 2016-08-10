@@ -1,25 +1,26 @@
 // GLOBAL Variables
-respone_not_received_timer = -1;
-expression = '';
-enabled = false;
+enabled = true;
 notification_enabled = false;
+all_sessions = false;
+
+respone_not_received_timer = -1;
 DEBUG = false;
+
+if (DEBUG)
+    console.log('popup.js opened!');
 
 logs_history = null;
 
-function reinit() {
-	chrome.tabs.query({
-		active: true,
-		currentWindow: true
-	}, function(tabs) {
-		chrome.tabs.sendMessage(tabs[0].id, {
-			from: 'popup',
-			subject: 'init',
-			enabled: enabled,
-			notification_enabled : notification_enabled
-		}, function(response) {});
-	});
-}
+_gaq = [];
+_gaq.push(['_setAccount', 'UA-82270161-1']);
+
+_gaq.push(['_trackEvent','popup','opened']);
+
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = 'https://ssl.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
 
 function init(logsHistoryJSON) {
 	var logs;
@@ -31,11 +32,32 @@ function init(logsHistoryJSON) {
 	showLogs();
 }
 
+function loadLogs () {
+	if (all_sessions) {
+		// update console history from current active tab
+		chrome.runtime.sendMessage({
+			from: 'popup',
+			subject: 'get_all_history'
+		}, function(response) {});
+    } else {
+    	// update console history from current active tab
+		chrome.tabs.query({
+			active: true,
+			currentWindow: true
+		}, function(tabs) {
+			// ...and send a request for the DOM info...
+			chrome.tabs.sendMessage(tabs[0].id, {
+				from: 'popup',
+				subject: 'get_console_history'
+			}, function(response) {});
+		});
+    }
+}
 function showNewLogs(logsHistoryJSON) {
 	var _old_logs = logs_history;
 	logs_history = JSON.parse(logsHistoryJSON);
 	var text = controller.getPromptText();
-	controller.clearScreen();
+	clear();
 	showLogs();
 	controller.promptText(text);
 	chrome.runtime.sendMessage({
@@ -94,7 +116,6 @@ function addToHistory(command) {
 	}
 }
 function evaluateJSExpression(_expression) {
-	expression = _expression;
 	respone_not_received_timer = setTimeout(function () {
 		controller.commandResult('can\'t access page!','jquery-console-message-error');
 	},1000);
@@ -147,7 +168,10 @@ function reduce(arr,filters) {
 	}
 	return results;
 }
-
+function clear() {
+	if (controller)
+		controller.clearScreen();
+}
 function showLogs() {
 	var logs = [];
 	var filters = $('#filters').val();
@@ -169,13 +193,46 @@ function showLogs() {
 			}
 		}
 	}
-	
-	if (logs.length) {
-		controller.commandResult(logs);
-	} else {
-		controller.commandResult('');
+	if (controller) {
+		if (logs.length) {
+			controller.commandResult(logs);
+		} else {
+			controller.commandResult('');
+		}
+		controller.focus();
 	}
-	controller.focus();
+}
+
+function onSwitchClicked ( event)
+{
+    var checked = $(event.currentTarget).parent().hasClass('switchable-checked');
+    var id = $(event.currentTarget).closest('.switchable-wrapper').prev().get(0).id;
+
+    if (id === 'notificationSwitch') {
+    	notification_enabled = checked;
+    	chrome.runtime.sendMessage({
+			from: 'popup',
+			subject: 'disable_notifications',
+			enabled: checked
+		}, function(response) {
+		});
+    } else if (id === 'enabledSwitch') {
+    	enabled = checked; 
+    	chrome.runtime.sendMessage({
+			from: 'popup',
+			subject: 'disable_extension',
+			enabled: checked
+		}, function(response) {
+		});
+    } else if (id === 'allSessions') {
+    	all_sessions = checked;
+    	clear();
+    	loadLogs();
+
+    	chrome.storage.sync.set({'all_sessions': all_sessions}, function() {
+          console.log('all_sessions saved');
+        });
+    }
 }
 
 // Once the DOM is ready...
@@ -186,87 +243,81 @@ window.addEventListener('DOMContentLoaded', function() {
 			if (enabled) {
 				$('#enabledSwitch').prop('checked','checked');
 			}
-			$('#filters').change(function () {
-				controller.clearScreen();
-				showLogs();
-			})
+			$('#filters').on('change',function () {
+				if ($('#filters').data('oldVal') != $('#filters').val()) {
+					_gaq.push(['_trackEvent',$('#filters').val(),'filter']);
+					$('#filters').data('oldVal', $('#filters').val());
+					chrome.storage.sync.set({
+						'filters': $('#filters').val()
+					}, function() {
+						console.log('filters saved');
+					});
+					clear();
+					showLogs();
+				}
+			});
 			$('#enabledSwitch').val(enabled?'checked':'');
 			$('#enabledSwitch').switchable({
-	            click: function( event)
-	            {
-	                var checked = $(event.currentTarget).parent().hasClass('switchable-checked');
-	                var id = $(event.currentTarget).closest('.switchable-wrapper').prev().get(0).id;
-
-	                if (id === 'notificationSwitch') {
-	                	notification_enabled = checked;
-	                	chrome.runtime.sendMessage({
-							from: 'popup',
-							subject: 'disable_notifications',
-							enabled: checked
-						}, function(response) {
-							reinit();
-						});
-	                } else {
-	                	enabled = checked; 
-	                	chrome.runtime.sendMessage({
-							from: 'popup',
-							subject: 'disable_extension',
-							enabled: checked
-						}, function(response) {
-							reinit();
-						});
-	                }
-	                
-	                
-	            }
+	            click: onSwitchClicked
 	        });
-
-	        chrome.storage.sync.get('notification_enabled', function(result) {
-				notification_enabled = result.notification_enabled;
-				if (notification_enabled && enabled) {
-					$('#notificationSwitch').prop('checked','checked');
-				}
-				$('#notificationSwitch').val((notification_enabled && enabled)?'checked':'');
-				$('#notificationSwitch').switchable();
+			chrome.storage.sync.get('filters', function(result) {
+				$('#filters').val(result.filters);
+				$('#filters').data('oldVal', $('#filters').val());
 			});
+	        
+		});
+
+		chrome.storage.sync.get('notification_enabled', function(result) {
+			notification_enabled = result.notification_enabled;
+			if (notification_enabled) {
+				$('#notificationSwitch').prop('checked','checked');
+			}
+			$('#notificationSwitch').val((notification_enabled)?'checked':'');
+			$('#notificationSwitch').switchable();
+		});
+
+		chrome.storage.sync.get('all_sessions', function(result) {
+			all_sessions = result.all_sessions;
+			if (all_sessions) {
+				$('#allSessions').prop('checked','checked');
+			}
+			$('#allSessions').val((all_sessions && enabled)?'checked':'');
+			$('#allSessions').switchable();
+
+			loadLogs();
 		});
 		
-
         controller = $('.console').empty().console({
 			promptLabel: '> ',
 			commandValidate: function(line) {
 				if (DEBUG)
 					console.log('validate',line);
 				if (line === 'clear' || line === 'clear()') {
+					_gaq.push(['_trackEvent',line,'command']);
 					addToHistory(line);
-					controller.clearScreen();
-					expression = '';
+					clear();
 				} else if (line === 'clearHistory' || line === 'clearHistory()') {
+					_gaq.push(['_trackEvent',line,'command']);
 					addToHistory(line);
 					controller.commandResult('');
 					clearCommandsHistory();
 				} else if (line === 'logs' || line === 'logs()') {
+					_gaq.push(['_trackEvent',line,'command']);
 					addToHistory(line);
 					showLogs();
-					expression = '';
 				} else if (line === 'cookie') {
+					_gaq.push(['_trackEvent',line,'command']);
 					addToHistory(line);
 					evaluateJSExpression('console.__data__.cookie()');
-					expression = '';
 				} else if (line.indexOf('cookie(') === 0) {
 					addToHistory(line);
 					evaluateJSExpression('console.__data__.' + line);
-					expression = '';
-				} else if (line.indexOf('$') === 0) {
-					addToHistory(line);
-					evaluateJSExpression('console.__data__.'+line);
-					expression = '';
 				} else if (line) {
+					_gaq.push(['_trackEvent',line,'expression']);
+					addToHistory(line);
 					evaluateJSExpression(line);
-					expression = '';
 				} else {
 					controller.commandResult('');
-					expression = '';
 				}
 				return false; // disable it for now
 			},
@@ -285,17 +336,6 @@ window.addEventListener('DOMContentLoaded', function() {
 		});
 		loadCommandsHistory();
 
-	});
-	// update console history from current active tab
-	chrome.tabs.query({
-		active: true,
-		currentWindow: true
-	}, function(tabs) {
-		// ...and send a request for the DOM info...
-		chrome.tabs.sendMessage(tabs[0].id, {
-			from: 'popup',
-			subject: 'get_console_history'
-		}, function(response) {});
 	});
 });
 
@@ -322,11 +362,17 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		else {
 			showNewLogs(request.logsHistoryJSON);
 		}
+	} else if (request.from === 'background' && request.subject === 'all_history') {
+		if (!logs_history) {
+			init(request.logsHistoryJSON);
+		}
+		else {
+			showNewLogs(request.logsHistoryJSON);
+		}
 	} else if (request.from === 'content' && request.subject === 'expression_found') {
 		clearTimeout(respone_not_received_timer);
 		respone_not_received_timer = -1;
 		var data = JSON.parse(request.output);
-		addToHistory(expression);
 
 		if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0)) {
 			controller.commandResult(data,'jquery-console-message-error');
