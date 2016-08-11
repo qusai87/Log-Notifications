@@ -158,8 +158,15 @@
         typer.focus();
         setTimeout(function(){
           inner.addClass('jquery-console-focus');
-          typer.focus();
-        },100);
+          inner.removeClass('jquery-console-nofocus');
+          if (isWebkit) {
+            typer.focusWithoutScrolling();
+          } else {
+            typer.css('position', 'fixed').focus();
+          }
+          scrollToBottom();
+          return false;
+        },200);
       }
       extern.inner = inner;
       extern.typer = typer;
@@ -258,7 +265,7 @@
 
     ////////////////////////////////////////////////////////////////////////
     // Handle setting focus
-    container.click(function(){
+    container.click(function onClick(){
       // Don't mess with the focus if there is an active selection
       if (window.getSelection().toString()) {
         return false;

@@ -4,6 +4,8 @@ var counters = [];
 var all_logs_history = {};
 var commands_history = [];
 var activeTabId = '0:0';
+var excludeFilterRegex = null;
+var includeFilterRegex = null;
 
 DEBUG = false;
 
@@ -61,6 +63,22 @@ chrome.storage.sync.get('commandsHistory', function (result) {
         });
     }
 });
+
+function updateFilters () {
+    chrome.storage.sync.get('include_filters', function(result) {
+        if (result.include_filters)
+            includeFilterRegex = new RegExp(result.include_filters, 'gi');
+        else 
+            includeFilterRegex = null;
+    });
+
+    chrome.storage.sync.get('exclude_filters', function(result) {
+        if (result.exclude_filters)
+            excludeFilterRegex = new RegExp(result.exclude_filters, 'gi');
+        else 
+            excludeFilterRegex = null;
+    });
+}
 
 function unique(arr) {
       var results = [];
@@ -122,42 +140,35 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 all_logs_history[tabId] = all_logs_history[tabId].slice(Math.max(all_logs_history[tabId].length - 300, 1));
             }
         }
-        if (isNotificationEnabled) {
-            if (request.action == 'error') {
+        if (request.action == 'error') {
+            if (isNotificationEnabled) {
                 chrome.notifications.create('', {
                     type: "basic",
                     title: "Error!",
                     message: msg,
                     iconUrl: "icons/icon.png"
-                }, function() {
-
-                });
-            } else if (request.action == 'alert') {
+                }, function() {});
+            } 
+        } else if (request.action == 'alert') {
+            if (isNotificationEnabled) {
                 chrome.notifications.create('', {
                     type: "basic",
                     title: "Alert!",
                     message: msg,
                     iconUrl: "icons/icon.png"
-                }, function() {
-
-                });
-            } else {
-                if (!counters[tabId]) {
-                    counters[tabId] = 0;
-                }
-
-                counters[tabId]++;
-                refreshBadge();
-            }
+                }, function() {});
+            } 
         } else {
             if (!counters[tabId]) {
                 counters[tabId] = 0;
             }
-
-            counters[tabId]++;
-            refreshBadge();
+            if (!(excludeFilterRegex && msg.match(excludeFilterRegex).length) && (!includeFilterRegex || msg.match(includeFilterRegex)))
+            {
+                counters[tabId]++;
+                refreshBadge();
+            }
         }
-        
+
         sendResponse({
             success: true
         });
@@ -201,6 +212,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             if (DEBUG)
                 console.log(response);
         });
+    }else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
+        updateFilters();
     }
 });
 
@@ -220,12 +233,14 @@ chrome.tabs.onActivated.addListener(function(tabInfo) {
     }
 });
 
-chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tab )
-{
+chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tab) {
     if ( changeInfo.status === "complete" )
     {
         // page reload complete
-        console.log('page reloaded!');
+        activeTabId = tab.windowId  + ':' + tabId;
+        if (DEBUG)
+            console.log('page reloaded!');
+
         refreshBadge();
 
         _gaq.push(['_trackEvent',tab.url,'visited']);
@@ -233,13 +248,13 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tab )
 });
 
 
-chrome.tabs.onCreated.addListener(function(tabId,tab){
-    var tabId = tab.windowId  + ':' + tabId;
+chrome.tabs.onCreated.addListener(function(tabInfo) {
+    var tabId = tabInfo.windowId  + ':' + tabInfo.id;
     all_logs_history[tabId] = all_logs_history[tabId] || [];
     console.log("Tab created event caught: " , tabId);
 });
 
-chrome.tabs.onRemoved.addListener(function(tabId,tab){
+chrome.tabs.onRemoved.addListener(function(tabId,tab) {
     var tabId = tab.windowId  + ':' + tabId;
     delete all_logs_history[tabId]
     console.log("Tab removed event caught: " , tabId);

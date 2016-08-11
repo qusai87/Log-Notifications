@@ -4,8 +4,11 @@
 	width: 400px;
 	font-family: Helvetica, Ubuntu, Arial, sans-serif;
 }
-#filters {
-	width: 389px;
+#include_filters {
+	width: 47%;
+}
+#exclude_filters {
+	width: 47%;
 }
 h1 {
 	font-size: 1.5em;

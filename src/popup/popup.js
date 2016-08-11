@@ -30,6 +30,10 @@ function init(logsHistoryJSON) {
 	}, function(response) {});
 	logs_history = JSON.parse(logsHistoryJSON);
 	showLogs();
+
+	$("#include_filters").removeAttr('disabled');
+	$("#exclude_filters").removeAttr('disabled');
+	controller.focus();
 }
 
 function loadLogs () {
@@ -134,23 +138,26 @@ function evaluateJSExpression(_expression) {
 }
 
 
-function reduce(arr,filters) {
+function reduce(arr,filters,exclude) {
 	var results =[];
 	if (!arr) {
 		return null;
 	}
 	var count = 1;
-
+	var includeFilterRegex = new RegExp(filters, 'gi');
+	var excludeFilterRegex = new RegExp(exclude, 'gi');
 	for (var i=0;i<arr.length;i++) {
 		arr[i].count = 1;
 	}
 	for (var i=0;i<arr.length;i++) {
-		if (filters) {
+		if (filters || exclude) {
 			var msg = arr[i].msg;
 			if (typeof arr[i].msg === 'object') {
 				msg = arr[i].msg.join('');
 			}
-			if (msg.indexOf(filters) === -1)
+			if (!msg.match(includeFilterRegex))
+				continue;
+			else if (exclude && msg.match(excludeFilterRegex))
 				continue;
 		}
 		if (_.isEqual(arr[i+1],arr[i])) {
@@ -174,8 +181,9 @@ function clear() {
 }
 function showLogs() {
 	var logs = [];
-	var filters = $('#filters').val();
-	var logs_history_filtered = reduce(logs_history,filters);
+	var filters = $('#include_filters').val();
+	var excludeFilters = $('#exclude_filters').val();
+	var logs_history_filtered = reduce(logs_history,filters,excludeFilters);
 	for (var key in logs_history_filtered) {
 		var value = logs_history_filtered[key];
 		if (value.action) {
@@ -193,7 +201,7 @@ function showLogs() {
 			}
 		}
 	}
-	if (controller) {
+	if (typeof controller =='object') {
 		if (logs.length) {
 			controller.commandResult(logs);
 		} else {
@@ -243,14 +251,36 @@ window.addEventListener('DOMContentLoaded', function() {
 			if (enabled) {
 				$('#enabledSwitch').prop('checked','checked');
 			}
-			$('#filters').on('change',function () {
-				if ($('#filters').data('oldVal') != $('#filters').val()) {
-					_gaq.push(['_trackEvent',$('#filters').val(),'filter']);
-					$('#filters').data('oldVal', $('#filters').val());
+			$('#include_filters').on('change',function () {
+				if ($('#include_filters').data('oldVal') != $('#include_filters').val()) {
+					_gaq.push(['_trackEvent',$('#include_filters').val(),'include filter']);
+					$('#include_filters').data('oldVal', $('#include_filters').val());
 					chrome.storage.sync.set({
-						'filters': $('#filters').val()
+						'include_filters': $('#include_filters').val()
 					}, function() {
-						console.log('filters saved');
+						console.log('include_filters saved');
+						chrome.runtime.sendMessage({
+							from: 'popup',
+							subject: 'update_filters'
+						}, function(response) {});
+					});
+					clear();
+					showLogs();
+				}
+			});
+
+			$('#exclude_filters').on('change',function () {
+				if ($('#exclude_filters').data('oldVal') != $('#exclude_filters').val()) {
+					_gaq.push(['_trackEvent',$('#exclude_filters').val(),'exclude filter']);
+					$('#exclude_filters').data('oldVal', $('#exclude_filters').val());
+					chrome.storage.sync.set({
+						'exclude_filters': $('#exclude_filters').val()
+					}, function() {
+						console.log('exclude_filters saved');
+						chrome.runtime.sendMessage({
+							from: 'popup',
+							subject: 'update_filters'
+						}, function(response) {});
 					});
 					clear();
 					showLogs();
@@ -261,66 +291,15 @@ window.addEventListener('DOMContentLoaded', function() {
 			$('#enabledSwitch').switchable({
 	            click: onSwitchClicked
 	        });
-			chrome.storage.sync.get('filters', function(result) {
-				$('#filters').val(result.filters);
-				$('#filters').data('oldVal', $('#filters').val());
+			chrome.storage.sync.get('include_filters', function(result) {
+				$('#include_filters').val(result.include_filters);
+				$('#include_filters').data('oldVal', $('#include_filters').val());
 			});
 
-			controller = $('.console').empty().console({
-				promptLabel: '> ',
-				commandValidate: function(line) {
-					if (DEBUG)
-						console.log('validate',line);
-					if (line === 'clear' || line === 'clear()') {
-						_gaq.push(['_trackEvent',line,'command']);
-						addToHistory(line);
-						evaluateJSExpression('console.__data__.history = []');
-						clear();
-					} else if (line === 'clearHistory' || line === 'clearHistory()') {
-						_gaq.push(['_trackEvent',line,'command']);
-						addToHistory(line);
-						controller.commandResult('');
-						clearCommandsHistory();
-					} else if (line === 'logs' || line === 'logs()') {
-						_gaq.push(['_trackEvent',line,'command']);
-						addToHistory(line);
-						showLogs();
-					} else if (line === 'cookie') {
-						_gaq.push(['_trackEvent',line,'command']);
-						addToHistory(line);
-						evaluateJSExpression('console.__data__.cookie()');
-					} else if (line.indexOf('cookie(') === 0) {
-						addToHistory(line);
-						evaluateJSExpression('console.__data__.' + line);
-					} else if (line) {
-						_gaq.push(['_trackEvent',line,'expression']);
-						addToHistory(line);
-						evaluateJSExpression(line);
-					} else {
-						controller.commandResult('');
-					}
-					return false; // disable it for now
-				},
-				commandHandle: function(line) {
-					try {
-						var ret = eval(line);
-						if (typeof ret != 'undefined') return ret.toString();
-						else return true;
-					} catch (e) {
-						return e.toString();
-					}
-				},
-				animateScroll: true,
-				promptHistory: true,
-				welcomeMessage: 'current console logs:'
+			chrome.storage.sync.get('exclude_filters', function(result) {
+				$('#exclude_filters').val(result.exclude_filters);
+				$('#exclude_filters').data('oldVal', $('#exclude_filters').val());
 			});
-			loadCommandsHistory();
-			$("#filters").blur(); 
-			controller.focus();
-			setTimeout(function () {
-				controller.focus();
-			},250);
-	        
 		});
 
 		chrome.storage.sync.get('notification_enabled', function(result) {
@@ -342,6 +321,57 @@ window.addEventListener('DOMContentLoaded', function() {
 
 			loadLogs();
 		});
+
+		controller = $('.console').empty().console({
+			promptLabel: '> ',
+			commandValidate: function(line) {
+				if (DEBUG)
+					console.log('validate',line);
+				if (line === 'clear' || line === 'clear()') {
+					_gaq.push(['_trackEvent',line,'command']);
+					addToHistory(line);
+					evaluateJSExpression('console.__data__.history = []');
+					clear();
+				} else if (line === 'clearHistory' || line === 'clearHistory()') {
+					_gaq.push(['_trackEvent',line,'command']);
+					addToHistory(line);
+					controller.commandResult('');
+					clearCommandsHistory();
+				} else if (line === 'logs' || line === 'logs()') {
+					_gaq.push(['_trackEvent',line,'command']);
+					addToHistory(line);
+					showLogs();
+				} else if (line === 'cookie') {
+					_gaq.push(['_trackEvent',line,'command']);
+					addToHistory(line);
+					evaluateJSExpression('console.__data__.cookie()');
+				} else if (line.indexOf('cookie(') === 0) {
+					addToHistory(line);
+					evaluateJSExpression('console.__data__.' + line);
+				} else if (line) {
+					_gaq.push(['_trackEvent',line,'expression']);
+					addToHistory(line);
+					evaluateJSExpression(line);
+				} else {
+					controller.commandResult('');
+				}
+				return false; // disable it for now
+			},
+			commandHandle: function(line) {
+				try {
+					var ret = eval(line);
+					if (typeof ret != 'undefined') return ret.toString();
+					else return true;
+				} catch (e) {
+					return e.toString();
+				}
+			},
+			autofocus:true,
+			animateScroll: true,
+			promptHistory: true,
+			welcomeMessage: 'current console logs:'
+		});
+		loadCommandsHistory();
 	});
 });
 
