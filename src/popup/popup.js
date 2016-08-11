@@ -256,6 +256,7 @@ window.addEventListener('DOMContentLoaded', function() {
 					showLogs();
 				}
 			});
+
 			$('#enabledSwitch').val(enabled?'checked':'');
 			$('#enabledSwitch').switchable({
 	            click: onSwitchClicked
@@ -264,6 +265,59 @@ window.addEventListener('DOMContentLoaded', function() {
 				$('#filters').val(result.filters);
 				$('#filters').data('oldVal', $('#filters').val());
 			});
+
+			controller = $('.console').empty().console({
+				promptLabel: '> ',
+				commandValidate: function(line) {
+					if (DEBUG)
+						console.log('validate',line);
+					if (line === 'clear' || line === 'clear()') {
+						_gaq.push(['_trackEvent',line,'command']);
+						addToHistory(line);
+						clear();
+					} else if (line === 'clearHistory' || line === 'clearHistory()') {
+						_gaq.push(['_trackEvent',line,'command']);
+						addToHistory(line);
+						controller.commandResult('');
+						clearCommandsHistory();
+					} else if (line === 'logs' || line === 'logs()') {
+						_gaq.push(['_trackEvent',line,'command']);
+						addToHistory(line);
+						showLogs();
+					} else if (line === 'cookie') {
+						_gaq.push(['_trackEvent',line,'command']);
+						addToHistory(line);
+						evaluateJSExpression('console.__data__.cookie()');
+					} else if (line.indexOf('cookie(') === 0) {
+						addToHistory(line);
+						evaluateJSExpression('console.__data__.' + line);
+					} else if (line) {
+						_gaq.push(['_trackEvent',line,'expression']);
+						addToHistory(line);
+						evaluateJSExpression(line);
+					} else {
+						controller.commandResult('');
+					}
+					return false; // disable it for now
+				},
+				commandHandle: function(line) {
+					try {
+						var ret = eval(line);
+						if (typeof ret != 'undefined') return ret.toString();
+						else return true;
+					} catch (e) {
+						return e.toString();
+					}
+				},
+				animateScroll: true,
+				promptHistory: true,
+				welcomeMessage: 'current console logs:'
+			});
+			debugger;	
+			loadCommandsHistory();
+			setTimeout(function () {
+				controller.focus();
+			},100);
 	        
 		});
 
@@ -286,56 +340,6 @@ window.addEventListener('DOMContentLoaded', function() {
 
 			loadLogs();
 		});
-		
-        controller = $('.console').empty().console({
-			promptLabel: '> ',
-			commandValidate: function(line) {
-				if (DEBUG)
-					console.log('validate',line);
-				if (line === 'clear' || line === 'clear()') {
-					_gaq.push(['_trackEvent',line,'command']);
-					addToHistory(line);
-					clear();
-				} else if (line === 'clearHistory' || line === 'clearHistory()') {
-					_gaq.push(['_trackEvent',line,'command']);
-					addToHistory(line);
-					controller.commandResult('');
-					clearCommandsHistory();
-				} else if (line === 'logs' || line === 'logs()') {
-					_gaq.push(['_trackEvent',line,'command']);
-					addToHistory(line);
-					showLogs();
-				} else if (line === 'cookie') {
-					_gaq.push(['_trackEvent',line,'command']);
-					addToHistory(line);
-					evaluateJSExpression('console.__data__.cookie()');
-				} else if (line.indexOf('cookie(') === 0) {
-					addToHistory(line);
-					evaluateJSExpression('console.__data__.' + line);
-				} else if (line) {
-					_gaq.push(['_trackEvent',line,'expression']);
-					addToHistory(line);
-					evaluateJSExpression(line);
-				} else {
-					controller.commandResult('');
-				}
-				return false; // disable it for now
-			},
-			commandHandle: function(line) {
-				try {
-					var ret = eval(line);
-					if (typeof ret != 'undefined') return ret.toString();
-					else return true;
-				} catch (e) {
-					return e.toString();
-				}
-			},
-			animateScroll: true,
-			promptHistory: true,
-			welcomeMessage: 'current console logs:'
-		});
-		loadCommandsHistory();
-
 	});
 });
 
