@@ -1,7 +1,7 @@
 var isEnabled,isNotificationEnabled;
 
 var counters = [];
-var all_logs_history = [];
+var all_logs_history = {};
 var commands_history = [];
 var activeTabId = '0:0';
 
@@ -118,8 +118,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 all_logs_history[tabId] = [];
 
             all_logs_history[tabId].push(request);
-            if (all_logs_history.length> 300) {
-                all_logs_history = all_logs_history.slice(Math.max(all_logs_history.length - 300, 1));
+            if (all_logs_history[tabId].length> 300) {
+                all_logs_history[tabId] = all_logs_history[tabId].slice(Math.max(all_logs_history[tabId].length - 300, 1));
             }
         }
         if (isNotificationEnabled) {
@@ -230,4 +230,17 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tab )
 
         _gaq.push(['_trackEvent',tab.url,'visited']);
     }
+});
+
+
+chrome.tabs.onCreated.addListener(function(tabId,tab){
+    var tabId = tab.windowId  + ':' + tabId;
+    all_logs_history[tabId] = all_logs_history[tabId] || [];
+    console.log("Tab created event caught: " , tabId);
+});
+
+chrome.tabs.onRemoved.addListener(function(tabId,tab){
+    var tabId = tab.windowId  + ':' + tabId;
+    delete all_logs_history[tabId]
+    console.log("Tab removed event caught: " , tabId);
 });

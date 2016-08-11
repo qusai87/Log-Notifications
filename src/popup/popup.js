@@ -274,6 +274,7 @@ window.addEventListener('DOMContentLoaded', function() {
 					if (line === 'clear' || line === 'clear()') {
 						_gaq.push(['_trackEvent',line,'command']);
 						addToHistory(line);
+						evaluateJSExpression('console.__data__.history = []');
 						clear();
 					} else if (line === 'clearHistory' || line === 'clearHistory()') {
 						_gaq.push(['_trackEvent',line,'command']);
@@ -313,11 +314,12 @@ window.addEventListener('DOMContentLoaded', function() {
 				promptHistory: true,
 				welcomeMessage: 'current console logs:'
 			});
-			debugger;	
 			loadCommandsHistory();
+			$("#filters").blur(); 
+			controller.focus();
 			setTimeout(function () {
 				controller.focus();
-			},100);
+			},250);
 	        
 		});
 
