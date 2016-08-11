@@ -97,19 +97,37 @@ div.console div.jquery-console-message-value
 div.console div.jquery-console-message-log 
 {
 	padding: 5px;
-	color: #9e9c9c;
+	color: #171717;
 	font-size: 12px;
+}
+div.console div.jquery-console-message-log:before {
+	content: " ";
+	margin: 0 10px 0 2px;
+}
+div.console div.jquery-console-message-value:before
+{
+	content: "\f104";
+	color: grey;
+	font-family: FontAwesome;
+	margin: 0 7px 0 2px;
 }
 div.console div.jquery-console-message-info 
 {
 	padding: 5px;
-	color: #4a48c1;
+	color: #171717;
 
+}
+div.console div.jquery-console-message-info:before
+{
+	content: "\f05a";
+	color: #4a48c1;
+	font-family: FontAwesome;
+	margin: 0 7px 0 2px;
 }
 div.console div.jquery-console-message-warn 
 {
 	padding: 5px;
-	color: #ff0000;
+	color: #424242;
 	background: #fdfdd7;
 }
 div.console div.jquery-console-message-table 
@@ -125,6 +143,23 @@ div.console div.jquery-console-message-error
 	font-family:sans-serif; 
 	font-weight:bold;
 	padding: 5px;
+}
+div.console div.jquery-console-message-error:before {
+	content: "\f057";
+	color: red;
+	margin: 0 7px 0 2px;
+	font-family: FontAwesome;
+
+	/* more styling for the icon, including color, font-size, positioning, etc. */
+}
+
+div.console div.jquery-console-message-warn:before {
+	content: "\f071";
+	color: #ff8600;
+    margin: 0 7px 0 2px;
+	font-family: FontAwesome;
+
+	/* more styling for the icon, including color, font-size, positioning, etc. */
 }
 div.console div.jquery-console-message-success
 { 

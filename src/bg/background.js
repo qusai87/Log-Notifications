@@ -149,7 +149,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 counters[tabId]++;
                 refreshBadge();
             }
+        } else {
+            if (!counters[tabId]) {
+                counters[tabId] = 0;
+            }
+
+            counters[tabId]++;
+            refreshBadge();
         }
+        
         sendResponse({
             success: true
         });

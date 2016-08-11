@@ -7,10 +7,7 @@ if (DEBUG)
 
 chrome.storage.sync.get('enabled', function(result) {
 	var enabled = result.enabled;
-	chrome.storage.sync.get('notification_enabled', function(result2) {
-		init(enabled,result2.notification_enabled);
-	});
-	
+	init(enabled);
 });
 var injectedFiles = [];
 function injectFile(src) {
@@ -23,30 +20,31 @@ function injectFile(src) {
 			this.parentNode.removeChild(this);
 		};
 		(document.head || document.documentElement).appendChild(s);
+		return true;
+	} else {
+		return false;
 	}
 }
-function init(enabled,notificationEnabled) {
+function init(enabled) {
+	// Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
+
 	if (enabled) {
-		injectFile('src/inject/evaluate.js');
+		if (injectFile('src/inject/evaluate.js')) {
+			document.addEventListener('Msg_LogNotificationExtension_js_expression_found', function(e) {
+				if (DEBUG)
+					console.log(e);
+				if (e && e.detail) {
+					chrome.runtime.sendMessage({
+						from: 'content',
+						subject: 'expression_found',
+						output: e.detail
+					}, function(response) {});
+				}
+			});
+		}
 		
-		document.addEventListener('Msg_LogNotificationExtension_js_expression_found', function(e) {
-			if (DEBUG)
-				console.log(e);
-			if (e && e.detail) {
-				chrome.runtime.sendMessage({
-					from: 'content',
-					subject: 'expression_found',
-					output: e.detail
-				}, function(response) {});
-			}
-		});
 
-		if (notificationEnabled) {
-			injectFile('src/inject/console.js');
-
-			// Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
-			// Event listener
-
+		if (injectFile('src/inject/console.js')) {
 			document.addEventListener('Msg_LogNotificationExtension_found', function(e) {
 				if (e && e.detail && e.detail.length) {
 					var msg = e.detail[0].msg;
@@ -76,7 +74,6 @@ function init(enabled,notificationEnabled) {
 					});
 				}
 			});
-
 		}
 	}
 }
@@ -98,8 +95,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, response)
 	}   
 	else if ((request.from === 'popup') && (request.subject === 'init')) {
 		if (DEBUG) {
-			console.log('init')
+			console.log('init message received');
 		}
-		init(request.enabled,request.notification_enabled);
+		init(request.enabled);
 	}   
 });

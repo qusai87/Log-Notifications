@@ -1,5 +1,6 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
 var DEBUG = false;
+//DEBUG = true;
 
 if (DEBUG)
     console.log('console.js injected!');
@@ -28,18 +29,15 @@ var startLogDispatchTimer = function () {
         },50);
     }
 }
-Array.prototype.toString =  function() {
-  return '[object Array]';
-};
 
 // Completelety overrride log console.
 // http://stackoverflow.com/questions/7042611/override-console-log-for-production
 // 
 
-console = shallowCopy(_console || {});
-console.__data__ = console.__data__ || {};
-console.__data__.messages = [];
-console.__data__.history = [];
+window.console = shallowCopy(_console || {});
+window.console.__data__ = console.__data__ || {};
+window.console.__data__.messages = [];
+window.console.__data__.history = [];
 
 var addLogStackNumber = (function (undefined) {
     var Log = Error; // does this do anything?  proper inheritance...?
@@ -96,18 +94,15 @@ var addLogStackNumber = (function (undefined) {
 
 })();//--- logWrapper*/
 
-console.log = function(){
+window.console.log = function(){
     var args = Array.prototype.slice.call(arguments, 0);
     console.__data__.messages.push({msg:args,action:'log'});
     startLogDispatchTimer();
 
-    if (args.join(' ') == "[object Array]")
-       return _console.table.apply(_console,arguments);
-
     _console.log.apply(_console,arguments);
 
 };
-console.info = function () {
+window.console.info = function () {
     var args = Array.prototype.slice.call(arguments, 0);
     console.__data__.messages.push({msg:args,action:'info'});
     startLogDispatchTimer();
@@ -115,13 +110,13 @@ console.info = function () {
     _console.info.apply(_console,arguments);
 };
 
-console.table = function () {
+window.console.table = function () {
     _console.table.apply(_console,arguments);
 };
-console.dir = function () {
+window.console.dir = function () {
     _console.dir.apply(_console,arguments);
 };
-console.warn = function () {
+window.console.warn = function () {
     var args = Array.prototype.slice.call(arguments, 0);
     console.__data__.messages.push({msg:args,action:'warn'});
     startLogDispatchTimer();
@@ -130,7 +125,7 @@ console.warn = function () {
     _console.warn.apply(_console,output);
 };
 
-console.error = function () {
+window.console.error = function () {
     var args = Array.prototype.slice.call(arguments, 0);
     console.__data__.messages.push({msg:args,action:'error'});
     startLogDispatchTimer();
