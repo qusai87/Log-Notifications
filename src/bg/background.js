@@ -80,6 +80,8 @@ function updateFilters () {
     });
 }
 
+updateFilters();
+
 function unique(arr) {
     var results = [];
     for (i = 0; i < arr.length; i++) {

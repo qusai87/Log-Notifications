@@ -248,6 +248,13 @@ function onSwitchClicked ( event)
 
 // Once the DOM is ready...
 window.addEventListener('DOMContentLoaded', function() {
+	$(document).ready(function(){
+	   $('body').on('click', 'a', function(){
+	     chrome.tabs.create({url: $(this).attr('href')});
+	     return false;
+	   });
+	});
+	
 	$(function () {
 		chrome.storage.sync.get('enabled', function(result) {
 			enabled = result.enabled;
