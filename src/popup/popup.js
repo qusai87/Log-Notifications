@@ -1,7 +1,7 @@
 // GLOBAL Variables
 enabled = true;
 notification_enabled = false;
-all_sessions = false;
+preserveLogs = false;
 
 respone_not_received_timer = -1;
 DEBUG = false;
@@ -37,7 +37,7 @@ function init(logsHistoryJSON) {
 }
 
 function loadLogs () {
-	if (all_sessions) {
+	if (preserveLogs) {
 		// update console history from current active tab
 		chrome.runtime.sendMessage({
 			from: 'popup',
@@ -217,6 +217,7 @@ function onSwitchClicked ( event)
     var id = $(event.currentTarget).closest('.switchable-wrapper').prev().get(0).id;
 
     if (id === 'notificationSwitch') {
+    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
     	notification_enabled = checked;
     	chrome.runtime.sendMessage({
 			from: 'popup',
@@ -225,6 +226,7 @@ function onSwitchClicked ( event)
 		}, function(response) {
 		});
     } else if (id === 'enabledSwitch') {
+    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
     	enabled = checked; 
     	chrome.runtime.sendMessage({
 			from: 'popup',
@@ -232,13 +234,14 @@ function onSwitchClicked ( event)
 			enabled: checked
 		}, function(response) {
 		});
-    } else if (id === 'allSessions') {
-    	all_sessions = checked;
+    } else if (id === 'preserveLogsSwitch') {
+    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
+    	preserveLogs = checked;
     	clear();
     	loadLogs();
 
-    	chrome.storage.sync.set({'all_sessions': all_sessions}, function() {
-          console.log('all_sessions saved');
+    	chrome.storage.sync.set({'preserveLogs': preserveLogs}, function() {
+          console.log('preserveLogs saved');
         });
     }
 }
@@ -311,13 +314,13 @@ window.addEventListener('DOMContentLoaded', function() {
 			$('#notificationSwitch').switchable();
 		});
 
-		chrome.storage.sync.get('all_sessions', function(result) {
-			all_sessions = result.all_sessions;
-			if (all_sessions) {
-				$('#allSessions').prop('checked','checked');
+		chrome.storage.sync.get('preserveLogs', function(result) {
+			preserveLogs = result.preserveLogs;
+			if (preserveLogs) {
+				$('#preserveLogsSwitch').prop('checked','checked');
 			}
-			$('#allSessions').val((all_sessions && enabled)?'checked':'');
-			$('#allSessions').switchable();
+			$('#preserveLogsSwitch').val((preserveLogs && enabled)?'checked':'');
+			$('#preserveLogsSwitch').switchable();
 
 			loadLogs();
 		});

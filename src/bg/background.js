@@ -81,14 +81,14 @@ function updateFilters () {
 }
 
 function unique(arr) {
-      var results = [];
-      for ( i = 0; i < arr.length; i++ ) {
-          var current = arr[i];
-          if (arr.lastIndexOf(current) === i) 
+    var results = [];
+    for (i = 0; i < arr.length; i++) {
+        var current = arr[i];
+        if (arr.lastIndexOf(current) === i)
             results.push(current);
-      }
-      return results;
     }
+    return results;
+}
 
 function refreshBadge() {
     if (!isEnabled) {
@@ -233,17 +233,25 @@ chrome.tabs.onActivated.addListener(function(tabInfo) {
     }
 });
 
-chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tab) {
+chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
     if ( changeInfo.status === "complete" )
     {
         // page reload complete
-        activeTabId = tab.windowId  + ':' + tabId;
+        activeTabId = tabInfo.windowId  + ':' + tabId;
         if (DEBUG)
             console.log('page reloaded!');
 
         refreshBadge();
 
-        _gaq.push(['_trackEvent',tab.url,'visited']);
+        // Extract url info
+        var parser = document.createElement('a');
+        parser.href = tabInfo.url;
+
+        if (parser.hostname && parser.protocol.indexOf('http')!==-1) {
+            if (DEBUG)
+                console.log(parser.hostname);
+            _gaq.push(['_trackEvent', parser.hostname, 'domain']);
+        }
     }
 });
 
@@ -251,11 +259,23 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tab) {
 chrome.tabs.onCreated.addListener(function(tabInfo) {
     var tabId = tabInfo.windowId  + ':' + tabInfo.id;
     all_logs_history[tabId] = all_logs_history[tabId] || [];
-    console.log("Tab created event caught: " , tabId);
+    if (DEBUG)
+        console.log("Tab created event caught: " , tabId);
+
+    // Extract url info
+    var parser = document.createElement('a');
+    parser.href = tabInfo.url;
+
+    if (parser.hostname && parser.protocol.indexOf('http')!==-1) {
+        if (DEBUG)
+            console.log(parser.hostname);
+        _gaq.push(['_trackEvent', parser.hostname, 'domain']);
+    }
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId,tab) {
     var tabId = tab.windowId  + ':' + tabId;
     delete all_logs_history[tabId]
-    console.log("Tab removed event caught: " , tabId);
+    if (DEBUG)
+        console.log("Tab removed event caught: " , tabId);
 });
