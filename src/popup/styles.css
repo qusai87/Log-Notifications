@@ -2,7 +2,7 @@
 	padding: 10px;
 	height: 500px;
 	width: 400px;
-	font-family: Helvetica, Ubuntu, Arial, sans-serif;
+	font-family: Helvetica,Tahoma,Ubuntu, Arial, sans-serif;
 }
 #include_filters {
 	width: 47%;
@@ -127,10 +127,24 @@ div.console div.jquery-console-message-info:before
 	font-family: FontAwesome;
 	margin: 0 7px 0 2px;
 }
+
+div.console div.jquery-console-message-alert 
+{
+	padding: 5px;
+	color: #171717;
+
+}
+div.console div.jquery-console-message-alert:before
+{
+	content: "\f05a";
+	color: #171717;
+	font-family: FontAwesome;
+	margin: 0 7px 0 2px;
+}
 div.console div.jquery-console-message-warn 
 {
 	padding: 5px;
-	color: #424242;
+	color: #171717;
 	background: #fdfdd7;
 }
 div.console div.jquery-console-message-table 
@@ -149,7 +163,7 @@ div.console div.jquery-console-message-error
 }
 div.console div.jquery-console-message-error:before {
 	content: "\f057";
-	color: red;
+	color: #ef0505;
 	margin: 0 7px 0 2px;
 	font-family: FontAwesome;
 
@@ -158,7 +172,7 @@ div.console div.jquery-console-message-error:before {
 
 div.console div.jquery-console-message-warn:before {
 	content: "\f071";
-	color: #ff8600;
+	color: #ffbf24;
     margin: 0 7px 0 2px;
 	font-family: FontAwesome;
 

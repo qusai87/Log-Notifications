@@ -3,7 +3,7 @@ var isEnabled,isNotificationEnabled;
 var counters = [];
 var all_logs_history = {};
 var commands_history = [];
-var activeTabId = '0:0';
+var activeCounterId = null;
 var excludeFilterRegex = null;
 var includeFilterRegex = null;
 
@@ -33,7 +33,6 @@ chrome.storage.sync.get('enabled', function (result) {
             console.log('enabled saved');
         });
     }
-    refreshBadge();
 });
 
 chrome.storage.sync.get('notification_enabled', function (result) {
@@ -47,7 +46,6 @@ chrome.storage.sync.get('notification_enabled', function (result) {
             console.log('notification_enabled saved');
         });
     }
-    refreshBadge();
 });
 
 chrome.storage.sync.get('commandsHistory', function (result) {
@@ -92,54 +90,98 @@ function unique(arr) {
     return results;
 }
 
-function refreshBadge() {
-    if (!isEnabled) {
-        // Also correct
-        chrome.browserAction.setBadgeText({
-            text: 'off'
-        });
-    } /*else if (!isNotificationEnabled) {
-        chrome.browserAction.setBadgeText({
-            text: 'muted'
-        });    
-    }*/
-    else if (counters[activeTabId]) {
-        chrome.browserAction.setBadgeText({
-            text: '' + counters[activeTabId]
-        });    
-    } else {
-        chrome.browserAction.setBadgeText({
-            text: ""
-        });        
+function updateCounter(msg,tabId,counterId) {
+    if (counterId && msg) {
+        if (!counters[counterId]) {
+            counters[counterId] = 0;
+        }
+        if (!(excludeFilterRegex && msg.match(excludeFilterRegex)) && (!includeFilterRegex || msg.match(includeFilterRegex)))
+        {
+            counters[counterId]++;
+            refreshBadge(tabId,counterId);
+        }
     }
 }
+function refreshBadge(tabId,counterId) {
+    chrome.tabs.query(
+        { currentWindow: true, active: true },
+        function (tab) { 
+            tabId = tabId || (tab.length && tab[0].id);
+            if (!isEnabled) {
+                // Also correct
+                if (tabId) {
+                    setIconDisabled(tabId);
+                }
+            } else {
+                if (tabId) {
+                    setIconEnabled(tabId);
+                }
+                if (counterId && counters[counterId]) {
+                    chrome.browserAction.setBadgeText({
+                        text: '' + counters[counterId]
+                    });    
+                } else {
+                    chrome.browserAction.setBadgeText({
+                        text: ""
+                    });        
+                }
+            }
+        }
+    );
+    
+}
 
+function setIconDisabled(tabId) {
+    chrome.browserAction.setIcon(
+    {
+      path: {
+        19: 'icons/icon-disabled-19.png',
+        38: 'icons/icon-disabled-38.png'
+      }
+    });
+}
+
+function setIconEnabled(tabId) {
+    chrome.browserAction.setIcon(
+    {
+      path: {
+        19: 'icons/icon19.png',
+        38: 'icons/icon38.png'
+      }
+    });
+}
 // Listener - Put this in the background script to listen to all the events.
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    var tabId;
+    var counterId;
     if (sender && sender.tab) {
-        tabId = sender.tab.windowId + ':' + sender.tab.id;
+        counterId = sender.tab.windowId + ':' + sender.tab.id;
     } else {
-        tabId = activeTabId;
+        counterId = activeCounterId;
     }
     // First, validate the message's structure
     if ((request.from === 'content') && (request.subject === 'console_action')) {
         if (!isEnabled)
             return;
         var msg = "";
-        for (var i = 0; i < request.msg.length; i++)
-            if (typeof request.msg[i] == "object")
-                msg += "Object " + JSON.stringify(request.msg[i]) + " ";
-            else
-                msg += request.msg[i] + " ";
+        if (typeof msg === 'object') {
+            for (var i = 0; i < request.msg.length; i++)
+                if (typeof request.msg[i] == "object")
+                    msg += "Object " + JSON.stringify(request.msg[i]) + " ";
+                else
+                    msg += request.msg[i] + " ";            
+        } else if (typeof request.msg === 'string') {
+            msg = request.msg;
+        } else if (request.msg) {
+            msg = '' + request.msg;
+        }
 
-        if (tabId) {
-            if (!all_logs_history[tabId])
-                all_logs_history[tabId] = [];
+        if (counterId) {
+            if (!all_logs_history[counterId])
+                all_logs_history[counterId] = [];
 
-            all_logs_history[tabId].push(request);
-            if (all_logs_history[tabId].length> 300) {
-                all_logs_history[tabId] = all_logs_history[tabId].slice(Math.max(all_logs_history[tabId].length - 300, 1));
+            all_logs_history[counterId].push(request);
+            if (all_logs_history[counterId].length> 300) {
+                all_logs_history[counterId] = all_logs_history[counterId].slice(Math.max(all_logs_history[counterId].length - 300, 1));
             }
         }
         if (request.action == 'error') {
@@ -148,42 +190,50 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                     type: "basic",
                     title: "Error!",
                     message: msg,
-                    iconUrl: "icons/icon.png"
+                    iconUrl: "icons/icon-error.png"
                 }, function() {});
-            } 
+            } else {
+                updateCounter(msg,sender.tab.id,counterId);
+            }
+        } else if (request.action == 'warn') {
+            if (isNotificationEnabled) {
+                chrome.notifications.create('', {
+                    type: "basic",
+                    title: "Warning!",
+                    message: msg,
+                    iconUrl: "icons/icon-warn.png"
+                }, function() {});
+            } else {
+                updateCounter(msg,sender.tab.id,counterId);
+            }
         } else if (request.action == 'alert') {
             if (isNotificationEnabled) {
                 chrome.notifications.create('', {
                     type: "basic",
                     title: "Alert!",
                     message: msg,
-                    iconUrl: "icons/icon.png"
+                    iconUrl: "icons/icon-info.png"
                 }, function() {});
-            } 
+            } else {
+                updateCounter(msg,sender.tab.id,counterId);
+            }
         } else {
-            if (!counters[tabId]) {
-                counters[tabId] = 0;
-            }
-            if (!(excludeFilterRegex && msg.match(excludeFilterRegex).length) && (!includeFilterRegex || msg.match(includeFilterRegex)))
-            {
-                counters[tabId]++;
-                refreshBadge();
-            }
+            updateCounter(msg,sender.tab.id,counterId);
         }
 
         sendResponse({
             success: true
         });
     } else if ((request.from === 'popup') && (request.subject === 'popup_opened')) {
-        activeTabId = tabId;
-        counters[tabId] = 0;
-        refreshBadge();
+        activeCounterId = counterId;
+        counters[counterId] = 0;
+        refreshBadge(request.tabId,counterId);
         sendResponse({
             success: true
         });
     } else if ((request.from === 'popup') && (request.subject === 'disable_extension')) {
         isEnabled = request.enabled;
-        refreshBadge();
+        refreshBadge(request.tabId,counterId);
 
         chrome.storage.sync.set({'enabled': isEnabled}, function() {
           if (DEBUG)
@@ -191,7 +241,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         });
     } else if ((request.from === 'popup') && (request.subject === 'disable_notifications')) {
         isNotificationEnabled = request.enabled;
-        refreshBadge();
+        refreshBadge(request.tabId,counterId);
 
         chrome.storage.sync.set({'notification_enabled': isNotificationEnabled}, function() {
           if (DEBUG)
@@ -209,7 +259,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         chrome.runtime.sendMessage({
             from: 'background',
             subject: 'all_history',
-            logsHistoryJSON: activeTabId && JSON.stringify(all_logs_history[activeTabId])
+            logsHistoryJSON: counterId && JSON.stringify(all_logs_history[counterId])
         }, function(response) {
             if (DEBUG)
                 console.log(response);
@@ -226,12 +276,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
 chrome.tabs.onActivated.addListener(function(tabInfo) {
     if (DEBUG)
-        console.log('tab opened!',tabInfo);
+        console.log('tab opened!',tabInfo.tabId);
     if (tabInfo) {
-        var tabId = tabInfo.windowId  + ':' + tabInfo.tabId;
-        activeTabId  = tabId;
-
-        refreshBadge();
+        var counterId = tabInfo.windowId  + ':' + tabInfo.tabId;
+        activeCounterId = counterId;
+        refreshBadge(tabInfo.tabId,counterId);
     }
 });
 
@@ -239,11 +288,15 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
     if ( changeInfo.status === "complete" )
     {
         // page reload complete
-        activeTabId = tabInfo.windowId  + ':' + tabId;
+        var counterId = tabInfo.windowId  + ':' + tabId;
+        counters[counterId] = 0;
         if (DEBUG)
-            console.log('page reloaded!');
+            console.log('page reloaded!',tabId);
 
-        refreshBadge();
+        if (activeCounterId === counterId) {
+            // only refresh badge if it's the active tab!
+            refreshBadge(tabId, counterId);
+        }
 
         // Extract url info
         var parser = document.createElement('a');
@@ -259,8 +312,11 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 
 
 chrome.tabs.onCreated.addListener(function(tabInfo) {
-    var tabId = tabInfo.windowId  + ':' + tabInfo.id;
-    all_logs_history[tabId] = all_logs_history[tabId] || [];
+    var counterId = tabInfo.windowId  + ':' + tabInfo.id;
+    all_logs_history[counterId] = all_logs_history[counterId] || [];
+
+    refreshBadge(tabInfo.id, counterId);
+
     if (DEBUG)
         console.log("Tab created event caught: " , tabId);
 
@@ -276,8 +332,15 @@ chrome.tabs.onCreated.addListener(function(tabInfo) {
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId,tab) {
-    var tabId = tab.windowId  + ':' + tabId;
-    delete all_logs_history[tabId]
+    var counterId = tab.windowId  + ':' + tabId;
+    delete all_logs_history[counterId];
+
+    if (activeCounterId === counterId) {
+        activeCounterId = null;
+        //refreshBadge(null,activeCounterId); # No Need to refresh the badge since there will be another tab activated!
+    }
+
+
     if (DEBUG)
         console.log("Tab removed event caught: " , tabId);
 });

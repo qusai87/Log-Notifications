@@ -24,10 +24,11 @@ _gaq.push(['_trackEvent','popup','opened']);
 
 function init(logsHistoryJSON) {
 	var logs;
-	chrome.runtime.sendMessage({
+	sendRuntimeMessage({
 		from: 'popup',
-		subject: 'popup_opened'
+		subject: 'popup_opened',
 	}, function(response) {});
+
 	logs_history = JSON.parse(logsHistoryJSON);
 	showLogs();
 
@@ -39,22 +40,16 @@ function init(logsHistoryJSON) {
 function loadLogs () {
 	if (preserveLogs) {
 		// update console history from current active tab
-		chrome.runtime.sendMessage({
+		sendMessage({
 			from: 'popup',
 			subject: 'get_all_history'
 		}, function(response) {});
     } else {
     	// update console history from current active tab
-		chrome.tabs.query({
-			active: true,
-			currentWindow: true
-		}, function(tabs) {
-			// ...and send a request for the DOM info...
-			chrome.tabs.sendMessage(tabs[0].id, {
-				from: 'popup',
-				subject: 'get_console_history'
-			}, function(response) {});
-		});
+		sendMessage({
+			from: 'popup',
+			subject: 'get_console_history'
+		}, function(response) {});
     }
 }
 function showNewLogs(logsHistoryJSON) {
@@ -64,10 +59,32 @@ function showNewLogs(logsHistoryJSON) {
 	clear();
 	showLogs();
 	controller.promptText(text);
-	chrome.runtime.sendMessage({
+	sendRuntimeMessage({
 		from: 'popup',
-		subject: 'popup_opened'
+		subject: 'popup_opened',
 	}, function(response) {});
+}
+
+function sendMessage(params,callback) {
+	chrome.tabs.query({
+		active: true,
+		currentWindow: true
+	}, function(tabs) {
+		chrome.tabs.sendMessage(tabs[0].id,$.extend(params,{
+			tabId: tabs[0].id
+		}), callback);
+	});
+}
+
+function sendRuntimeMessage(params,callback) {
+	chrome.tabs.query({
+		active: true,
+		currentWindow: true
+	}, function(tabs) {
+		chrome.runtime.sendMessage($.extend(params,{
+			tabId: tabs[0].id
+		}), callback);
+	});
 }
 
 function getUniqueArray(arr) {
@@ -124,17 +141,11 @@ function evaluateJSExpression(_expression) {
 		controller.commandResult('can\'t access page!','jquery-console-message-error');
 	},1000);
 	// ...query for the active tab...
-	chrome.tabs.query({
-		active: true,
-		currentWindow: true
-	}, function(tabs) {
-		// ...and send a request for the DOM info...
-		chrome.tabs.sendMessage(tabs[0].id, {
-			from: 'popup',
-			subject: 'evaluate_js_expression',
-			expression: _expression
-		}, function() {});
-	});
+	sendMessage({
+		from: 'popup',
+		subject: 'evaluate_js_expression',
+		expression: _expression
+	}, function() {});
 }
 
 
@@ -219,7 +230,7 @@ function onSwitchClicked ( event)
     if (id === 'notificationSwitch') {
     	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
     	notification_enabled = checked;
-    	chrome.runtime.sendMessage({
+    	sendRuntimeMessage({
 			from: 'popup',
 			subject: 'disable_notifications',
 			enabled: checked
@@ -228,12 +239,11 @@ function onSwitchClicked ( event)
     } else if (id === 'enabledSwitch') {
     	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
     	enabled = checked; 
-    	chrome.runtime.sendMessage({
+    	sendRuntimeMessage({
 			from: 'popup',
 			subject: 'disable_extension',
 			enabled: checked
-		}, function(response) {
-		});
+		}, function(response) {});
     } else if (id === 'preserveLogsSwitch') {
     	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
     	preserveLogs = checked;

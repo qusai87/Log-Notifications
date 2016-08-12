@@ -158,18 +158,19 @@ window.alert = function() {
     
     console.__data__.messages.push({msg:args,action:'alert'});
     startLogDispatchTimer();
+
+    _console.info.apply(_console,arguments);
 };
 
-window.onerror = function(e, url, line) {
-    if (/Script error/.test(e)) {
-        console.__data__.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
-    } else {
-        console.__data__.messages.push({msg: 'error: ' + e , action: 'error'});
-    }
-    startLogDispatchTimer();
-    //_console.error.apply(_console,[e]);
-    return true; 
-}
+// window.onerror = function(e, url, line) {
+//     if (/Script error/.test(e)) {
+//         console.__data__.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
+//     } else {
+//         console.__data__.messages.push({msg: 'error: ' + e , action: 'error'});
+//     }
+//     startLogDispatchTimer();
+//     return false; 
+// }
 
 // handle uncaught errors
 window.addEventListener('error', function(e) {
@@ -181,12 +182,13 @@ window.addEventListener('error', function(e) {
             col: e.colno,
             message: e.message
         }
-
+        
         if (/Script error/.test(detail.message)) {
             console.__data__.messages.push({msg: 'unkown error: ' + detail.message , action: 'unknown'});
         } else {
             console.__data__.messages.push({msg: 'error: ' + detail.message , action: 'error'});
         }
+
         startLogDispatchTimer();
     }
 });
