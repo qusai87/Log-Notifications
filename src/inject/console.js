@@ -76,7 +76,8 @@ var addLogStackNumber = (function (undefined) {
             ? line.split(' (')[1].substring(0, line.length - 1)
             : line.split('at ')[1]
             );
-        return line;
+        // I should find a better way to align line ref to right (as chrome dev tools)
+        return '\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'+line;
     };
 
     return function (params) {
@@ -99,7 +100,8 @@ window.console.log = function(){
     console.__data__.messages.push({msg:args,action:'log'});
     startLogDispatchTimer();
 
-    _console.log.apply(_console,arguments);
+    var output = addLogStackNumber.apply(null,arguments);
+    _console.trace.apply(_console,output);
 
 };
 window.console.info = function () {

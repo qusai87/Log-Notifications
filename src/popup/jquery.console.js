@@ -642,8 +642,20 @@
       var mesg = $('<div class="jquery-console-message"></div>');
       if (className) mesg.addClass(className);
       
-      if (_.isArray(msg) && msg.length === 1 ) {
-        msg = msg[0];
+      if (_.isArray(msg)) {
+        var checkStringObject = true;
+        var stringArr = [];
+        for (obj in msg) {
+            if (typeof msg[obj] !== 'string') {
+              checkStringObject = false;
+              break;
+            } else {
+                stringArr.push(msg[obj]);
+            }
+        }
+        if (checkStringObject) {
+          msg = stringArr.join(' ');
+        }
       }
       
       if (typeof msg === 'object') {

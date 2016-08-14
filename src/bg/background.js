@@ -95,10 +95,26 @@ function updateCounter(msg,tabId,counterId) {
         if (!counters[counterId]) {
             counters[counterId] = 0;
         }
-        if (!(excludeFilterRegex && msg.match(excludeFilterRegex)) && (!includeFilterRegex || msg.match(includeFilterRegex)))
-        {
+        var filterMessage = null;
+        if  (typeof msg === 'string' ) {
+            filterMessage = msg;
+        } else if  (typeof msg === 'object' ) {
+            if (msg.length) {
+                filterMessage = msg.join(' ');
+            }
+            else {
+                filterMessage = msg.toString();
+            }
+        }
+        if (filterMessage) {
+            if (!(excludeFilterRegex && filterMessage.match(excludeFilterRegex)) && (!includeFilterRegex || msg.match(includeFilterRegex)))
+            {
+                counters[counterId]++;
+                refreshBadge(tabId,counterId);
+            }
+        } else {
             counters[counterId]++;
-            refreshBadge(tabId,counterId);
+            refreshBadge(tabId,counterId);   
         }
     }
 }
@@ -163,17 +179,30 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         if (!isEnabled)
             return;
         var msg = "";
-        if (typeof msg === 'object') {
-            for (var i = 0; i < request.msg.length; i++)
-                if (typeof request.msg[i] == "object")
-                    msg += "Object " + JSON.stringify(request.msg[i]) + " ";
-                else
-                    msg += request.msg[i] + " ";            
+
+        if (typeof request.msg === 'object') {
+            var checkStringObject = true;
+            var stringArr = [];
+            for (obj in request.msg) {
+                if (typeof request.msg[obj] !== 'string') {
+                    checkStringObject = false;
+                    break;
+                } else {
+                    stringArr.push(request.msg[obj]);
+                }
+            }
+            if (checkStringObject) {
+                 msg = stringArr.join(' ');
+            } else {
+                msg = request.msg;
+            }         
         } else if (typeof request.msg === 'string') {
             msg = request.msg;
         } else if (request.msg) {
             msg = '' + request.msg;
         }
+
+        request.msg = msg;
 
         if (counterId) {
             if (!all_logs_history[counterId])

@@ -37,6 +37,21 @@ function init(logsHistoryJSON) {
 	controller.focus();
 }
 
+
+function loadCommandsHistory() {
+	chrome.storage.sync.get('commandsHistory', function (result) {
+		if (DEBUG)
+			console.log('result.commandsHistory.length: ', result.commandsHistory.length)
+	    if (result.commandsHistory && result.commandsHistory.length) {
+	    	var uniqueHistory = getUniqueArray(result.commandsHistory);
+	    	for (var key in uniqueHistory) {
+            	var value = uniqueHistory[key];
+				controller.addToHistory(value);
+			}
+	    }
+	});
+}
+
 function loadLogs () {
 	if (preserveLogs) {
 		// update console history from current active tab
@@ -52,6 +67,40 @@ function loadLogs () {
 		}, function(response) {});
     }
 }
+
+function showLogs() {
+	var logs = [];
+	var filters = $('#include_filters').val();
+	var excludeFilters = $('#exclude_filters').val();
+	var logs_history_filtered = reduce(logs_history,filters,excludeFilters);
+	for (var key in logs_history_filtered) {
+		var value = logs_history_filtered[key];
+
+		if (value.action) {
+			if (value.msg && value.msg.length === 1) {
+				logs.push({
+					msg: value.msg,
+					count: value.count,
+					className: "jquery-console-message-"+value.action
+				});
+			} else {
+				logs.push({
+					msg: value.msg,
+					className: "jquery-console-message-"+value.action
+				});
+			}
+		}
+	}
+	if (typeof controller =='object') {
+		if (logs.length) {
+			controller.commandResult(logs);
+		} else {
+			controller.commandResult('');
+		}
+		controller.focus();
+	}
+}
+
 function showNewLogs(logsHistoryJSON) {
 	var _old_logs = logs_history;
 	logs_history = JSON.parse(logsHistoryJSON);
@@ -100,20 +149,6 @@ function getUniqueArray(arr) {
          }
     }
     return out;
-}
-
-function loadCommandsHistory() {
-	chrome.storage.sync.get('commandsHistory', function (result) {
-		if (DEBUG)
-			console.log('result.commandsHistory.length: ', result.commandsHistory.length)
-	    if (result.commandsHistory && result.commandsHistory.length) {
-	    	var uniqueHistory = getUniqueArray(result.commandsHistory);
-	    	for (var key in uniqueHistory) {
-            	var value = uniqueHistory[key];
-				controller.addToHistory(value);
-			}
-	    }
-	});
 }
 
 function clearCommandsHistory() {
@@ -189,37 +224,6 @@ function reduce(arr,filters,exclude) {
 function clear() {
 	if (controller)
 		controller.clearScreen();
-}
-function showLogs() {
-	var logs = [];
-	var filters = $('#include_filters').val();
-	var excludeFilters = $('#exclude_filters').val();
-	var logs_history_filtered = reduce(logs_history,filters,excludeFilters);
-	for (var key in logs_history_filtered) {
-		var value = logs_history_filtered[key];
-		if (value.action) {
-			if (value.msg && value.msg.length === 1) {
-				logs.push({
-					msg: value.msg,
-					count: value.count,
-					className: "jquery-console-message-"+value.action
-				});
-			} else {
-				logs.push({
-					msg: value.msg,
-					className: "jquery-console-message-"+value.action
-				});
-			}
-		}
-	}
-	if (typeof controller =='object') {
-		if (logs.length) {
-			controller.commandResult(logs);
-		} else {
-			controller.commandResult('');
-		}
-		controller.focus();
-	}
 }
 
 function onSwitchClicked ( event)
