@@ -52,6 +52,7 @@ function init(enabled) {
 					chrome.runtime.sendMessage({
 						from: 'content',
 						subject: 'console_action',
+						domain: window.location.hostname,
 						msg: msg,
 						action: action
 					}, function(response) {

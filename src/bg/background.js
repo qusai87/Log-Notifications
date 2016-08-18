@@ -1,8 +1,10 @@
-var isEnabled,isNotificationEnabled;
+var isEnabled = true;
+var isNotificationEnabled = false;
 
 var counters = [];
 var all_logs_history = {};
 var commands_history = [];
+var domainNotifications = {};
 var activeCounterId = null;
 var excludeFilterRegex = null;
 var includeFilterRegex = null;
@@ -40,13 +42,25 @@ chrome.storage.sync.get('notification_enabled', function (result) {
         isNotificationEnabled = result.notification_enabled;
     }
     else {
-        isNotificationEnabled =  true || localStorage.isNotificationEnabled;
         chrome.storage.sync.set({'notification_enabled': isNotificationEnabled}, function() {
           if (DEBUG)
             console.log('notification_enabled saved');
         });
     }
 });
+
+chrome.storage.sync.get('domain_notifications', function (result) {
+    if (typeof result.domain_notifications === 'object') {
+        domainNotifications = result.domain_notifications;
+    }
+    else {
+        chrome.storage.sync.set({'domain_notifications': domainNotifications}, function() {
+          if (DEBUG)
+            console.log('domainNotifications saved', domainNotifications);
+        });
+    }
+});
+
 
 chrome.storage.sync.get('commandsHistory', function (result) {
     if (result.commandsHistory && result.commandsHistory.length) {
@@ -174,6 +188,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     } else {
         counterId = activeCounterId;
     }
+
     // First, validate the message's structure
     if ((request.from === 'content') && (request.subject === 'console_action')) {
         if (!isEnabled)
@@ -214,7 +229,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             }
         }
         if (request.action == 'error') {
-            if (isNotificationEnabled) {
+            if (isNotificationEnabled || domainNotifications[request.domain]) {
                 chrome.notifications.create('', {
                     type: "basic",
                     title: "Error!",
@@ -225,7 +240,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 updateCounter(msg,sender.tab.id,counterId);
             }
         } else if (request.action == 'warn') {
-            if (isNotificationEnabled) {
+            if (isNotificationEnabled || domainNotifications[request.domain]) {
                 chrome.notifications.create('', {
                     type: "basic",
                     title: "Warning!",
@@ -236,7 +251,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 updateCounter(msg,sender.tab.id,counterId);
             }
         } else if (request.action == 'alert') {
-            if (isNotificationEnabled) {
+            if (isNotificationEnabled || domainNotifications[request.domain]) {
                 chrome.notifications.create('', {
                     type: "basic",
                     title: "Alert!",
@@ -276,6 +291,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           if (DEBUG)
             console.log('notification_enabled saved');
         });
+    } else if ((request.from === 'popup') && (request.subject === 'modify_domain_Notifications')) {
+        domainNotifications[request.domain] = request.enabled;
+
+        chrome.storage.sync.set({'domain_notifications': domainNotifications}, function() {
+          if (DEBUG)
+            console.log('domainNotifications saved', domainNotifications);
+        });
+
     } else if ((request.from === 'popup') && (request.subject === 'save_command_to_history')) {
         commands_history.push(request.command);
         if (commands_history> 100)

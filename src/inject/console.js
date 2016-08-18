@@ -4,7 +4,9 @@ var DEBUG = false;
 
 if (DEBUG)
     console.log('console.js injected!');
+
 var _console = console;
+window._console = _console;
 
 var dispatchTimer = -1;
 
@@ -40,8 +42,8 @@ window.console.__data__.messages = [];
 window.console.__data__.history = [];
 
 var addLogStackNumber = (function (undefined) {
-    var Log = Error; // does this do anything?  proper inheritance...?
-    Log.prototype.write = function (args) {
+    var ErrorLog = Error; // does this do anything?  proper inheritance...?
+    ErrorLog.prototype.write = function (args) {
         /// <summary>
         /// Paulirish-like console.log wrapper.  Includes stack trace via @fredrik SO suggestion (see remarks for sources).
         /// </summary>
@@ -53,14 +55,15 @@ var addLogStackNumber = (function (undefined) {
         /// </remarks>
 
         // via @fredrik SO trace suggestion; wrapping in special construct so it stands out
+        // _console.log(this.lineNumber); // check lineNumber
         var suffix = {
             "@": (this.lineNumber
                     ? this.fileName + ':' + this.lineNumber + ":1" // add arbitrary column value for chrome linking
                     : extractLineNumberFromStack(this.stack)
             )
         };
-        if (suffix["@"].indexOf('chrome-extension')==-1)
-            args = args.concat([suffix["@"]]);
+        if (suffix["@"].indexOf('chrome-extension')==-1 && suffix["@"].indexOf('anonymous') === -1)
+            args = args.concat(suffix["@"]);
         return args;
     };
     var extractLineNumberFromStack = function (stack) {
@@ -69,7 +72,7 @@ var addLogStackNumber = (function (undefined) {
         /// </summary>
         /// <param name="stack" type="String">the stack string</param>
 
-        // correct line number according to how Log().write implemented
+        // correct line number according to how ErrorLog().write implemented
         var line = stack.split('\n')[4];
         // fix for various display text
         line = (line.indexOf(' (') >= 0
@@ -77,7 +80,8 @@ var addLogStackNumber = (function (undefined) {
             : line.split('at ')[1]
             );
         // I should find a better way to align line ref to right (as chrome dev tools)
-        return '\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t'+line;
+        //return ["Node count: %d, and the time is %f.", document.childNodes.length, Date.now()]
+        return '\n at: \t' + line;
     };
 
     return function (params) {
@@ -90,7 +94,7 @@ var addLogStackNumber = (function (undefined) {
        //if (typeof DEBUGMODE === typeof undefined || !DEBUGMODE) return;
 
         // call handler extension which provides stack trace
-        return Log().write(Array.prototype.slice.call(arguments, 0)); // turn into proper array
+        return ErrorLog().write(Array.prototype.slice.call(arguments, 0)); // turn into proper array
     };//--  fn  returned
 
 })();//--- logWrapper*/
@@ -101,7 +105,7 @@ window.console.log = function(){
     startLogDispatchTimer();
 
     var output = addLogStackNumber.apply(null,arguments);
-    _console.trace.apply(_console,output);
+    _console.log.apply(_console,output);
 
 };
 window.console.info = function () {

@@ -6,6 +6,8 @@ preserveLogs = false;
 respone_not_received_timer = -1;
 DEBUG = false;
 
+domain = '';
+
 if (DEBUG)
     console.log('popup.js opened!');
 
@@ -21,6 +23,18 @@ _gaq.push(['_trackEvent','popup','opened']);
   ga.src = 'https://ssl.google-analytics.com/ga.js';
   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
+
+chrome.tabs.query(
+    { 
+    	active: true,
+		currentWindow: true
+    }, 
+    function callback(tabs) {
+        var parser = document.createElement('a');
+        parser.href = tabs[0].url;
+        domain = parser.hostname;
+    }
+);
 
 function init(logsHistoryJSON) {
 	var logs;
@@ -226,40 +240,6 @@ function clear() {
 		controller.clearScreen();
 }
 
-function onSwitchClicked ( event)
-{
-    var checked = $(event.currentTarget).parent().hasClass('switchable-checked');
-    var id = $(event.currentTarget).closest('.switchable-wrapper').prev().get(0).id;
-
-    if (id === 'notificationSwitch') {
-    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
-    	notification_enabled = checked;
-    	sendRuntimeMessage({
-			from: 'popup',
-			subject: 'disable_notifications',
-			enabled: checked
-		}, function(response) {
-		});
-    } else if (id === 'enabledSwitch') {
-    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
-    	enabled = checked; 
-    	sendRuntimeMessage({
-			from: 'popup',
-			subject: 'disable_extension',
-			enabled: checked
-		}, function(response) {});
-    } else if (id === 'preserveLogsSwitch') {
-    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
-    	preserveLogs = checked;
-    	clear();
-    	loadLogs();
-
-    	chrome.storage.sync.set({'preserveLogs': preserveLogs}, function() {
-          console.log('preserveLogs saved');
-        });
-    }
-}
-
 // Once the DOM is ready...
 window.addEventListener('DOMContentLoaded', function() {
 	$(document).ready(function(){
@@ -270,11 +250,63 @@ window.addEventListener('DOMContentLoaded', function() {
 	});
 	
 	$(function () {
+		$('.js-switch').each(function () {
+			var init = new Switchery(this,{ size: 'small' });
+			this.switch = init;
+			this.onchange = function () {
+				var id = this.id;
+				var checked = this.checked;
+
+				if (id === 'notificationSwitch') {
+			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
+			    	notification_enabled = checked;
+			    	sendRuntimeMessage({
+						from: 'popup',
+						subject: 'disable_notifications',
+						enabled: checked
+					}, function(response) {
+					});
+			    } else if (id === 'domainSwitch') {
+			    	debugger;
+			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
+			    	notification_enabled = checked;
+			    	sendRuntimeMessage({
+						from: 'popup',
+						subject: 'modify_domain_Notifications',
+						domain : domain,
+						enabled: checked
+					}, function(response) {
+					});
+			    } else if (id === 'enabledSwitch') {
+			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
+			    	enabled = checked; 
+			    	sendRuntimeMessage({
+						from: 'popup',
+						subject: 'disable_extension',
+						enabled: checked
+					}, function(response) {});
+			    } else if (id === 'preserveLogsSwitch') {
+			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
+			    	preserveLogs = checked;
+			    	clear();
+			    	loadLogs();
+
+			    	chrome.storage.sync.set({'preserveLogs': preserveLogs}, function() {
+			          if (DEBUG)
+			          	console.log('preserveLogs saved');
+			        });
+			    }
+			}
+		});
+
 		chrome.storage.sync.get('enabled', function(result) {
 			enabled = result.enabled;
 			if (enabled) {
-				$('#enabledSwitch').prop('checked','checked');
+				enabledSwitch.checked = true;
+			} else {
+				enabledSwitch.checked = false;
 			}
+			enabledSwitch.switch.setPosition();
 			$('#include_filters').on('change',function () {
 				if ($('#include_filters').data('oldVal') != $('#include_filters').val()) {
 					_gaq.push(['_trackEvent',$('#include_filters').val(),'include filter']);
@@ -282,7 +314,8 @@ window.addEventListener('DOMContentLoaded', function() {
 					chrome.storage.sync.set({
 						'include_filters': $('#include_filters').val()
 					}, function() {
-						console.log('include_filters saved');
+						if (DEBUG)
+							console.log('include_filters saved');
 						chrome.runtime.sendMessage({
 							from: 'popup',
 							subject: 'update_filters'
@@ -300,7 +333,8 @@ window.addEventListener('DOMContentLoaded', function() {
 					chrome.storage.sync.set({
 						'exclude_filters': $('#exclude_filters').val()
 					}, function() {
-						console.log('exclude_filters saved');
+						if (DEBUG)
+							console.log('exclude_filters saved');
 						chrome.runtime.sendMessage({
 							from: 'popup',
 							subject: 'update_filters'
@@ -312,9 +346,7 @@ window.addEventListener('DOMContentLoaded', function() {
 			});
 
 			$('#enabledSwitch').val(enabled?'checked':'');
-			$('#enabledSwitch').switchable({
-	            click: onSwitchClicked
-	        });
+
 			chrome.storage.sync.get('include_filters', function(result) {
 				$('#include_filters').val(result.include_filters);
 				$('#include_filters').data('oldVal', $('#include_filters').val());
@@ -329,21 +361,33 @@ window.addEventListener('DOMContentLoaded', function() {
 		chrome.storage.sync.get('notification_enabled', function(result) {
 			notification_enabled = result.notification_enabled;
 			if (notification_enabled) {
-				$('#notificationSwitch').prop('checked','checked');
+				notificationSwitch.checked = true;
+			} else {
+				notificationSwitch.checked = false;
 			}
-			$('#notificationSwitch').val((notification_enabled)?'checked':'');
-			$('#notificationSwitch').switchable();
+			notificationSwitch.switch.setPosition();
+		});
+
+		chrome.storage.sync.get('domain_notifications', function(result) {
+			domain_notifications = result.domain_notifications[domain];
+			if (domain_notifications) {
+				domainSwitch.checked = true;
+			} else {
+				domainSwitch.checked = false;
+			}
+			domainSwitch.switch.setPosition();
 		});
 
 		chrome.storage.sync.get('preserveLogs', function(result) {
 			preserveLogs = result.preserveLogs;
 			if (preserveLogs) {
-				$('#preserveLogsSwitch').prop('checked','checked');
+				preserveLogsSwitch.checked = true;
+			} else {
+				preserveLogsSwitch.checked = false;
 			}
-			$('#preserveLogsSwitch').val((preserveLogs && enabled)?'checked':'');
-			$('#preserveLogsSwitch').switchable();
+			preserveLogsSwitch.switch.setPosition();
 
-			loadLogs();
+			loadLogs();			
 		});
 
 		controller = $('.console').empty().console({
