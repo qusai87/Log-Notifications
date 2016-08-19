@@ -228,7 +228,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 all_logs_history[counterId] = all_logs_history[counterId].slice(Math.max(all_logs_history[counterId].length - 300, 1));
             }
         }
-        if (request.action == 'error') {
+        if (request.action == 'error' || request.action == 'unknown') {
             if (isNotificationEnabled || domainNotifications[request.domain]) {
                 chrome.notifications.create('', {
                     type: "basic",

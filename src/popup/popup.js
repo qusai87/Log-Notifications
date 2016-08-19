@@ -109,7 +109,7 @@ function showLogs() {
 		if (logs.length) {
 			controller.commandResult(logs);
 		} else {
-			controller.commandResult('');
+			controller.commandResult('No Console logs received!');
 		}
 		controller.focus();
 	}

@@ -65,7 +65,7 @@ div.console div.jquery-console-inner
 { 
 	width:98%; 
 	height:400px; 
-	background:#efefef; 
+	background:#fff; 
 	padding: 0;
  	overflow:auto;
  	margin-bottom: 10px;
@@ -76,6 +76,14 @@ div.console div.jquery-console-prompt-box
 	color:#444; 
 	font-family:monospace; 
 }
+
+div.console span.jquery-console-prompt-label 
+{ 
+	font-weight:bold;
+	color: #4785ff;
+    padding-left: 5px;
+}
+
 div.console div.jquery-console-focus span.jquery-console-cursor
 { 
 	background:#333; 
@@ -85,6 +93,7 @@ div.console div.jquery-console-message
 {
 	background: #fff;
 	border-bottom: 1px #dedede solid;
+	font-family: monospace;
 }
 
 div.console div.jquery-console-welcome 
@@ -159,15 +168,15 @@ div.console div.jquery-console-message-table
 	color: #9e9c9c;
 }
 
-div.console div.jquery-console-message-error
+div.console div.jquery-console-message-error,div.console div.jquery-console-message-unknown
 { 
 	color:#ef0505; 
 	background: #ffe7e7;
-	font-family:sans-serif; 
 	font-weight:bold;
 	padding: 5px;
 }
-div.console div.jquery-console-message-error:before {
+
+div.console div.jquery-console-message-error:before,div.console div.jquery-console-message-unknown:before {
 	content: "\f057";
 	color: #ef0505;
 	margin: 0 7px 0 2px;
@@ -189,10 +198,6 @@ div.console div.jquery-console-message-success
 	color:#187718; 
 	font-family:monospace;
 	padding: 5px;
-}
-div.console span.jquery-console-prompt-label 
-{ 
-	font-weight:bold;
 }
 
 pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
