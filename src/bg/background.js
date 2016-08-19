@@ -4,7 +4,9 @@ var isNotificationEnabled = false;
 var counters = [];
 var all_logs_history = {};
 var commands_history = [];
-var domainNotifications = {};
+var domainNotifications = {
+    localhost : true,
+};
 var activeCounterId = null;
 var excludeFilterRegex = null;
 var includeFilterRegex = null;
@@ -184,14 +186,15 @@ function refreshBadge(tabId,counterId) {
 }
 
 function setIcon(type) {
+    var iconPrefix = "icons/icon"+(type?'-'+type:'');
     chrome.browserAction.setIcon(
     {
         path: {
-            "16": "icons/icon"+(type?'-'+type:'')+"-16.png",
-            "19": "icons/icon"+(type?'-'+type:'')+"-19.png",
-            "38": "icons/icon"+(type?'-'+type:'')+"-38.png",
-            "48": "icons/icon"+(type?'-'+type:'')+"-48.png",
-            "128": "icons/icon"+(type?'-'+type:'')+"-128.png"
+            "16" : iconPrefix+"-16.png",
+            "19" : iconPrefix+"-19.png",
+            "38" : iconPrefix+"-38.png",
+            "48" : iconPrefix+"-48.png",
+            "128": iconPrefix+"-128.png"
         }
     });
 }
@@ -308,6 +311,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         });
     } else if ((request.from === 'popup') && (request.subject === 'modify_domain_Notifications')) {
         domainNotifications[request.domain] = request.enabled;
+        refreshBadge(request.tabId,counterId);
 
         chrome.storage.sync.set({'domain_notifications': domainNotifications}, function() {
           if (DEBUG)

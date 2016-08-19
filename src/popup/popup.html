@@ -7,7 +7,6 @@
 <script src="./jquery.console.js"></script>
 <script src="./popup.js"></script>
 
-<!-- <link rel="stylesheet" type="text/css" href="./switchable.css" /> -->
 <link rel="stylesheet" type="text/css" href="./../lib/font-awesome/css/font-awesome.min.css" />
 <link rel="stylesheet" type="text/css" href="./../lib/switchery/switchery.min.css" />
 <script type="text/javascript" src="./../lib/switchery/switchery.min.js"></script>
@@ -23,17 +22,22 @@
             <h1>JS Console</h1>
         </div>
         <div class="pull-right">
-            Notificaitons: <input type="checkbox" id="notificationSwitch" value="" data-label="" class="js-switch">
-            Enabled: <input type="checkbox" id="enabledSwitch" value="" data-label="" class="js-switch">
+            <label>Enabled</label>
+            <input type="checkbox" id="enabledSwitch" value="" data-label="" class="js-switch">
         </div>
-
     </div>
     <div class="header">
+        <div class="pull-right">
+            <label>Enable Notificaitons on All Domains</label>
+            <input type="checkbox" id="notificationSwitch" value="" data-label="" class="js-switch">
+        </div>
         <div class="pull-left">
-            Preserved Logs: <input type="checkbox" id="preserveLogsSwitch" value="" data-label="" class="js-switch">
+            <label>Preserved Logs</label>
+            <input type="checkbox" id="preserveLogsSwitch" value="" data-label="" class="js-switch">
         </div>
         <div class="pull-right">
-            Notificaitons only on this Domain: <input type="checkbox" id="domainSwitch" value="" data-label="" class="js-switch">
+            <label>Notificaitons only on this Domain</label>
+            <input type="checkbox" id="domainSwitch" value="" data-label="" class="js-switch">
         </div>
     </div>
     <div style="clear:both">

@@ -14,9 +14,8 @@ h1 {
 	font-size: 1.5em;
 	margin-top: 0;
 }
-
-.switchable-wrapper {
-    float: right;
+label {
+	padding: 10px;
 }
 
 .header {

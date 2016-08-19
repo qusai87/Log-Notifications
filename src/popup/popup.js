@@ -260,6 +260,13 @@ window.addEventListener('DOMContentLoaded', function() {
 				if (id === 'notificationSwitch') {
 			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
 			    	notification_enabled = checked;
+
+			    	if (notification_enabled) {
+			    		domainSwitch.switch.disable();
+			    	} else {
+			    		domainSwitch.switch.enable();
+			    	}
+
 			    	sendRuntimeMessage({
 						from: 'popup',
 						subject: 'disable_notifications',
@@ -268,7 +275,8 @@ window.addEventListener('DOMContentLoaded', function() {
 					});
 			    } else if (id === 'domainSwitch') {
 			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
-			    	notification_enabled = checked;
+			    	domain_notifications[domain] = checked;
+
 			    	sendRuntimeMessage({
 						from: 'popup',
 						subject: 'modify_domain_Notifications',
@@ -279,6 +287,16 @@ window.addEventListener('DOMContentLoaded', function() {
 			    } else if (id === 'enabledSwitch') {
 			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
 			    	enabled = checked; 
+
+			    	if (enabled) {
+			    		domainSwitch.switch.enable();
+			    		notificationSwitch.switch.enable();
+			    		preserveLogsSwitch.switch.enable();
+			    	} else {
+			    		domainSwitch.switch.disable();
+			    		notificationSwitch.switch.disable();
+			    		preserveLogsSwitch.switch.disable();
+			    	}
 			    	sendRuntimeMessage({
 						from: 'popup',
 						subject: 'disable_extension',
@@ -300,12 +318,14 @@ window.addEventListener('DOMContentLoaded', function() {
 
 		chrome.storage.sync.get('enabled', function(result) {
 			enabled = result.enabled;
+
 			if (enabled) {
 				enabledSwitch.checked = true;
 			} else {
 				enabledSwitch.checked = false;
 			}
 			enabledSwitch.switch.setPosition();
+
 			$('#include_filters').on('change',function () {
 				if ($('#include_filters').data('oldVal') != $('#include_filters').val()) {
 					_gaq.push(['_trackEvent',$('#include_filters').val(),'include filter']);
@@ -365,6 +385,9 @@ window.addEventListener('DOMContentLoaded', function() {
 				notificationSwitch.checked = false;
 			}
 			notificationSwitch.switch.setPosition();
+			if (!enabled) {
+	    		notificationSwitch.switch.disable();
+	    	}
 		});
 
 		chrome.storage.sync.get('domain_notifications', function(result) {
@@ -375,6 +398,10 @@ window.addEventListener('DOMContentLoaded', function() {
 				domainSwitch.checked = false;
 			}
 			domainSwitch.switch.setPosition();
+			
+			if (!enabled || notification_enabled) {
+	    		domainSwitch.switch.disable();
+	    	}
 		});
 
 		chrome.storage.sync.get('preserveLogs', function(result) {
@@ -385,7 +412,9 @@ window.addEventListener('DOMContentLoaded', function() {
 				preserveLogsSwitch.checked = false;
 			}
 			preserveLogsSwitch.switch.setPosition();
-
+			if (!enabled) {
+	    		preserveLogsSwitch.switch.disable();
+	    	}
 			loadLogs();			
 		});
 

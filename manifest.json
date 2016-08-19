@@ -1,9 +1,9 @@
 {
-  "name": "JS Console & Log Notifications",
-  "version": "0.3.2",
+  "name": "JS Console with Chrome Notifications",
+  "version": "0.3.3",
   "manifest_version": 2,
   "offline_enabled": true,
-  "description": "Show JS console (new) and convert console errors/alerts to chrome notifications!",
+  "description": "Show JS console in popup and show console errors/warns and window alerts as chrome notifications!",
   "homepage_url": "https://chrome.google.com/webstore/detail/log-notifications/dkebpeehodefnopcpggkdgeljadommmm?utm_source=plus",
   "icons": {
     "16": "icons/icon-16.png",
