@@ -35,6 +35,8 @@ chrome.storage.sync.get('enabled', function (result) {
             console.log('enabled saved');
         });
     }
+    refreshBadge();
+
 });
 
 chrome.storage.sync.get('notification_enabled', function (result) {
@@ -47,6 +49,7 @@ chrome.storage.sync.get('notification_enabled', function (result) {
             console.log('notification_enabled saved');
         });
     }
+    refreshBadge();
 });
 
 chrome.storage.sync.get('domain_notifications', function (result) {
@@ -59,6 +62,7 @@ chrome.storage.sync.get('domain_notifications', function (result) {
             console.log('domainNotifications saved', domainNotifications);
         });
     }
+    refreshBadge();
 });
 
 
@@ -133,51 +137,62 @@ function updateCounter(msg,tabId,counterId) {
     }
 }
 function refreshBadge(tabId,counterId) {
+    // update badge text :
+    if (isEnabled) {
+        if (counterId && counters[counterId]) {
+            chrome.browserAction.setBadgeText({
+                text: '' + counters[counterId]
+            });    
+        } else {
+            chrome.browserAction.setBadgeText({
+                text: ""
+            });        
+        }
+    }
+    // update icon :
     chrome.tabs.query(
-        { currentWindow: true, active: true },
-        function (tab) { 
-            tabId = tabId || (tab.length && tab[0].id);
-            if (!isEnabled) {
-                // Also correct
-                if (tabId) {
-                    setIconDisabled(tabId);
-                }
-            } else {
-                if (tabId) {
-                    setIconEnabled(tabId);
-                }
-                if (counterId && counters[counterId]) {
-                    chrome.browserAction.setBadgeText({
-                        text: '' + counters[counterId]
-                    });    
+    {
+        currentWindow: true,
+        active: true
+    },
+    function (tab) {
+        if (tab && tab.length) {
+            tabId = tabId || tab[0].id;
+            var parser = document.createElement('a');
+            parser.href = tab[0].url;
+            var domain = parser.hostname;
+
+            if (tabId) {
+                if (isEnabled) {
+                    if (isNotificationEnabled || domainNotifications[domain]) {
+                        setIcon('');
+                    } else {
+                        setIcon('muted');
+                    }
                 } else {
-                    chrome.browserAction.setBadgeText({
-                        text: ""
-                    });        
+                    setIcon('disabled');
                 }
             }
+        } else {
+            if (isEnabled) {
+                setIcon('');
+            } else {
+                setIcon('disabled');
+            }
         }
-    );
-    
-}
-
-function setIconDisabled(tabId) {
-    chrome.browserAction.setIcon(
-    {
-      path: {
-        19: 'icons/icon-disabled-19.png',
-        38: 'icons/icon-disabled-38.png'
-      }
     });
 }
 
-function setIconEnabled(tabId) {
+function setIcon(type) {
     chrome.browserAction.setIcon(
     {
-      path: {
-        19: 'icons/icon19.png',
-        38: 'icons/icon38.png'
-      }
+        path: {
+            "16": "icons/icon"+(type?'-'+type:'')+"-16.png",
+            "19": "icons/icon"+(type?'-'+type:'')+"-19.png",
+            "38": "icons/icon"+(type?'-'+type:'')+"-38.png",
+            "48": "icons/icon"+(type?'-'+type:'')+"-48.png",
+            "128": "icons/icon"+(type?'-'+type:'')+"-128.png"
+        }
     });
 }
 // Listener - Put this in the background script to listen to all the events.

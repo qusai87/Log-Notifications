@@ -2,7 +2,7 @@
 enabled = true;
 notification_enabled = false;
 preserveLogs = false;
-
+domain_notifications = {};
 respone_not_received_timer = -1;
 DEBUG = false;
 
@@ -267,7 +267,6 @@ window.addEventListener('DOMContentLoaded', function() {
 					}, function(response) {
 					});
 			    } else if (id === 'domainSwitch') {
-			    	debugger;
 			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
 			    	notification_enabled = checked;
 			    	sendRuntimeMessage({
@@ -369,8 +368,8 @@ window.addEventListener('DOMContentLoaded', function() {
 		});
 
 		chrome.storage.sync.get('domain_notifications', function(result) {
-			domain_notifications = result.domain_notifications[domain];
-			if (domain_notifications) {
+			domain_notifications = result.domain_notifications;
+			if (domain_notifications[domain]) {
 				domainSwitch.checked = true;
 			} else {
 				domainSwitch.checked = false;
@@ -395,7 +394,12 @@ window.addEventListener('DOMContentLoaded', function() {
 			commandValidate: function(line) {
 				if (DEBUG)
 					console.log('validate',line);
-				if (line === 'clear' || line === 'clear()') {
+
+				if (line === 'domains' || line === 'domains()') {
+					_gaq.push(['_trackEvent',line,'command']);
+					addToHistory(line);
+					controller.commandResult(domain_notifications,'jquery-console-message-value');
+				} else if (line === 'clear' || line === 'clear()') {
 					_gaq.push(['_trackEvent',line,'command']);
 					addToHistory(line);
 					evaluateJSExpression('console.__data__.history = []');

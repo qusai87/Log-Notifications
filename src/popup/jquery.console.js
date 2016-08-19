@@ -585,6 +585,11 @@
     ////////////////////////////////////////////////////////////////////////
     // Reset the prompt in invalid command
     function commandResult(msg,className,count) {
+      if (typeof msg === 'undefined') {
+        newPromptBox();
+        return;
+      }
+
       column = -1;
       updatePromptDisplay();
       if (typeof msg == 'string') {
