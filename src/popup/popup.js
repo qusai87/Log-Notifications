@@ -8,9 +8,6 @@ DEBUG = false;
 
 domain = '';
 
-if (DEBUG)
-    console.log('popup.js opened!');
-
 logs_history = null;
 
 _gaq = [];
@@ -522,3 +519,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		}
 	}
 });
+
+
+if (DEBUG)
+    console.log('popup.js opened!');

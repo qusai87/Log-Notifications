@@ -13,19 +13,6 @@ var includeFilterRegex = null;
 
 DEBUG = false;
 
-if (DEBUG)
-    console.log('background.js started!');
-
-var _gaq = [];
-_gaq.push(['_setAccount', 'UA-82270161-1']);
-_gaq.push(['_trackPageview']);
-
-(function() {
-  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-  ga.src = 'https://ssl.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
-
 chrome.storage.sync.get('enabled', function (result) {
     if (typeof result.enabled === 'boolean') {
         isEnabled = result.enabled;
@@ -373,10 +360,13 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
         var parser = document.createElement('a');
         parser.href = tabInfo.url;
 
-        if (parser.hostname && parser.protocol.indexOf('http')!==-1) {
-            if (DEBUG)
-                console.log(parser.hostname);
-            _gaq.push(['_trackEvent', parser.hostname, 'domain']);
+        var domain = parser.hostname;
+
+        if (domain && parser.protocol.indexOf('http')!==-1) {
+
+            if (isNotificationEnabled || domainNotifications[domain]) {
+                _gaq.push(['_trackEvent', domain, 'domain']);
+            }
         }
     }
 });
@@ -394,11 +384,13 @@ chrome.tabs.onCreated.addListener(function(tabInfo) {
     // Extract url info
     var parser = document.createElement('a');
     parser.href = tabInfo.url;
+    var domain = parser.hostname;
 
-    if (parser.hostname && parser.protocol.indexOf('http')!==-1) {
-        if (DEBUG)
-            console.log(parser.hostname);
-        _gaq.push(['_trackEvent', parser.hostname, 'domain']);
+    if (domain && parser.protocol.indexOf('http')!==-1) {
+
+        if (isNotificationEnabled || domainNotifications[domain]) {
+            _gaq.push(['_trackEvent', domain, 'domain']);
+        }
     }
 });
 
@@ -415,3 +407,17 @@ chrome.tabs.onRemoved.addListener(function(tabId,tab) {
     if (DEBUG)
         console.log("Tab removed event caught: " , tabId);
 });
+
+
+if (DEBUG)
+    console.log('background.js started!');
+
+var _gaq = [];
+_gaq.push(['_setAccount', 'UA-82270161-1']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = 'https://ssl.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
