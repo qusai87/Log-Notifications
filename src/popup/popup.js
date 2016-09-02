@@ -65,8 +65,8 @@ function loadCommandsHistory() {
 
 function loadLogs () {
 	if (preserveLogs) {
-		// update console history from current active tab
-		sendMessage({
+		// update console history from background history
+		sendRuntimeMessage({
 			from: 'popup',
 			subject: 'get_all_history'
 		}, function(response) {});

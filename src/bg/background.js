@@ -1,3 +1,5 @@
+//test notifications : var count=0;var timer =setInterval(function () {count++;console.warn('bla bla bla');if (count===3) console.warn('after 3 times');if (count>5) clearTimeout(timer);},350)
+
 var isEnabled = true;
 var isNotificationEnabled = false;
 
@@ -10,6 +12,10 @@ var domainNotifications = {
 var activeCounterId = null;
 var excludeFilterRegex = null;
 var includeFilterRegex = null;
+var notificationTimeout = -1;
+var notificationCounter = 1;
+var lastInfo;
+
 
 DEBUG = false;
 
@@ -83,6 +89,37 @@ function updateFilters () {
         else 
             excludeFilterRegex = null;
     });
+}
+
+function showChromeNotification (info) {
+    if (!info)
+        return;
+
+    if (lastInfo) {
+        if (_.isEqual(lastInfo,info)) {
+            if (notificationTimeout !== -1) {
+                clearTimeout(notificationTimeout);       
+                notificationCounter++; 
+            }
+
+            notificationTimeout = setTimeout(function () {
+                if (notificationCounter > 1)
+                    lastInfo.title = '['+notificationCounter+'] ' + lastInfo.title ;
+                chrome.notifications.create('', lastInfo , function() {});
+                notificationCounter = 1;
+                lastInfo = null;
+            },500);
+
+        } else {
+            chrome.notifications.create('', info , function() {});
+            notificationCounter = 1; 
+        }
+    } else {
+        chrome.notifications.create('', info , function() {});
+        notificationCounter = 1;
+    }
+
+    lastInfo = info;
 }
 
 updateFilters();
@@ -235,34 +272,34 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         }
         if (request.action == 'error' || request.action == 'unknown') {
             if (isNotificationEnabled || domainNotifications[request.domain]) {
-                chrome.notifications.create('', {
+                showChromeNotification({
                     type: "basic",
                     title: "Error!",
                     message: msg,
                     iconUrl: "icons/icon-error.png"
-                }, function() {});
+                });
             } else {
                 updateCounter(msg,sender.tab.id,counterId);
             }
         } else if (request.action == 'warn') {
             if (isNotificationEnabled || domainNotifications[request.domain]) {
-                chrome.notifications.create('', {
+                showChromeNotification({
                     type: "basic",
                     title: "Warning!",
                     message: msg,
                     iconUrl: "icons/icon-warn.png"
-                }, function() {});
+                });
             } else {
                 updateCounter(msg,sender.tab.id,counterId);
             }
         } else if (request.action == 'alert') {
             if (isNotificationEnabled || domainNotifications[request.domain]) {
-                chrome.notifications.create('', {
+                showChromeNotification({
                     type: "basic",
                     title: "Alert!",
                     message: msg,
                     iconUrl: "icons/icon-info.png"
-                }, function() {});
+                });
             } else {
                 updateCounter(msg,sender.tab.id,counterId);
             }
