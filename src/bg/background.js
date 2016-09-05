@@ -135,7 +135,7 @@ function unique(arr) {
 }
 
 function updateCounter(msg,tabId,counterId) {
-    if (counterId && msg) {
+    if (counterId && msg && activeCounterId === counterId) {
         if (!counters[counterId]) {
             counters[counterId] = 0;
         }
