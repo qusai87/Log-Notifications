@@ -303,6 +303,17 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             } else {
                 updateCounter(msg,sender.tab.id,counterId);
             }
+        } else if (request.action == 'info') {
+            if (isNotificationEnabled || domainNotifications[request.domain]) {
+                showChromeNotification({
+                    type: "basic",
+                    title: "info!",
+                    message: msg,
+                    iconUrl: "icons/icon-info.png"
+                });
+            } else {
+                updateCounter(msg,sender.tab.id,counterId);
+            }
         } else {
             updateCounter(msg,sender.tab.id,counterId);
         }

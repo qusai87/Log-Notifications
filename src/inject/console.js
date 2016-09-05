@@ -190,9 +190,9 @@ window.addEventListener('error', function(e) {
         }
         
         if (/Script error/.test(detail.message)) {
-            console.__data__.messages.push({msg: 'unkown error: ' + detail.message , action: 'unknown'});
+            console.__data__.messages.push({msg: detail.message , action: 'unknown'});
         } else {
-            console.__data__.messages.push({msg: 'error: ' + detail.message , action: 'error'});
+            console.__data__.messages.push({msg: detail.message , action: 'error'});
         }
 
         startLogDispatchTimer();

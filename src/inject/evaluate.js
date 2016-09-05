@@ -54,7 +54,7 @@ document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression',
     try {
         results = eval(e.detail);
     } catch (err) {
-        results = '*'+err.toString();
+        results = 'Error: '+err.toString();
     }
     try {
         if (results && typeof results !=='function') {
@@ -76,7 +76,7 @@ document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression',
         document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
           detail: {
             expression : e.detail,
-            results: JSON.stringify('*'+err.toString()),
+            results: JSON.stringify('Error: '+err.toString()),
           }
         }));
     }

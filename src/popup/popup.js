@@ -510,11 +510,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		if (request.output) {
 			var data = JSON.parse(request.output);
 
-			if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0)) {
+			if (typeof data==='string' && (data.indexOf('ReferenceError') > 0)) {
 				controller.commandResult(data,'jquery-console-message-error');
-			} else if (typeof data==='string' && (data.indexOf('*SyntaxError') === 0)) {
+			} else if (typeof data==='string' && (data.indexOf('SyntaxError') > 0)) {
 				controller.commandResult(data,'jquery-console-message-error');
-			} else if (typeof data==='string' && (data.indexOf('*TypeError') === 0)) {
+			} else if (typeof data==='string' && (data.indexOf('TypeError') > 0)) {
 				controller.commandResult(data,'jquery-console-message-error');
 			} else {
 				controller.commandResult(data,'jquery-console-message-value',0,request.expression);
