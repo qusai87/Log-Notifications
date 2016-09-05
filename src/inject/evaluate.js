@@ -3,21 +3,19 @@ var DEBUG = false;
 if (DEBUG)
 	console.log('evaluate.js injected!');
 
-var console = window.console;
-
-console.__data__ = console.__data__ || {};
+_JSConsole = {};
 
 if (typeof jQuery === 'function' && jQuery.fn)
-    console.__data__.jQuery = jQuery 
+    _JSConsole.jQuery = jQuery 
 else if (typeof require === 'function') {
     try {
-        console.__data__.jQuery = require('jquery');
+        _JSConsole.jQuery = require('jquery');
     } catch (e) {
         
     }
 }
 
-console.__data__.cookie = function(name) {
+_JSConsole.cookie = function(name) {
 	var cookies = {};
 	var c = document.cookie.split(';');
 

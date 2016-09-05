@@ -673,7 +673,7 @@
         if (!exp)
           exp = msg.toString();
         else 
-          exp = exp.replace('console.__data__.','');
+          exp = exp.replace('_JSConsole.','');
 
         if (exp.indexOf('[object') === 0)  {
           json = msg;

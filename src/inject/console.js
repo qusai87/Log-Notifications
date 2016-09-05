@@ -2,11 +2,11 @@
 var DEBUG = false;
 //DEBUG = true;
 
-if (DEBUG)
+if (DEBUG) {
     console.log('console.js injected!');
+}
 
-var _console = console;
-window._console = _console;
+window._console = window.console;
 
 var dispatchTimer = -1;
 
@@ -26,7 +26,7 @@ var startLogDispatchTimer = function () {
         dispatchTimer = setTimeout(function () {
             dispatchTimer = -1;
             document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_found', {
-              detail: console.__data__.messages
+              detail: _JSConsole.messages
             }));
         },50);
     }
@@ -35,11 +35,18 @@ var startLogDispatchTimer = function () {
 // Completelety overrride log console.
 // http://stackoverflow.com/questions/7042611/override-console-log-for-production
 // 
+function $debug() {
+    if (DEBUG) {
+        debugger;
+    }
+}
 
 window.console = shallowCopy(_console || {});
-window.console.__data__ = console.__data__ || {};
-window.console.__data__.messages = [];
-window.console.__data__.history = [];
+window.console.isModified = true;
+
+window._JSConsole = _JSConsole || {};
+window._JSConsole.messages = [];
+window._JSConsole.history = [];
 
 var addLogStackNumber = (function (undefined) {
     var ErrorLog = Error; // does this do anything?  proper inheritance...?
@@ -101,49 +108,55 @@ var addLogStackNumber = (function (undefined) {
 
 window.console.log = function(){
     var args = Array.prototype.slice.call(arguments, 0);
-    console.__data__.messages.push({msg:args,action:'log'});
+    _JSConsole.messages.push({msg:args,action:'log'});
     startLogDispatchTimer();
 
     var output = addLogStackNumber.apply(null,arguments);
-    _console.log.apply(_console,output);
+
+    if (!_console.isModified)
+        _console.log.apply(_console,output);
 
 };
 window.console.info = function () {
     var args = Array.prototype.slice.call(arguments, 0);
-    console.__data__.messages.push({msg:args,action:'info'});
+    _JSConsole.messages.push({msg:args,action:'info'});
     startLogDispatchTimer();
-
-    _console.info.apply(_console,arguments);
+    if (!_console)
+        _console.info.apply(_console,arguments);
 };
 
 window.console.table = function () {
-    _console.table.apply(_console,arguments);
+    if (!_console.isModified)
+        _console.table.apply(_console,arguments);
 };
 window.console.dir = function () {
-    _console.dir.apply(_console,arguments);
+    if (!_console.isModified)
+        _console.dir.apply(_console,arguments);
 };
 window.console.warn = function () {
     var args = Array.prototype.slice.call(arguments, 0);
-    console.__data__.messages.push({msg:args,action:'warn'});
+    _JSConsole.messages.push({msg:args,action:'warn'});
     startLogDispatchTimer();
 
     var output = addLogStackNumber.apply(null,arguments);
-    _console.warn.apply(_console,output);
+    if (!_console.isModified)
+        _console.warn.apply(_console,output);
 };
 
 window.console.error = function () {
     var args = Array.prototype.slice.call(arguments, 0);
-    console.__data__.messages.push({msg:args,action:'error'});
+    _JSConsole.messages.push({msg:args,action:'error'});
     startLogDispatchTimer();
 
     var output = addLogStackNumber.apply(null,arguments);
-    _console.error.apply(_console,output);
+    if (!_console.isModified)
+        _console.error.apply(_console,output);
 };
 
 document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
-    if (console.__data__.messages.length) {
-        console.__data__.history.push(console.__data__.messages.shift());
-        if (console.__data__.messages.length) {
+    if (_JSConsole.messages.length) {
+        _JSConsole.history.push(_JSConsole.messages.shift());
+        if (_JSConsole.messages.length) {
             startLogDispatchTimer();
         }
 
@@ -151,9 +164,9 @@ document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
 });
 
 document.addEventListener('Msg_LogNotificationExtension_get_history', function(e) {
-    if (console.__data__.history) {
+    if (_JSConsole.history) {
         document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_history_found', {
-          detail: JSON.stringify(console.__data__.history)
+          detail: JSON.stringify(_JSConsole.history)
         }));
     }
 });
@@ -162,17 +175,18 @@ window.alert = function() {
     // do something here
     var args = Array.prototype.slice.call(arguments, 0);
     
-    console.__data__.messages.push({msg:args,action:'alert'});
+    _JSConsole.messages.push({msg:args,action:'alert'});
     startLogDispatchTimer();
 
-    _console.info.apply(_console,arguments);
+    if (!_console.isModified)
+        _console.info.apply(_console,arguments);
 };
 
 // window.onerror = function(e, url, line) {
 //     if (/Script error/.test(e)) {
-//         console.__data__.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
+//         _JSConsole.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
 //     } else {
-//         console.__data__.messages.push({msg: 'error: ' + e , action: 'error'});
+//         _JSConsole.messages.push({msg: 'error: ' + e , action: 'error'});
 //     }
 //     startLogDispatchTimer();
 //     return false; 
@@ -190,9 +204,9 @@ window.addEventListener('error', function(e) {
         }
         
         if (/Script error/.test(detail.message)) {
-            console.__data__.messages.push({msg: detail.message , action: 'unknown'});
+            _JSConsole.messages.push({msg: detail.message , action: 'unknown'});
         } else {
-            console.__data__.messages.push({msg: detail.message , action: 'error'});
+            _JSConsole.messages.push({msg: detail.message , action: 'error'});
         }
 
         startLogDispatchTimer();

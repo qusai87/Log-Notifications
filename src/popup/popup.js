@@ -428,7 +428,7 @@ window.addEventListener('DOMContentLoaded', function() {
 				} else if (line === 'clear' || line === 'clear()') {
 					_gaq.push(['_trackEvent',line,'command']);
 					addToHistory(line);
-					evaluateJSExpression('console.__data__.history = []');
+					evaluateJSExpression('_JSConsole.history = []');
 					clear();
 				} else if (line === 'clearHistory' || line === 'clearHistory()') {
 					_gaq.push(['_trackEvent',line,'command']);
@@ -442,10 +442,10 @@ window.addEventListener('DOMContentLoaded', function() {
 				} else if (line === 'cookie') {
 					_gaq.push(['_trackEvent',line,'command']);
 					addToHistory(line);
-					evaluateJSExpression('console.__data__.cookie()');
+					evaluateJSExpression('_JSConsole.cookie()');
 				} else if (line.indexOf('cookie(') === 0) {
 					addToHistory(line);
-					evaluateJSExpression('console.__data__.' + line);
+					evaluateJSExpression('_JSConsole.' + line);
 				} else if (line) {
 					_gaq.push(['_trackEvent',line,'expression']);
 					addToHistory(line);
