@@ -267,7 +267,7 @@
     // Handle setting focus
     container.click(function onClick(){
       // Don't mess with the focus if there is an active selection
-      if (window.getSelection().toString()) {
+      if (window.getSelection().toString() || $(arguments[0].target).parents('.json').length) {
         return false;
       }
 
@@ -584,7 +584,7 @@
 
     ////////////////////////////////////////////////////////////////////////
     // Reset the prompt in invalid command
-    function commandResult(msg,className,count) {
+    function commandResult(msg,className,count,exp) {
       if (typeof msg === 'undefined') {
         newPromptBox();
         return;
@@ -601,13 +601,8 @@
         }
       } else if (msg instanceof jQuery || msg.nodeName) { // Assume it's a DOM node or jQuery object.
         inner.append(msg);
-      } else if (typeof msg === 'object') {
-        var str = JSON.stringify(msg, undefined, 4);
-        var preEl = $('<div class="jquery-console-message"><pre></pre></div>');
-        $(preEl).find('pre').html(syntaxHighlight(str));
-        inner.append(preEl);
       } else {
-        message(msg,className,count);
+        message(msg,className,count,exp);
       }
       newPromptBox();
     };
@@ -643,7 +638,7 @@
 
     ////////////////////////////////////////////////////////////////////////
     // Display a message
-    function message(msg,className,count) {
+    function message(msg,className,count,exp) {
       var mesg = $('<div class="jquery-console-message"></div>');
       if (className) mesg.addClass(className);
       
@@ -664,9 +659,28 @@
       }
       
       if (typeof msg === 'object') {
-        var str = JSON.stringify(msg, undefined, 4);
-        var preEl = document.createElement('pre');
-        $(preEl).html(syntaxHighlight(str));
+        // var str = JSON.stringify(msg, undefined, 4);
+        // var preEl = document.createElement('pre');
+        // $(preEl).html(syntaxHighlight(str));
+        // mesg.append(preEl);
+
+        // var str = JSON.stringify(msg, undefined, 4);
+        // var preEl = $('<div class="jquery-console-message"><pre></pre></div>');
+        // $(preEl).find('pre').html(syntaxHighlight(str));
+
+        var preEl = $('<div class="json"></div>');
+        json = {};
+        if (!exp)
+          exp = msg.toString();
+        else 
+          exp = exp.replace('console.__data__.','');
+
+        if (exp.indexOf('[object') === 0)  {
+          json = msg;
+        } else {
+          json[exp] = msg;
+        }
+        $(preEl).JSONView(json,{ collapsed: true });
         mesg.append(preEl);
       } else {
         mesg.filledText(msg).hide();

@@ -37,7 +37,8 @@ function init(enabled) {
 					chrome.runtime.sendMessage({
 						from: 'content',
 						subject: 'expression_found',
-						output: e.detail
+						output: e.detail.results,
+						expression : e.detail.expression,
 					}, function(response) {});
 				}
 			});

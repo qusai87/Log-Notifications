@@ -1,6 +1,6 @@
 {
   "name": "JS Console with Chrome Notifications",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "manifest_version": 2,
   "offline_enabled": true,
   "description": "Show JS console in popup and show console errors/warns and window alerts as chrome notifications!",

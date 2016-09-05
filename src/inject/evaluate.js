@@ -59,16 +59,25 @@ document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression',
     try {
         if (results && typeof results !=='function') {
             document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
-              detail: JSON.stringify(results,censor(results))
+              detail: {  
+                expression : e.detail,
+                results:JSON.stringify(results,censor(results))
+              }
             }));
         } else {
             document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
-              detail:  JSON.stringify(typeof results !=='function' ? 'undefined': 'Function')
+              detail: {  
+                expression : e.detail,
+                results:JSON.stringify(typeof results !=='function' ? 'undefined': 'Function')
+              }
             }));
         }
     } catch (err) {
         document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_js_expression_found', {
-          detail: JSON.stringify('*'+err.toString())
+          detail: {
+            expression : e.detail,
+            results: JSON.stringify('*'+err.toString()),
+          }
         }));
     }
 });

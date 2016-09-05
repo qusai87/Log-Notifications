@@ -506,16 +506,21 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	} else if (request.from === 'content' && request.subject === 'expression_found') {
 		clearTimeout(respone_not_received_timer);
 		respone_not_received_timer = -1;
-		var data = JSON.parse(request.output);
 
-		if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0)) {
-			controller.commandResult(data,'jquery-console-message-error');
-		} else if (typeof data==='string' && (data.indexOf('*SyntaxError') === 0)) {
-			controller.commandResult(data,'jquery-console-message-error');
-		} else if (typeof data==='string' && (data.indexOf('*TypeError') === 0)) {
-			controller.commandResult(data,'jquery-console-message-error');
+		if (request.output) {
+			var data = JSON.parse(request.output);
+
+			if (typeof data==='string' && (data.indexOf('*ReferenceError') === 0)) {
+				controller.commandResult(data,'jquery-console-message-error');
+			} else if (typeof data==='string' && (data.indexOf('*SyntaxError') === 0)) {
+				controller.commandResult(data,'jquery-console-message-error');
+			} else if (typeof data==='string' && (data.indexOf('*TypeError') === 0)) {
+				controller.commandResult(data,'jquery-console-message-error');
+			} else {
+				controller.commandResult(data,'jquery-console-message-value',0,request.expression);
+			}
 		} else {
-			controller.commandResult(data,'jquery-console-message-value');
+			controller.commandResult('undefined','jquery-console-message-error');
 		}
 	}
 });
