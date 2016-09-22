@@ -134,32 +134,35 @@ function unique(arr) {
     return results;
 }
 
+function isValidMessage (msg) {
+    var message = null;
+    if  (typeof msg === 'string' ) {
+        message = msg;
+    } else if  (typeof msg === 'object' ) {
+        if (msg.length) {
+            message = msg.join(' ');
+        }
+        else {
+            message = msg.toString();
+        }
+    }
+    if (message)
+        return !(excludeFilterRegex && message.match(excludeFilterRegex)) && (!includeFilterRegex || message.match(includeFilterRegex));
+    return false;
+}
+
 function updateCounter(msg,tabId,counterId) {
     if (counterId && msg && activeCounterId === counterId) {
         if (!counters[counterId]) {
             counters[counterId] = 0;
         }
-        var filterMessage = null;
-        if  (typeof msg === 'string' ) {
-            filterMessage = msg;
-        } else if  (typeof msg === 'object' ) {
-            if (msg.length) {
-                filterMessage = msg.join(' ');
-            }
-            else {
-                filterMessage = msg.toString();
-            }
-        }
-        if (filterMessage) {
-            if (!(excludeFilterRegex && filterMessage.match(excludeFilterRegex)) && (!includeFilterRegex || msg.match(includeFilterRegex)))
-            {
-                counters[counterId]++;
-                refreshBadge(tabId,counterId);
-            }
-        } else {
+        
+        if (isValidMessage(msg))
+        {
             counters[counterId]++;
-            refreshBadge(tabId,counterId);   
+            refreshBadge(tabId,counterId);
         }
+        
     }
 }
 function refreshBadge(tabId,counterId) {
@@ -270,41 +273,30 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 all_logs_history[counterId] = all_logs_history[counterId].slice(Math.max(all_logs_history[counterId].length - 300, 1));
             }
         }
-        if (request.action == 'error' || request.action == 'unknown') {
-            if (isNotificationEnabled || domainNotifications[request.domain]) {
+        if (isValidMessage(msg) && (isNotificationEnabled || domainNotifications[request.domain])) {
+            if (request.action == 'error' || request.action == 'unknown') {
                 showChromeNotification({
                     type: "basic",
                     title: "Error!",
                     message: msg,
                     iconUrl: "icons/icon-error.png"
                 });
-            } else {
-                updateCounter(msg,sender.tab.id,counterId);
-            }
-        } else if (request.action == 'warn') {
-            if (isNotificationEnabled || domainNotifications[request.domain]) {
+            } else if (request.action == 'warn') {
                 showChromeNotification({
                     type: "basic",
                     title: "Warning!",
                     message: msg,
                     iconUrl: "icons/icon-warn.png"
                 });
-            } else {
-                updateCounter(msg,sender.tab.id,counterId);
-            }
-        } else if (request.action == 'alert') {
-            if (isNotificationEnabled || domainNotifications[request.domain]) {
+            } else if (request.action == 'alert') {
                 showChromeNotification({
                     type: "basic",
                     title: "Alert!",
                     message: msg,
                     iconUrl: "icons/icon-info.png"
                 });
-            } else {
-                updateCounter(msg,sender.tab.id,counterId);
-            }
-        } else if (request.action == 'info') {
-            if (isNotificationEnabled || domainNotifications[request.domain]) {
+
+            } else if (request.action == 'info') {
                 showChromeNotification({
                     type: "basic",
                     title: "info!",
