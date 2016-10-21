@@ -14,7 +14,9 @@ var excludeFilterRegex = null;
 var includeFilterRegex = null;
 var notificationTimeout = -1;
 var notificationCounter = 1;
-var lastInfo;
+var lastNotificatation;
+
+var notifications = {};
 
 
 DEBUG = false;
@@ -91,12 +93,12 @@ function updateFilters () {
     });
 }
 
-function showChromeNotification (info) {
-    if (!info)
+function showChromeNotification (notificationData) {
+    if (!notificationData)
         return;
 
-    if (lastInfo) {
-        if (_.isEqual(lastInfo,info)) {
+    if (lastNotificatation) {
+        if (_.isEqual(lastNotificatation,notificationData)) {
             if (notificationTimeout !== -1) {
                 clearTimeout(notificationTimeout);       
                 notificationCounter++; 
@@ -104,22 +106,56 @@ function showChromeNotification (info) {
 
             notificationTimeout = setTimeout(function () {
                 if (notificationCounter > 1)
-                    lastInfo.title = '['+notificationCounter+'] ' + lastInfo.title ;
-                chrome.notifications.create('', lastInfo , function() {});
+                    lastNotificatation.title = '['+notificationCounter+'] ' + lastNotificatation.title ;
+                
+                createNotification(notificationData);
                 notificationCounter = 1;
-                lastInfo = null;
+                lastNotificatation = null;
             },500);
 
         } else {
-            chrome.notifications.create('', info , function() {});
+            createNotification(notificationData);
             notificationCounter = 1; 
         }
     } else {
-        chrome.notifications.create('', info , function() {});
+        createNotification(notificationData);
         notificationCounter = 1;
     }
 
-    lastInfo = info;
+    lastNotificatation = notificationData;
+}
+
+function createNotification (notificationData) {
+    chrome.notifications.create('', notificationData ,  _.bind(function(id) {
+        if (this.context)
+            this.context.notifications[id] = this.message;
+    },{message :notificationData.message , context: this}));
+}
+
+/* Respond to the user's clicking one of the buttons */
+chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
+    if (btnIdx === 0 && notifId) {
+        var log = getNotificationData(notifId);
+        if (log) {
+            copyToClipboard(log);
+            chrome.notifications.clear(notifId);
+        }
+    } else {
+        chrome.notifications.clear(notifId);
+    }
+});
+
+function getNotificationData(id) {
+    return notifications[id];
+}
+function copyToClipboard (txt) {
+    var input = document.createElement('textarea');
+    document.body.appendChild(input);
+    input.value = txt;
+    input.focus();
+    input.select();
+    document.execCommand('Copy');
+    input.remove();
 }
 
 updateFilters();
@@ -165,19 +201,7 @@ function updateCounter(msg,tabId,counterId) {
         
     }
 }
-function refreshBadge(tabId,counterId) {
-    // update badge text :
-    if (isEnabled) {
-        if (counterId && counters[counterId]) {
-            chrome.browserAction.setBadgeText({
-                text: '' + counters[counterId]
-            });    
-        } else {
-            chrome.browserAction.setBadgeText({
-                text: ""
-            });        
-        }
-    }
+function refreshBadge(tabId,counterId) { 
     // update icon :
     chrome.tabs.query(
     {
@@ -195,14 +219,33 @@ function refreshBadge(tabId,counterId) {
                 if (isEnabled) {
                     if (isNotificationEnabled || domainNotifications[domain]) {
                         setIcon('');
+                        if (counterId && counters[counterId]) {
+                            chrome.browserAction.setBadgeText({
+                                text: '' + counters[counterId]
+                            });    
+                        } else {
+                            chrome.browserAction.setBadgeText({
+                                text: ""
+                            });        
+                        }
                     } else {
                         setIcon('muted');
+                         chrome.browserAction.setBadgeText({
+                            text: ""
+                        });   
                     }
                 } else {
                     setIcon('disabled');
+                    chrome.browserAction.setBadgeText({
+                        text: ""
+                    });   
                 }
             }
         } else {
+            chrome.browserAction.setBadgeText({
+                text: ""
+            });   
+
             if (isEnabled) {
                 setIcon('');
             } else {
@@ -279,21 +322,33 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                     type: "basic",
                     title: "Error!",
                     message: msg,
-                    iconUrl: "icons/icon-error.png"
+                    iconUrl: "icons/icon-error.png",
+                    buttons: [
+                        { title: 'Copy' },
+                        { title: 'Close' }
+                    ]
                 });
             } else if (request.action == 'warn') {
                 showChromeNotification({
                     type: "basic",
                     title: "Warning!",
                     message: msg,
-                    iconUrl: "icons/icon-warn.png"
+                    iconUrl: "icons/icon-warn.png",
+                    buttons: [
+                        { title: 'Copy' },
+                        { title: 'Close' }
+                    ]
                 });
             } else if (request.action == 'alert') {
                 showChromeNotification({
                     type: "basic",
                     title: "Alert!",
                     message: msg,
-                    iconUrl: "icons/icon-info.png"
+                    iconUrl: "icons/icon-info.png",
+                    buttons: [
+                        { title: 'Copy' },
+                        { title: 'Close' }
+                    ]
                 });
 
             } else if (request.action == 'info') {
@@ -301,7 +356,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                     type: "basic",
                     title: "info!",
                     message: msg,
-                    iconUrl: "icons/icon-info.png"
+                    iconUrl: "icons/icon-info.png",
+                    buttons: [
+                        { title: 'Copy' },
+                        { title: 'Close' }
+                    ]
                 });
             } else {
                 updateCounter(msg,sender.tab.id,counterId);
