@@ -83,12 +83,17 @@ if (!window.console.isOverrided && !window.console.isModified) {
             /// <param name="stack" type="String">the stack string</param>
 
             // correct line number according to how ErrorLog().write implemented
-            var line = stack.split('\n')[4];
-            // fix for various display text
-            line = (line.indexOf(' (') >= 0
-                ? line.split(' (')[1].substring(0, line.length - 1)
-                : line.split('at ')[1]
-                );
+            try {
+                var line = stack.split('\n')[4];
+                // fix for various display text
+                line = (line.indexOf(' (') >= 0
+                    ? line.split(' (')[1].substring(0, line.length - 1)
+                    : line.split('at ')[1]
+                    );
+                
+            } catch (e) {
+                return '';
+            }
             // I should find a better way to align line ref to right (as chrome dev tools)
             //return ["Node count: %d, and the time is %f.", document.childNodes.length, Date.now()]
             return '\n at: \t' + line;
