@@ -42,6 +42,14 @@ if (!window.console.isOverrided && !window.console.isModified) {
         }
     }
 
+    function $start_debug() {
+        DEBUG = true;
+    }
+
+    function $stop_debug() {
+        DEBUG = false;
+    }
+
     // Take shallow copy of console methods
     var _console = shallowCopy(window.console || {}); 
     // Add flag to detect if current console methods is overrided!
