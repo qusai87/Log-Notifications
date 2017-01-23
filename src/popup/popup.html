@@ -25,26 +25,40 @@
         </div>
         <div class="pull-right">
             <label>Enabled</label>
-            <input type="checkbox" id="enabledSwitch" value="" data-label="" class="js-switch">
+            <span class="pull-right">
+                <input type="checkbox" id="enabledSwitch" value="" data-label="" class="js-switch">
+            </span>
         </div>
 
     </div>
     <div class="header">
         <div class="pull-left">
-            <label>Preserved Logs</label>
-            <input type="checkbox" id="preserveLogsSwitch" value="" data-label="" class="js-switch">
-            <div class="hidden" style="display: none;">
-                <label>Show console stack</label>
-                <input type="checkbox" id="showLineRefenceSwitch" value="" data-label="" class="js-switch">
+            <div class="switch">
+                <label>Preserved Logs</label>
+                <span class="pull-right">
+                    <input type="checkbox" id="preserveLogsSwitch" value="" data-label="" class="js-switch">
+                </span>
+            </div>
+            <div class="switch">
+                <label>Enable Log Stack</label>
+                <span class="pull-right">
+                    <input type="checkbox" id="enableLogStackSwitch" value="" data-label="" class="js-switch">
+                </span>
             </div>
         </div>
         <div class="pull-right">
-            <label>Enable Notificaitons on All Domains</label>
-            <input type="checkbox" id="notificationSwitch" value="" data-label="" class="js-switch">
-        </div>
-        <div class="pull-right">
-            <label>Notificaitons only on this Domain</label>
-            <input type="checkbox" id="domainSwitch" value="" data-label="" class="js-switch">
+            <div class="switch">
+                <label>Enable Notificaitons on All Domains</label>
+                <span class="pull-right">
+                    <input type="checkbox" id="notificationSwitch" value="" data-label="" class="js-switch">
+                </span>
+            </div>
+            <div class="switch">
+                <label>Notificaitons only on this Domain</label>
+                <span class="pull-right">
+                    <input type="checkbox" id="domainSwitch" value="" data-label="" class="js-switch">
+                </span>
+            </div>
         </div>
     </div>
     <div style="clear:both">

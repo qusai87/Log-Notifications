@@ -18,6 +18,10 @@ label {
 	padding: 10px;
 }
 
+.switch {
+    height: 27px;
+}
+
 .header {
 	float: left;
 	padding: 0 10px 10px 0;

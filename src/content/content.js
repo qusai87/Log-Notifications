@@ -5,10 +5,15 @@ var console = window.console;
 if (DEBUG)
 	console.log('content.js started!');
 
-chrome.storage.sync.get('enabled', function(result) {
-	var enabled = result.enabled;
-	init(enabled);
+chrome.storage.sync.get('enableLogStack', function(result) {
+	var enableLogStack = result.enableLogStack;
+	chrome.storage.sync.get('enabled', function(result) {
+		var enabled = result.enabled;
+		init(enabled,enableLogStack);
+	});
 });
+
+
 
 /**
  * @license domReady 2.0.1 Copyright jQuery Foundation and other contributors.
@@ -33,54 +38,6 @@ function pageLoaded() {
         }
 
         var completed = false;
-        if (window.location.hostname.indexOf('booking.facebook') != -1) {
-        	var rightPane = document.querySelector('[id="rightCol"]');
-        	var rightPane_width = 0;
-			if (rightPane) {
-				rightPane_width =  parseInt (window.getComputedStyle(rightPane.firstChild.firstChild).width);
-			}
-
-        	var pagelet_web_messenger = document.querySelector('#pagelet_web_messenger');
-        	var globalContainer = document.querySelector('#globalContainer');
-
-        	if (pagelet_web_messenger && globalContainer && rightPane_width) 
-        	{
-        		var pagelet_web_messenger_width = parseInt(window.getComputedStyle(pagelet_web_messenger).width);
-        		var leftPane = pagelet_web_messenger.querySelector('.wmMasterView');
-        		var mainPane = pagelet_web_messenger.querySelector('[role="main"]');
-        		if (leftPane && mainPane) {
-	        		var mainPane_width = parseInt(window.getComputedStyle(mainPane).width);
-	        		var leftPane_width = parseInt(window.getComputedStyle(leftPane).width);
-	        		var max = pagelet_web_messenger_width+rightPane_width-leftPane_width - 20;
-
-					if (mainPane) {
-						var content = mainPane.querySelector('.uiScrollableAreaContent');
-						if (content) {
-							var height = parseInt (window.getComputedStyle(content).height);
-						}
-						if (mainPane && height>20) {
-							var newWidth = Math.min(max, rightPane_width + mainPane_width);
-        					globalContainer.style.width  = newWidth + leftPane_width + 10 + 'px'
-							mainPane.style.width = newWidth + 'px';
-							mainPane.querySelector('.uiScrollableArea').style.width="100%";
-							mainPane.querySelector('.uiScrollableAreaBody').style.width="100%";
-							if (rightPane)
-								rightPane.style.display = 'none';
-							completed = true;
-						}
-					}
-        		}
-        	} 
-
-        	if (!completed && times<20) {
-        		times ++;
-        		console.log('restart fix facebook chat');
-        		isPageLoaded = false;
-				setTimeout(pageLoaded,100); //restart until it complete everything!
-        	} else {
-        		window.$debug && $debug();
-        	}
-		}
     }
 }
 
@@ -159,8 +116,29 @@ function add_CSS_File(src) {
 		return false;
 	}
 }
-function init(enabled) {
+function init(enabled, enableLogStack) {
 	// Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
+	document.addEventListener('Msg_LogNotificationExtension_enabled', function(e) {
+		if (DEBUG)
+			console.log(enabled);
+
+		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enabled', {
+			detail: enabled
+		}));
+
+		return enabled;
+	});
+
+	document.addEventListener('Msg_LogNotificationExtension_enableLogStack', function(e) {
+		if (DEBUG)
+			console.log(enableLogStack);
+		
+		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enableLogStack', {
+			detail: enableLogStack
+		}));
+
+		return enableLogStack;
+	});
 
 	if (enabled) {
 		if (add_JS_File('src/inject/evaluate.js')) {
@@ -193,7 +171,7 @@ function init(enabled) {
 					}, function(response) {
 						if (DEBUG)
 							console.log(response);
-						document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', {}));
+						document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', {detail:''}));
 					});
 				}
 			});

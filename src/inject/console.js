@@ -1,6 +1,7 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
 var DEBUG = false;
 //DEBUG = true;
+var enableStack = false;
 
 if (!window.console.isOverrided && !window.console.isModified) {
     if (DEBUG) {
@@ -59,7 +60,12 @@ if (!window.console.isOverrided && !window.console.isModified) {
     window._JSConsole.messages = [];
     window._JSConsole.history = [];
 
-    var addLogStackNumber = (function (undefined) {
+    var addLogStackWrapper = function (undefined) {
+        if (!enableStack) {
+            return function () {
+                return Array.prototype.slice.call(arguments, 0);
+            }
+        }
         var ErrorLog = Error; // does this do anything?  proper inheritance...?
         ErrorLog.prototype.write = function (args) {
             /// <summary>
@@ -120,7 +126,9 @@ if (!window.console.isOverrided && !window.console.isModified) {
             return ErrorLog().write(Array.prototype.slice.call(arguments, 0)); // turn into proper array
         };//--  fn  returned
 
-    })();//--- logWrapper*/
+    };
+
+    addLogStackNumber = addLogStackWrapper();
 
     window.console.log = function(){
         var args = Array.prototype.slice.call(arguments, 0);
@@ -186,6 +194,17 @@ if (!window.console.isOverrided && !window.console.isModified) {
             }));
         }
     });
+
+
+    document.addEventListener('Msg_LogNotificationExtension_get_enableLogStack', function(e) {
+        if (e.detail)
+            enableStack = e.detail;
+
+        addLogStackNumber = addLogStackWrapper();
+    });
+
+    document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_enableLogStack', {
+    }));
 
     window.alert = function() {
         // do something here

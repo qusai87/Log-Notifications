@@ -2,6 +2,8 @@
 enabled = true;
 notification_enabled = false;
 preserveLogs = false;
+enableLogStack = false;
+
 domain_notifications = {};
 respone_not_received_timer = -1;
 DEBUG = false;
@@ -309,6 +311,16 @@ window.addEventListener('DOMContentLoaded', function() {
 			          if (DEBUG)
 			          	console.log('preserveLogs saved');
 			        });
+			    } else if (id === 'enableLogStackSwitch') {
+			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
+			    	enableLogStack = checked;
+			    	clear();
+			    	loadLogs();
+
+			    	chrome.storage.sync.set({'enableLogStack': enableLogStack}, function() {
+			          if (DEBUG)
+			          	console.log('enableLogStack saved');
+			        });
 			    }
 			}
 		});
@@ -389,6 +401,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
 		chrome.storage.sync.get('domain_notifications', function(result) {
 			domain_notifications = result.domain_notifications;
+			console.log('domain_notifications:' , domain_notifications);
 			if (domain_notifications[domain]) {
 				domainSwitch.checked = true;
 			} else {
@@ -403,6 +416,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
 		chrome.storage.sync.get('preserveLogs', function(result) {
 			preserveLogs = result.preserveLogs;
+			console.log('preserveLogs:' , preserveLogs);
 			if (preserveLogs) {
 				preserveLogsSwitch.checked = true;
 			} else {
@@ -413,6 +427,20 @@ window.addEventListener('DOMContentLoaded', function() {
 	    		preserveLogsSwitch.switch.disable();
 	    	}
 			loadLogs();			
+		});
+
+		chrome.storage.sync.get('enableLogStack', function(result) {
+			enableLogStack = result.enableLogStack;
+			console.log('enableLogStack:' , enableLogStack);
+			if (enableLogStack) {
+				enableLogStackSwitch.checked = true;
+			} else {
+				enableLogStackSwitch.checked = false;
+			}
+			enableLogStackSwitch.switch.setPosition();
+			if (!enabled) {
+	    		enableLogStackSwitch.switch.disable();
+	    	}	
 		});
 
 		controller = $('.console').empty().console({

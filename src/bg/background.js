@@ -126,6 +126,9 @@ function showChromeNotification (notificationData) {
 }
 
 function createNotification (notificationData) {
+    if (DEBUG)
+        console.log('notification created!', notificationData);
+    
     chrome.notifications.create('', notificationData ,  _.bind(function(id) {
         if (this.context)
             this.context.notifications[id] = this.message;
@@ -268,6 +271,46 @@ function setIcon(type) {
         }
     });
 }
+function countElements(arr) {
+    if (!arr)
+        return;
+
+    var a = [], b = [], prev;
+
+    arr.sort(dynamicSort('msg'));
+    for ( var i = 0; i < arr.length; i++ ) {
+        if ( !prev || (arr[i] && arr[i].msg !== prev.msg) ) {
+            a.push(arr[i].msg);
+            b.push(1);
+        } else {
+            b[b.length-1]++;
+        }
+        prev = arr[i];
+    }
+
+    return [a,b];
+}
+
+function compare(a,b) {
+    return (a['msg'] < b['msg']) ? -1 : (a['msg'] > b['msg']) ? 1 : 0;
+}
+
+function countMessages(arr,msg) {
+    if (!arr)
+        return 0;
+
+    var a = [], prev;
+    var count = 0;
+
+    for ( var i = 0; i < arr.length; i++ ) {
+        if (arr[i] && msg === arr[i].msg)
+            count++;
+    }
+
+    return count;
+}
+
+
 // Listener - Put this in the background script to listen to all the events.
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     var counterId;
@@ -306,8 +349,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         }
 
         request.msg = msg;
-
+        
         if (counterId) {
+            var count = countMessages(all_logs_history[counterId],msg);
+            if (count>5) {
+                return;
+            } else if (count==5) {
+                msg = 'This Message repeat many times and it will be disabled from notifications. \n' +request.msg;
+            }
+
             if (!all_logs_history[counterId])
                 all_logs_history[counterId] = [];
 
@@ -501,7 +551,6 @@ chrome.tabs.onRemoved.addListener(function(tabId,tab) {
         activeCounterId = null;
         //refreshBadge(null,activeCounterId); # No Need to refresh the badge since there will be another tab activated!
     }
-
 
     if (DEBUG)
         console.log("Tab removed event caught: " , tabId);
