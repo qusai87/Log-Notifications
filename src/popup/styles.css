@@ -67,7 +67,7 @@ div.console {
 div.console div.jquery-console-inner
 { 
 	width:98%; 
-	height:400px; 
+	height:300px; 
 	background:#fff; 
 	padding: 0;
  	overflow:auto;
