@@ -1,0 +1,255 @@
+diff --git a/manifest.json b/manifest.json
+index 1bbab66..169c657 100644
+--- a/manifest.json
++++ b/manifest.json
+@@ -1,9 +1,10 @@
+ {
+-  "name": "JS Console with Chrome Notifications",
+-  "version": "0.4.6",
++  "name": "Mini JS Console with Error Detection",
++  "short_name": "Mini JS Console",
++  "version": "1.0.0",
+   "manifest_version": 2,
+   "offline_enabled": true,
+-  "description": "Show JS console in popup and show console errors/warns and window alerts as chrome notifications!",
++  "description": "Mini JS console that track console logs and detect JS errors/alerts and show them via chorme notifications",
+   "homepage_url": "https://chrome.google.com/webstore/detail/log-notifications/dkebpeehodefnopcpggkdgeljadommmm?utm_source=plus",
+   "icons": {
+     "16": "icons/icon-16.png",
+@@ -26,7 +27,7 @@
+     "default_popup": "src/popup/popup.html"
+   },
+   "permissions": [
+-    "notifications","tabs", "storage"
++    "notifications","tabs", "storage", "browsingData"
+   ],
+   "content_scripts": [
+     {
+diff --git a/src/bg/background.js b/src/bg/background.js
+index ccd57cb..0a4e693 100644
+--- a/src/bg/background.js
++++ b/src/bg/background.js
+@@ -16,6 +16,9 @@ var notificationTimeout = -1;
+ var notificationCounter = 1;
+ var lastNotificatation;
+ 
++var disableCache = false;
++var clearCacheRunning = false;
++
+ var notifications = {};
+ 
+ 
+@@ -36,6 +39,12 @@ chrome.storage.sync.get('enabled', function (result) {
+ 
+ });
+ 
++chrome.storage.sync.get('disableCache', function (result) {
++    if (typeof result.disableCache === 'boolean') {
++        disableCache = result.disableCache;
++    }
++});
++
+ chrome.storage.sync.get('notification_enabled', function (result) {
+     if (typeof result.notification_enabled === 'boolean') {
+         isNotificationEnabled = result.notification_enabled;
+@@ -310,6 +319,23 @@ function countMessages(arr,msg) {
+     return count;
+ }
+ 
++function clearCache() {
++    if (!clearCacheRunning) {
++        //if (chrome.experimental != undefined && chrome.experimental.clear != undefined) {
++        if (typeof(chrome.browsingData) !== 'undefined') {
++            clearCacheRunning = true;
++            var millisecondsPerWeek = 1000 * 60 * 60 * 24 * 7;
++            var oneWeekAgo = (new Date()).getTime() - millisecondsPerWeek;
++            
++            //Chrome 19:
++            chrome.browsingData.removeCache({
++                  "since": oneWeekAgo
++                }, function() {
++                clearCacheRunning = false;
++            });
++        }
++    }
++};
+ 
+ // Listener - Put this in the background script to listen to all the events.
+ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+@@ -471,8 +497,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+             if (DEBUG)
+                 console.log(response);
+         });
+-    }else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
++    } else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
+         updateFilters();
++    } else if ((request.from === 'popup') && (request.subject === 'disable_cache')) {
++        disableCache = request.enabled;
+     }
+ });
+ 
+@@ -492,7 +520,7 @@ chrome.tabs.onActivated.addListener(function(tabInfo) {
+ });
+ 
+ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
+-    if ( changeInfo.status === "complete" )
++    if (changeInfo.status === "complete" )
+     {
+         // page reload complete
+         var counterId = tabInfo.windowId  + ':' + tabId;
+@@ -511,12 +539,25 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
+ 
+         var domain = parser.hostname;
+ 
+-        if (domain && parser.protocol.indexOf('http')!==-1) {
++        if (isEnabled && domain && parser.protocol.indexOf('http')!==-1) {
+ 
+             if (isNotificationEnabled || domainNotifications[domain]) {
+                 _gaq.push(['_trackEvent', domain, 'domain']);
+             }
+         }
++    } else if (isEnabled && disableCache &&changeInfo.status === 'loading') {
++        // Extract url info
++        var parser = document.createElement('a');
++        parser.href = tabInfo.url;
++
++        var domain = parser.hostname;
++
++         if (domain && parser.protocol.indexOf('http')!==-1) {
++
++            if (isNotificationEnabled || domainNotifications[domain]) {
++                clearCache();
++            }
++        }
+     }
+ });
+ 
+diff --git a/src/inject/styles.css b/src/inject/styles.css
+index 65c8e91..e69de29 100644
+--- a/src/inject/styles.css
++++ b/src/inject/styles.css
+@@ -1,3 +0,0 @@
+-div#plack-debugger {
+-    display: none;
+-}
+\ No newline at end of file
+diff --git a/src/popup/popup.html b/src/popup/popup.html
+index 3110e63..30b1006 100755
+--- a/src/popup/popup.html
++++ b/src/popup/popup.html
+@@ -24,7 +24,7 @@
+             <h1>JS Console</h1>
+         </div>
+         <div class="pull-right">
+-            <label>Enabled</label>
++            <label>Active</label>
+             <span class="pull-right">
+                 <input type="checkbox" id="enabledSwitch" value="" data-label="" class="js-switch">
+             </span>
+@@ -45,16 +45,22 @@
+                     <input type="checkbox" id="enableLogStackSwitch" value="" data-label="" class="js-switch">
+                 </span>
+             </div>
++            <div class="switch">
++                <label>Disable Cache</label>
++                <span class="pull-right">
++                    <input type="checkbox" id="disableCacheSwitch" value="" data-label="" class="js-switch">
++                </span>
++            </div>
+         </div>
+         <div class="pull-right">
+             <div class="switch">
+-                <label>Enable Notificaitons on All Domains</label>
++                <label>Enable on All Domains</label>
+                 <span class="pull-right">
+                     <input type="checkbox" id="notificationSwitch" value="" data-label="" class="js-switch">
+                 </span>
+             </div>
+             <div class="switch">
+-                <label>Notificaitons only on this Domain</label>
++                <label>Enable only on this Domain</label>
+                 <span class="pull-right">
+                     <input type="checkbox" id="domainSwitch" value="" data-label="" class="js-switch">
+                 </span>
+diff --git a/src/popup/popup.js b/src/popup/popup.js
+index 7a5049f..ee312bf 100644
+--- a/src/popup/popup.js
++++ b/src/popup/popup.js
+@@ -3,6 +3,7 @@ enabled = true;
+ notification_enabled = false;
+ preserveLogs = false;
+ enableLogStack = false;
++disableCache = false;
+ 
+ domain_notifications = {};
+ respone_not_received_timer = -1;
+@@ -291,10 +292,14 @@ window.addEventListener('DOMContentLoaded', function() {
+ 			    		domainSwitch.switch.enable();
+ 			    		notificationSwitch.switch.enable();
+ 			    		preserveLogsSwitch.switch.enable();
++			    		enableLogStackSwitch.switch.enable();
++	    				disableCacheSwitch.switch.enable();
+ 			    	} else {
+ 			    		domainSwitch.switch.disable();
+ 			    		notificationSwitch.switch.disable();
+ 			    		preserveLogsSwitch.switch.disable();
++			    		enableLogStackSwitch.switch.disable();
++	    				disableCacheSwitch.switch.disable();
+ 			    	}
+ 			    	sendRuntimeMessage({
+ 						from: 'popup',
+@@ -321,6 +326,20 @@ window.addEventListener('DOMContentLoaded', function() {
+ 			          if (DEBUG)
+ 			          	console.log('enableLogStack saved');
+ 			        });
++			    } else if (id === 'disableCacheSwitch') {
++			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
++			    	disableCache = checked;
++
++			    	chrome.storage.sync.set({'disableCache': disableCache}, function() {
++			          if (DEBUG)
++			          	console.log('disableCache saved');
++			        });
++
++			        sendRuntimeMessage({
++						from: 'popup',
++						subject: 'disable_cache',
++						enabled: checked
++					}, function(response) {});
+ 			    }
+ 			}
+ 		});
+@@ -443,6 +462,20 @@ window.addEventListener('DOMContentLoaded', function() {
+ 	    	}	
+ 		});
+ 
++		chrome.storage.sync.get('disableCache', function(result) {
++			disableCache = result.disableCache;
++			console.log('disableCache:' , disableCache);
++			if (disableCache) {
++				disableCacheSwitch.checked = true;
++			} else {
++				disableCacheSwitch.checked = false;
++			}
++			disableCacheSwitch.switch.setPosition();
++			if (!enabled) {
++	    		disableCacheSwitch.switch.disable();
++	    	}	
++		});
++
+ 		controller = $('.console').empty().console({
+ 			promptLabel: '> ',
+ 			commandValidate: function(line) {
+diff --git a/src/popup/styles.css b/src/popup/styles.css
+index 66d7211..f499c18 100644
+--- a/src/popup/styles.css
++++ b/src/popup/styles.css
+@@ -67,7 +67,7 @@ div.console {
+ div.console div.jquery-console-inner
+ { 
+ 	width:98%; 
+-	height:400px; 
++	height:300px; 
+ 	background:#fff; 
+ 	padding: 0;
+  	overflow:auto;
