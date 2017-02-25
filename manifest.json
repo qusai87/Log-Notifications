@@ -1,9 +1,10 @@
 {
-  "name": "JS Console with Chrome Notifications",
-  "version": "0.4.6",
+  "name": "Mini JS Console with Error Detection",
+  "short_name": "Mini JS Console",
+  "version": "1.0.0",
   "manifest_version": 2,
   "offline_enabled": true,
-  "description": "Show JS console in popup and show console errors/warns and window alerts as chrome notifications!",
+  "description": "Mini JS console that track console logs and detect JS errors/alerts and show them via chorme notifications",
   "homepage_url": "https://chrome.google.com/webstore/detail/log-notifications/dkebpeehodefnopcpggkdgeljadommmm?utm_source=plus",
   "icons": {
     "16": "icons/icon-16.png",
@@ -26,7 +27,7 @@
     "default_popup": "src/popup/popup.html"
   },
   "permissions": [
-    "notifications","tabs", "storage"
+    "notifications","tabs", "storage", "browsingData"
   ],
   "content_scripts": [
     {

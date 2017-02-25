@@ -16,6 +16,9 @@ var notificationTimeout = -1;
 var notificationCounter = 1;
 var lastNotificatation;
 
+var disableCache = false;
+var clearCacheRunning = false;
+
 var notifications = {};
 
 
@@ -34,6 +37,12 @@ chrome.storage.sync.get('enabled', function (result) {
     }
     refreshBadge();
 
+});
+
+chrome.storage.sync.get('disableCache', function (result) {
+    if (typeof result.disableCache === 'boolean') {
+        disableCache = result.disableCache;
+    }
 });
 
 chrome.storage.sync.get('notification_enabled', function (result) {
@@ -310,6 +319,23 @@ function countMessages(arr,msg) {
     return count;
 }
 
+function clearCache() {
+    if (!clearCacheRunning) {
+        //if (chrome.experimental != undefined && chrome.experimental.clear != undefined) {
+        if (typeof(chrome.browsingData) !== 'undefined') {
+            clearCacheRunning = true;
+            var millisecondsPerWeek = 1000 * 60 * 60 * 24 * 7;
+            var oneWeekAgo = (new Date()).getTime() - millisecondsPerWeek;
+            
+            //Chrome 19:
+            chrome.browsingData.removeCache({
+                  "since": oneWeekAgo
+                }, function() {
+                clearCacheRunning = false;
+            });
+        }
+    }
+};
 
 // Listener - Put this in the background script to listen to all the events.
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -471,8 +497,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             if (DEBUG)
                 console.log(response);
         });
-    }else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
+    } else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
         updateFilters();
+    } else if ((request.from === 'popup') && (request.subject === 'disable_cache')) {
+        disableCache = request.enabled;
     }
 });
 
@@ -492,7 +520,7 @@ chrome.tabs.onActivated.addListener(function(tabInfo) {
 });
 
 chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
-    if ( changeInfo.status === "complete" )
+    if (changeInfo.status === "complete" )
     {
         // page reload complete
         var counterId = tabInfo.windowId  + ':' + tabId;
@@ -511,10 +539,23 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 
         var domain = parser.hostname;
 
-        if (domain && parser.protocol.indexOf('http')!==-1) {
+        if (isEnabled && domain && parser.protocol.indexOf('http')!==-1) {
 
             if (isNotificationEnabled || domainNotifications[domain]) {
                 _gaq.push(['_trackEvent', domain, 'domain']);
+            }
+        }
+    } else if (isEnabled && disableCache &&changeInfo.status === 'loading') {
+        // Extract url info
+        var parser = document.createElement('a');
+        parser.href = tabInfo.url;
+
+        var domain = parser.hostname;
+
+         if (domain && parser.protocol.indexOf('http')!==-1) {
+
+            if (isNotificationEnabled || domainNotifications[domain]) {
+                clearCache();
             }
         }
     }

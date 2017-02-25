@@ -3,6 +3,7 @@ enabled = true;
 notification_enabled = false;
 preserveLogs = false;
 enableLogStack = false;
+disableCache = false;
 
 domain_notifications = {};
 respone_not_received_timer = -1;
@@ -291,10 +292,14 @@ window.addEventListener('DOMContentLoaded', function() {
 			    		domainSwitch.switch.enable();
 			    		notificationSwitch.switch.enable();
 			    		preserveLogsSwitch.switch.enable();
+			    		enableLogStackSwitch.switch.enable();
+	    				disableCacheSwitch.switch.enable();
 			    	} else {
 			    		domainSwitch.switch.disable();
 			    		notificationSwitch.switch.disable();
 			    		preserveLogsSwitch.switch.disable();
+			    		enableLogStackSwitch.switch.disable();
+	    				disableCacheSwitch.switch.disable();
 			    	}
 			    	sendRuntimeMessage({
 						from: 'popup',
@@ -321,6 +326,20 @@ window.addEventListener('DOMContentLoaded', function() {
 			          if (DEBUG)
 			          	console.log('enableLogStack saved');
 			        });
+			    } else if (id === 'disableCacheSwitch') {
+			    	_gaq.push(['_trackEvent', id+"_"+checked, 'switch']);
+			    	disableCache = checked;
+
+			    	chrome.storage.sync.set({'disableCache': disableCache}, function() {
+			          if (DEBUG)
+			          	console.log('disableCache saved');
+			        });
+
+			        sendRuntimeMessage({
+						from: 'popup',
+						subject: 'disable_cache',
+						enabled: checked
+					}, function(response) {});
 			    }
 			}
 		});
@@ -440,6 +459,20 @@ window.addEventListener('DOMContentLoaded', function() {
 			enableLogStackSwitch.switch.setPosition();
 			if (!enabled) {
 	    		enableLogStackSwitch.switch.disable();
+	    	}	
+		});
+
+		chrome.storage.sync.get('disableCache', function(result) {
+			disableCache = result.disableCache;
+			console.log('disableCache:' , disableCache);
+			if (disableCache) {
+				disableCacheSwitch.checked = true;
+			} else {
+				disableCacheSwitch.checked = false;
+			}
+			disableCacheSwitch.switch.setPosition();
+			if (!enabled) {
+	    		disableCacheSwitch.switch.disable();
 	    	}	
 		});
 
