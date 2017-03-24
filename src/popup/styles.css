@@ -1,30 +1,31 @@
-#mainPopup {
-	padding: 10px;
-	height: 500px;
-	width: 450px;
-	font-family: Helvetica,Tahoma,Ubuntu, Arial, sans-serif;
+body, section {			/* Change width and height to own preferences */
+	width: 500px;
+	height: 560px;
+	overflow-x: hidden;
 }
-#include_filters {
-	width: 47%;
-}
-#exclude_filters {
-	width: 47%;
-}
+
+/* Basic style tweaks */
+section { padding: 5px;}
+.navbar { margin-bottom: 2px; }
+
 h1 {
 	font-size: 1.5em;
 	margin-top: 0;
 }
 label {
-	padding: 10px;
+	padding-right: 3px;
 }
 
 .switch {
     height: 27px;
 }
 
+.filter-text {
+	width: 100%;
+}
+
 .header {
 	float: left;
-	padding: 0 10px 10px 0;
 	width: 100%;
 }
 .footer {
@@ -65,8 +66,7 @@ div.console {
 	margin-top:1em;
 }
 div.console div.jquery-console-inner
-{ 
-	width:98%; 
+{
 	height:300px; 
 	background:#fff; 
 	padding: 0;

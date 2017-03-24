@@ -1,7 +1,7 @@
 {
   "name": "Mini JS Console with Error Detection",
   "short_name": "Mini JS Console",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "manifest_version": 2,
   "offline_enabled": true,
   "description": "Mini JS console that track console logs and detect JS errors/alerts and show them via chorme notifications",
