@@ -483,6 +483,23 @@ window.addEventListener('DOMContentLoaded', function() {
 			saveOption(id,checked);
 		});
 
+	   $('.js-jquery-button').click(function(){
+		   	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+			    $.get("https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js", function(result) {
+			        evaluateJSExpression(result+';$.fn.jquery');
+			        $('.js-jquery-button').prop('disabled', true);
+			    }, "text");
+			});
+	   });
+
+	   $('.js-underscore-button').click(function(){
+		   	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+			    $.get("http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.2.1/underscore-min.js", function(result) {
+			        evaluateJSExpression(result+';_ = window._ || require("underscore");_.VERSION');
+			        $('.js-underscore-button').prop('disabled', true);
+			    }, "text");
+			});
+	   });
 	   $('.btn-toggle').click(function() {
 		    $(this).find('.btn').toggleClass('active');  
 		    
