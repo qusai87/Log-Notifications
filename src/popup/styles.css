@@ -9,7 +9,7 @@ section { padding: 5px;}
 .navbar { margin-bottom: 2px; }
 
 h1 {
-	font-size: 1.5em;
+	font-size: 1.2em;
 	margin-top: 0;
 }
 label {
@@ -21,7 +21,10 @@ label {
 }
 
 .filter-text {
-	width: 100%;
+	width: 50%;
+    padding: 0;
+    margin: 0;
+    float: left;
 }
 
 .header {
@@ -33,6 +36,14 @@ label {
 	padding: 0 10px 10px 0;
 	margin: 10 0px;
 	width: 100%;
+}
+
+.well-sm {
+	padding: 9px 0;
+}
+
+.panel {
+	margin-bottom: 0px;
 }
 
 .badge {
@@ -51,7 +62,7 @@ label {
 .note {
 	color: #9e9c9c;
 	font-style: italic;
-	margin-bottom: 10px;
+	margin-bottom: 2px;
 }
 #expression {
 	width: 300px;
@@ -67,7 +78,7 @@ div.console {
 }
 div.console div.jquery-console-inner
 {
-	height:300px; 
+	height:410px; 
 	background:#fff; 
 	padding: 0;
  	overflow:auto;

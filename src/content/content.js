@@ -1,8 +1,9 @@
 // Stackoverflow : http://stackoverflow.com/questions/9515704/building-a-chrome-extension-inject-code-in-a-page-using-a-content-script/9517879#9517879
 // Read it from the storage
-var DEBUG = false;
+__DEBUG = false;
+
 var console = window.console;
-if (DEBUG)
+if (__DEBUG)
 	console.log('content.js started!');
 
 chrome.storage.sync.get('enableLogStack', function(result) {
@@ -119,8 +120,8 @@ function add_CSS_File(src) {
 function init(enabled, enableLogStack) {
 	// Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
 	document.addEventListener('Msg_LogNotificationExtension_enabled', function(e) {
-		if (DEBUG)
-			console.log(enabled);
+		if (__DEBUG)
+			console.log('enabled',enabled);
 
 		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enabled', {
 			detail: enabled
@@ -130,8 +131,8 @@ function init(enabled, enableLogStack) {
 	});
 
 	document.addEventListener('Msg_LogNotificationExtension_enableLogStack', function(e) {
-		if (DEBUG)
-			console.log(enableLogStack);
+		if (__DEBUG)
+			console.log('enableLogStack',enableLogStack);
 		
 		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enableLogStack', {
 			detail: enableLogStack
@@ -143,8 +144,8 @@ function init(enabled, enableLogStack) {
 	if (enabled) {
 		if (add_JS_File('src/inject/evaluate.js')) {
 			document.addEventListener('Msg_LogNotificationExtension_js_expression_found', function(e) {
-				if (DEBUG)
-					console.log(e);
+				if (__DEBUG)
+					console.log('js_expression_found:', e);
 				if (e && e.detail) {
 					chrome.runtime.sendMessage({
 						from: 'content',
@@ -158,21 +159,22 @@ function init(enabled, enableLogStack) {
 		
 
 		if (add_JS_File('src/inject/console.js')) {
-			document.addEventListener('Msg_LogNotificationExtension_found', function(e) {
-				if (e && e.detail && e.detail.length) {
-					var msg = e.detail[0].msg;
-					var action = e.detail[0].action;
-					chrome.runtime.sendMessage({
-						from: 'content',
-						subject: 'console_action',
-						domain: window.location.hostname,
-						msg: msg,
-						action: action
-					}, function(response) {
-						if (DEBUG)
-							console.log(response);
-						document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', {detail:''}));
-					});
+			document.addEventListener('Msg_LogNotificationExtension_messages', function(e) {
+				if (e && e.detail) {
+					for (var i = 0; i <e.detail.length; i++) {
+						var msg = e.detail[i].msg;
+						var action = e.detail[i].action;
+						chrome.runtime.sendMessage({
+							from: 'content',
+							subject: 'console_action',
+							domain: window.location.hostname,
+							msg: msg,
+							action: action
+						}, function(response) {
+							if (__DEBUG)
+								console.log('messages:',response);
+						});
+					}
 				}
 			});
 
@@ -183,8 +185,8 @@ function init(enabled, enableLogStack) {
 						subject: 'logs_history_found',
 						logsHistoryJSON: e.detail
 					}, function(response) {
-						if (DEBUG)
-							console.log(response);
+						if (__DEBUG)
+							console.log('history_found',response);
 					});
 				}
 			});
@@ -200,8 +202,8 @@ function init(enabled, enableLogStack) {
 chrome.runtime.onMessage.addListener(function(request, sender, response) 
 {
 	// First, validate the message's structure
-	if (DEBUG)
-		console.log(request);
+	if (__DEBUG)
+		console.log('request:',request);
 
 	if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
 		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_history', {}));
@@ -212,7 +214,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, response)
 		}));
 	}   
 	else if ((request.from === 'popup') && (request.subject === 'init')) {
-		if (DEBUG) {
+		if (__DEBUG) {
 			console.log('init message received');
 		}
 		init(request.enabled);

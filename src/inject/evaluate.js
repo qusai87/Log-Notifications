@@ -1,6 +1,6 @@
-var DEBUG = false;
+__DEBUG = false;
 
-if (DEBUG)
+if (__DEBUG)
 	console.log('evaluate.js injected!');
 
 window._JSConsole = window._JSConsole || {};
@@ -50,8 +50,8 @@ function censor(censor) {
 }
 
 document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression', function(e) {
-    if (DEBUG)
-        console.log(e);
+    if (__DEBUG)
+        _console.log('evaluate_js_expression',e);
     var results = '';
     try {
         results = eval(e.detail);

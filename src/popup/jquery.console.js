@@ -460,7 +460,7 @@
             inner.children(".jquery-console-prompt-box, .jquery-console-message").remove();
             extern.report(" ");
             extern.promptText("");
-            extern.focus();
+            //extern.focus();
     };
 
     function deleteNextWord() {

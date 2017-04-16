@@ -1,10 +1,9 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
-var DEBUG = false;
-//DEBUG = true;
+__DEBUG = false;
 var enableStack = false;
 
 if (!window.console.isOverrided && !window.console.isModified) {
-    if (DEBUG) {
+    if (__DEBUG) {
         console.log('console.js injected!');
     }
 
@@ -27,10 +26,14 @@ if (!window.console.isOverrided && !window.console.isModified) {
         if (dispatchTimer == -1) {
             dispatchTimer = setTimeout(function () {
                 dispatchTimer = -1;
-                document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_found', {
-                  detail: _JSConsole.messages
-                }));
-            },50);
+                if (_JSConsole.messages.length) {
+                    document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_messages', {
+                      detail: _JSConsole.messages
+                    }));
+                    _JSConsole.history = _JSConsole.history.concat(_JSConsole.messages);
+                    _JSConsole.messages = [];
+                }
+            },100);
         }
     }
 
@@ -38,17 +41,17 @@ if (!window.console.isOverrided && !window.console.isModified) {
     // http://stackoverflow.com/questions/7042611/override-console-log-for-production
     // 
     function $debug() {
-        if (DEBUG) {
+        if (__DEBUG) {
             debugger;
         }
     }
 
     function $start_debug() {
-        DEBUG = true;
+        __DEBUG = true;
     }
 
     function $stop_debug() {
-        DEBUG = false;
+        __DEBUG = false;
     }
 
     // Take shallow copy of console methods
@@ -120,7 +123,6 @@ if (!window.console.isOverrided && !window.console.isModified) {
             /// <param name="params" type="[...]">list your logging parameters</param>
 
             // only if explicitly true somewhere
-           //if (typeof DEBUGMODE === typeof undefined || !DEBUGMODE) return;
 
             // call handler extension which provides stack trace
             return ErrorLog().write(Array.prototype.slice.call(arguments, 0)); // turn into proper array
@@ -176,16 +178,6 @@ if (!window.console.isOverrided && !window.console.isModified) {
         if (!_console.isOverrided)
             _console.error.apply(_console,output);
     };
-
-    document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
-        if (_JSConsole.messages.length) {
-            _JSConsole.history.push(_JSConsole.messages.shift());
-            if (_JSConsole.messages.length) {
-                startLogDispatchTimer();
-            }
-
-        }
-    });
 
     document.addEventListener('Msg_LogNotificationExtension_get_history', function(e) {
         if (_JSConsole.history) {

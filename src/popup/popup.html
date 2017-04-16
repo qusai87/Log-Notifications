@@ -13,6 +13,7 @@
         <link href="./../lib/jquery.jsonview/jquery.jsonview.css" rel="stylesheet" media="screen">  
         <link href="./../lib/bootstrap-switch/css/bootstrap3/bootstrap-switch.css" rel="stylesheet" media="screen">
         <link href="./styles.css" rel="stylesheet" media="screen">
+        <link href="./simple-sidebar.css" rel="stylesheet">
 
         <!-- <script src="./../lib/switchery/switchery.min.js"></script> -->
         <!-- <link href="./../lib/switchery/switchery.min.css" rel="stylesheet" media="screen">   -->
@@ -28,106 +29,164 @@
 
     </head>
 
-    <body>
+     <body>
         <noscript>
             <p>
                 <strong>Please enable JavaScript!</strong>
             </p>
         </noscript>
-        <section class="container-fluid">
+        <div id="wrapper">
+            <!-- Sidebar -->
+            <div id="sidebar-wrapper">
+                <div class="panel-group">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-6">
+                                    General
+                                </div>
+                                 <div class="col-6 text-right">
+                                    <a href="#menu-toggle" class="btn btn-default js-menu-toggle">close</a>
+                                </div>
+                            </div>
+                        </div>
 
-            <div class="well well-sm">
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="switch">
+                                        <input type="checkbox" id="preserveLogsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                        <span>Preserved Logs</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span>Theme</span>
+                                    <input type="checkbox" id="themeSwitch" name='bootstrap-switch' data-on-text="Dark" data-size='mini' class="make-switch">
+                                </div>
+                            </div>
 
-                <div class="header">
-                    <div class="pull-left">
-                        <h1>Mini JS Console</h1>
-                    </div>
-                    <div class="pull-right">
-                        <label>Active</label>
-                        <input type="checkbox" id="enabledSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                    </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="switch">
+                                        <input type="checkbox" id="enableLogStackSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                        <span>Enable Log Stack</span>
+                                    </div>
+                                </div>
 
-                </div>
-                 <div class="header">
-                    <div class="pull-left">
-                        <div class="switch">
-                            <input type="checkbox" id="preserveLogsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                            <span>Preserved Logs</span>
+                                <div class="col-6 text-right">
+                                    <div class="switch">
+                                        <span>Disable Cache</span>
+                                        <input type="checkbox" id="disableCacheSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                     <div class="pull-right">
-                        <span>Theme</span>
-                        <input type="checkbox" id="themeSwitch" name='bootstrap-switch' data-on-text="Dark" data-size='mini' class="make-switch">
-                    </div>
-                </div>
-                <div class="header">
-                    <div class="pull-left">
-                        <div class="switch">
-                            <input type="checkbox" id="enableLogStackSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                            <span>Enable Log Stack</span>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Notifications</div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="switch">
+                                        <input type="checkbox" id="notificationSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
+                                        <span>Enable Notifications</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <div class="switch">
+                                        <span>Only on this domain</span>
+                                        <input type="checkbox" id="domainSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="switch">
+                                        <input type="checkbox" id="disableWarningsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                        <span>Disable Warning notifications</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="switch">
+                                        <input type="checkbox" id="disableAlertsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
+                                        <span>Disable Alert notifications</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="switch">
+                                        <input type="checkbox" id="disableErrorsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
+                                        <span>Disable Error notifications</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="pull-right">
-                        <div class="switch">
-                            <span>Enable on All Domains</span>
-                            <input type="checkbox" id="notificationSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Load JS Libraries</div>
+                        <div class="panel-body">
+                            <button type="button" class="btn btn-success btn-sm js-jquery-button">Load JQuery</button>
+                            <button type="button" class="btn btn-success btn-sm js-underscore-button">Load Underscore</button>
                         </div>
                     </div>
-                </div>
-
-                <div class="header">
-                    <div class="pull-left">
-                        <div class="switch">
-                            <input type="checkbox" id="disableCacheSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                            <span>Disable Cache</span>
-                        </div>
-                    </div>
-                    <div class="pull-right">
-                        <div class="switch">
-                            <span>Enable only on this Domain</span>
-                            <input type="checkbox" id="domainSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel">
-                    <!-- <div class="col-9">
-                       <input class="form-control custom-input-width" type="text"> 
-                    </div> -->
-                    <div class="text-left">
-                        <button type="button" class="btn btn-success btn-sm js-jquery-button">Load JQuery</button>
-                        <button type="button" class="btn btn-success btn-sm js-underscore-button">Load Underscore</button>
-                    </div>
-                </div>
-
-
-                <div class="row">
-                    <span class="col-6">
-                        <input type="text" class="filter-text" id="include_filters" value="" placeholder="filter (regex)" tabindex="-1"></input>
-                    </span>
-                    <span class="col-6">
-                        <input type="text" class="filter-text" id="exclude_filters" value="" placeholder="exclude (regex)" tabindex="-1"></input>
-                    </span>
-                </div>
-                <div class="console">
-                    Pleae wait, or reopen this popup again!
-                </div>
-                <div style="clear:both"> 
-                    <small>Commands: <strong>cookie</strong>,<strong>logs</strong>,<strong>domains</strong>,<strong>clear</strong>& <strong>clearHistory</strong></small>
-                    <div class="note"> Note: you can also debug global JS variables & expressions!</div>
                 </div>
             </div>
-            <div class="footer">
-                <div class="pull-left">
-                    <a href="https://paypal.me/qusaitabbal">donate</a>
-                </div>
-                <div class="pull-right">
-                    <a href="https://goo.gl/forms/or4ydvjfTbaVQPyP2">feedback</a>
-                </div>
+            <!-- /#sidebar-wrapper -->
+            <!-- Page Content -->
+            <div id="page-content-wrapper">
+                <section class="container-fluid">
+                    <div class="header">
+                        <div class="row">
+
+                            <div class="col-2">
+                                <a href="#menu-toggle" class="btn btn-default btn-xs js-menu-toggle" tabindex="1">Options</a>
+                            </div>
+                            <div class="col-5 text-center">
+                                <h1>Mini JS Console</h1>
+                            </div>
+                            <div class="col-5 text-right">
+                                <label>Active</label>
+                                <input type="checkbox" id="enabledSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="">
+                        <span class="">
+                        <input type="text" class="filter-text" id="include_filters" value="" placeholder="filter (regex)" tabindex="2"></input>
+                    </span>
+                        <span class="">
+                        <input type="text" class="filter-text" id="exclude_filters" value="" placeholder="exclude (regex)" tabindex="3"></input>
+                    </span>
+                        <div class="console">
+                            Pleae wait, or reopen this popup again!
+                        </div>
+                        <div class="note clearfix">
+                            <small>Commands: <strong>cookie</strong>,<strong>logs</strong>,<strong>domains</strong>,<strong>clear</strong>& <strong>clearHistory</strong></small>
+                        </div>
+                        <div class="note ">
+                            <small> Note: you can also debug global JS variables & expressions!</small>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="col-6">
+                            <a href="https://paypal.me/qusaitabbal" tabindex="4">donate</a>
+                        </div>
+                        <div class="col-6 text-right">
+                            <a href="https://goo.gl/forms/or4ydvjfTbaVQPyP2" tabindex="5">feedback</a>
+                        </div>
+                    </div>
+                    </header>
+                    <!-- /#page-content-wrapper -->
             </div>
-        </section>
+            <!-- /#wrapper -->
     </body>
+
 </html>
 
 
