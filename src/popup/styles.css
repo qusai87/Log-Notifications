@@ -2,6 +2,8 @@ body, section {			/* Change width and height to own preferences */
 	width: 500px;
 	height: 560px;
 	overflow-x: hidden;
+}
+body {
 	background-color: #f3f3f4;
 }
 

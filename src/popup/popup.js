@@ -43,7 +43,6 @@ $(function() {
 					subject: 'update_filters'
 				}, function(response) {});
 			});
-			clear();
 			showLogs();
 		}
 	});
@@ -62,7 +61,6 @@ $(function() {
 					subject: 'update_filters'
 				}, function(response) {});
 			});
-			clear();
 			showLogs();
 		}
 	});
@@ -231,7 +229,6 @@ function showLogs() {
 	var excludeFilters = $('#exclude_filters').val();
 	var logs_history_filtered = reduce(logs_history,filters,excludeFilters);
 
-
 	for (var key in logs_history_filtered) {
 		var value = logs_history_filtered[key];
 
@@ -254,6 +251,7 @@ function showLogs() {
 	}
 	if (typeof controller =='object') {
 		if (logs.length) {
+			clear();
 			controller.commandResult(logs);
 		} else {
 			//controller.commandResult('No Console logs received!');
@@ -296,13 +294,16 @@ function normalizeText(text) {
 function showNewLogs(logsHistoryJSON) {
 	var _old_logs = logs_history;
 	logs_history = JSON.parse(logsHistoryJSON);
-	var text = controller.getPromptText();
-	showLogs();
-	controller.promptText(text);
-	sendRuntimeMessage({
-		from: 'popup',
-		subject: 'popup_opened',
-	}, function(response) {});
+	if (_old_logs.length !== logs_history.length) {
+		showLogs();
+		var text = controller.getPromptText();
+		controller.promptText(text);
+		sendRuntimeMessage({
+			from: 'popup',
+			subject: 'popup_opened',
+		}, function(response) {});
+		
+	}
 }
 
 function sendMessage(params,callback) {
@@ -474,7 +475,6 @@ function loadSwitch(switchName, key, callback) {
 
 		if (loading_counts == totalLoad) {
 			loaded = true;
-			clear();
 			loadLogs();
 		}
 	});
@@ -561,12 +561,10 @@ function saveOption(id, checked) {
 		});
 	} else if (id === 'preserveLogsSwitch') {
 		saveSwitch('preserveLogsSwitch', 'preserveLogs', checked , function () {
-			clear();
 			loadLogs();
 		});
 	} else if (id === 'enableLogStackSwitch') {
 		saveSwitch('enableLogStackSwitch', 'enableLogStack', checked , function () {
-			clear();
 			loadLogs();
 		});
 	} else if (id === 'disableCacheSwitch') {
@@ -616,24 +614,13 @@ function saveOption(id, checked) {
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	// If the received message has the expected format...
 	if (request.from === 'content' && request.subject === 'console_action') {
-		chrome.tabs.query({
-			active: true,
-			currentWindow: true
-		}, function(tabs) {
-			if (sender.tab.id === tabs[0].id) {
-				chrome.tabs.sendMessage(tabs[0].id, {
-					from: 'popup',
-					subject: 'get_console_history'
-				}, function(response) {});
-			}
-		});
+		loadLogs();
 	}
 	else if (request.from === 'content' && request.subject === 'logs_history_found') {
 		if (!logs_history) {
 			init(request.logsHistoryJSON);
 		}
 		else {
-			clear();
 			showNewLogs(request.logsHistoryJSON);
 		}
 	} else if (request.from === 'background' && request.subject === 'preserved_logs') {
@@ -642,7 +629,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 				init(request.logsHistoryJSON);
 			}
 			else {
-				clear();
 				showNewLogs(request.logsHistoryJSON);
 			}
 		}

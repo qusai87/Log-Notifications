@@ -6,15 +6,15 @@ DEBUG = false;
 var isEnabled = true;
 var isNotificationEnabled = false;
 var domainNotifications = {
-	localhost : true,
+	localhost : true
 };
 var disableCache = false;
-var disableWarnings = false;
-var disableAlerts = false;
+var disableWarnings = true;
+var disableAlerts = true;
 var disableErrors = false;
-var clearCacheRunning = false;
 
 // Variables
+var clearCacheRunning = false;
 var activePageID = null;
 var lastNotificatation;
 var _pages = [];
@@ -43,12 +43,22 @@ chrome.storage.sync.get('enabled', function (result) {
 chrome.storage.sync.get('disableCache', function (result) {
 	if (typeof result.disableCache === 'boolean') {
 		disableCache = result.disableCache;
+	} else {
+		chrome.storage.sync.set({'disableCache': disableCache}, function() {
+			if (DEBUG)
+				console.log('disableCache saved');
+		});
 	}
 });
 
 chrome.storage.sync.get('disableWarnings', function (result) {
 	if (typeof result.disableWarnings === 'boolean') {
 		disableWarnings = result.disableWarnings;
+	} else {
+		chrome.storage.sync.set({'disableWarnings': disableWarnings}, function() {
+			if (DEBUG)
+				console.log('disableWarnings saved');
+		});
 	}
 });
 
@@ -61,6 +71,11 @@ chrome.storage.sync.get('disableErrors', function (result) {
 chrome.storage.sync.get('disableAlerts', function (result) {
 	if (typeof result.disableAlerts === 'boolean') {
 		disableAlerts = result.disableAlerts;
+	} else {
+		chrome.storage.sync.set({'disableAlerts': disableAlerts}, function() {
+			if (DEBUG)
+				console.log('disableAlerts saved');
+		});
 	}
 });
 
