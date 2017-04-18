@@ -184,7 +184,7 @@ function init(logsHistoryJSON) {
 	var logs;
 	sendRuntimeMessage({
 		from: 'popup',
-		subject: 'popup_opened',
+		subject: 'popup_opened'
 	}, function(response) {});
 
 	logs_history = JSON.parse(logsHistoryJSON);
@@ -281,15 +281,15 @@ function normalizeText(text) {
 		text = String(text);
 	}
 
-	if (typeof text === 'string') {
+	if (typeof text === 'string' && text.indexOf('%c') != -1) {
 		// Detect %c color cases
-		var regex  = /%c(.+?)\s([a-z0-9\-]+?)\:([a-z0-9\-]+?)\;/g;
+		//var regex  = /%c(.+?)\s([a-z0-9\-]+?)\:([a-z0-9\-]+?)\;/g;
+		text = text.replace(/%c(\w+)\s(\w+:#.+;)+/g,'[$1]');
+		//var matches = regex.exec(text);
 
-		var matches = regex.exec(text);
-
-		if (matches && matches.length >= 4) {
-			text = matches[1];
-		}
+		// if (matches && matches.length >= 4) {
+		// 	text = matches[1];
+		// }
 	}
 	return text;
 }
@@ -322,7 +322,8 @@ function sendRuntimeMessage(params,callback) {
 		currentWindow: true
 	}, function(tabs) {
 		chrome.runtime.sendMessage($.extend(params,{
-			tabId: tabs[0].id
+			tabId: tabs[0].id,
+			domain: domain
 		}), callback);
 	});
 }
@@ -527,7 +528,6 @@ function saveOption(id, checked) {
 			sendRuntimeMessage({
 				from: 'popup',
 				subject: 'modify_domain_Notifications',
-				domain : domain,
 				enabled: checked
 			}, function(response) {
 			});

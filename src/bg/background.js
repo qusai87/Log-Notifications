@@ -250,28 +250,20 @@ function refreshBadge(tabId, pageId, domain) {
 	pageId = pageId || activePageID;
 
 	var count = _pages[pageId] || 0;
-	chrome.tabs.query({
-		currentWindow: true,
-		active: true
-	}, function (tab) {
-		if (tab && tab.length) {
-			tabId = tabId || tab[0].id;
-			domain = domain || getDomain(tab[0].url);
-		}
-		if (activePageID == pageId) {
-			if (isEnabled) {
-				if (isNotificationEnabled || domainNotifications[domain]) {
-					enableIcon();
-				} else {
-					count = 0;
-					muteIcon();
-				}
+
+	if (pageId && activePageID == pageId) {
+		if (isEnabled) {
+			if (isNotificationEnabled || domainNotifications[domain]) {
+				enableIcon();
 			} else {
 				count = 0;
-				disableIcon();
+				muteIcon();
 			}
+		} else {
+			count = 0;
+			disableIcon();
 		}
-		if (activePageID === pageId && count) {
+		if (count) {
 			chrome.browserAction.setBadgeText({
 				text: String(count)
 			});
@@ -280,7 +272,7 @@ function refreshBadge(tabId, pageId, domain) {
 				text: ''
 			});
 		}
-	});
+	}
 }
 function enableIcon() {
 	setIcon('');
@@ -456,7 +448,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 			} else {
 				updateNotificationCounter(sender.tab.id,pageId,request.domain);
 			}
-		} else {
+		} else if (isValidMessage(msg)) {
 			updateNotificationCounter(sender.tab.id,pageId,request.domain);
 		}
 
@@ -466,13 +458,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	} else if ((request.from === 'popup') && (request.subject === 'popup_opened')) {
 		activePageID = pageId;
 		_pages[pageId] = 0;
-		refreshBadge();
+		refreshBadge(request.tabId,pageId,request.domain);
 		sendResponse({
 			success: true
 		});
 	} else if ((request.from === 'popup') && (request.subject === 'disable_extension')) {
 		isEnabled = request.enabled;
-		refreshBadge();
+		refreshBadge(request.tabId,pageId,request.domain);
 
 		chrome.storage.sync.set({'enabled': isEnabled}, function() {
 		  if (DEBUG)
@@ -480,7 +472,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		});
 	} else if ((request.from === 'popup') && (request.subject === 'disable_notifications')) {
 		isNotificationEnabled = request.enabled;
-		refreshBadge();
+		refreshBadge(request.tabId,pageId,request.domain);
 	} else if ((request.from === 'popup') && (request.subject === 'modify_domain_Notifications')) {
 		domainNotifications[request.domain] = request.enabled;
 		refreshBadge(request.tabId,pageId,request.domain);
@@ -525,39 +517,40 @@ chrome.tabs.onActivated.addListener(function(tabInfo) {
 	if (tabInfo) {
 		var pageId = tabInfo.windowId  + ':' + tabInfo.tabId;
 		activePageID = pageId;
-		refreshBadge(tabInfo.tabId,pageId);
+		chrome.tabs.query({
+				currentWindow: true,
+				active: true
+			}, function (tab) {
+				if (tab && tab.length) {
+					var domain = getDomain(tab[0].url);
+					refreshBadge(tabInfo.tabId,pageId, domain);
+				}
+			}
+		);
 	}
 });
 
 chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 	// page reload
 	var pageId = tabInfo.windowId  + ':' + tabId;
+	var domain = getDomain(tabInfo.url);
+
 	if (changeInfo.status === "loading" ) {
-		if (!activePageID)
-			 activePageID = pageId;
-		refreshBadge(tabId, pageId);
+		if (!activePageID) {
+			activePageID = pageId;
+			refreshBadge(tabId, pageId,domain);
+		}
+		if (isEnabled && disableCache) {
+			 if (domain) {
+				if (isNotificationEnabled || domainNotifications[domain]) {
+					clearCache();
+				}
+			}
+		}
 	} else if (changeInfo.status === "complete" )
 	{
 		if (DEBUG)
 			console.log('page reloaded!',tabId);
-
-		var domain = getDomain(tabInfo.url);
-
-		if (isEnabled && domain) {
-
-			if (isNotificationEnabled || domainNotifications[domain]) {
-				_gaq.push(['_trackEvent', domain, 'domain']);
-			}
-		}
-	} else if (isEnabled && disableCache && changeInfo.status === 'loading') {
-		var domain = getDomain(tabInfo.url);
-
-		 if (domain) {
-
-			if (isNotificationEnabled || domainNotifications[domain]) {
-				clearCache();
-			}
-		}
 	}
 });
 

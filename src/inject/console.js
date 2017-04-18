@@ -30,10 +30,8 @@ if (!window.console.isOverrided && !window.console.isModified) {
                     document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_messages', {
                       detail: _JSConsole.messages
                     }));
-                    _JSConsole.history = _JSConsole.history.concat(_JSConsole.messages);
-                    _JSConsole.messages = [];
                 }
-            },100);
+            },10);
         }
     }
 
@@ -187,7 +185,19 @@ if (!window.console.isOverrided && !window.console.isModified) {
         }
     });
 
-
+    document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
+        if (_JSConsole.messages.length) {
+            _JSConsole.history = _JSConsole.history.concat(_JSConsole.messages);
+            _JSConsole.messages = [];
+            //_JSConsole.history.push(_JSConsole.messages.shift());
+            if (_JSConsole.history.length> 1000) {
+                _JSConsole.history = _JSConsole.history.slice(Math.max(_JSConsole.history.length - 1000, 1));
+            }
+            if (_JSConsole.messages.length) {
+                startLogDispatchTimer();
+            }
+        }
+    });
     document.addEventListener('Msg_LogNotificationExtension_get_enableLogStack', function(e) {
         if (e.detail)
             enableStack = e.detail;

@@ -160,8 +160,8 @@ function init(enabled, enableLogStack) {
 
 		if (add_JS_File('src/inject/console.js')) {
 			document.addEventListener('Msg_LogNotificationExtension_messages', function(e) {
-				if (e && e.detail) {
-					for (var i = 0; i <e.detail.length; i++) {
+				if (e && e.detail && e.detail.length) {
+					for (var i = 0; i < e.detail.length; i++) {
 						var msg = e.detail[i].msg;
 						var action = e.detail[i].action;
 						chrome.runtime.sendMessage({
@@ -173,6 +173,7 @@ function init(enabled, enableLogStack) {
 						}, function(response) {
 							if (__DEBUG)
 								console.log('messages:',response);
+							document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', {detail:''}));
 						});
 					}
 				}
