@@ -549,12 +549,17 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 	// page reload
 	var pageId = tabInfo.windowId  + ':' + tabId;
 	var domain = getDomain(tabInfo.url);
+	if (DEBUG)
+		console.log('tab status:',changeInfo.status);
 
 	if (changeInfo.status === "loading" ) {
 		if (!activePageID) {
 			activePageID = pageId;
-			refreshBadge(tabId, pageId,domain);
 		}
+		if (activePageID)
+			_pages[activePageID] = 0;
+		
+		refreshBadge(tabId, pageId,domain);
 		if (isEnabled && disableCache) {
 			 if (domain) {
 				if (isNotificationEnabled || domainNotifications[domain]) {
