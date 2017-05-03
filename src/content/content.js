@@ -190,6 +190,8 @@ function init(enabled, enableLogStack) {
 	}
 }
 
+
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener(function(request, sender, response) 
 {
@@ -224,9 +226,11 @@ chrome.storage.sync.get('enableLogStack', function(result) {
 	});
 });
 
-chrome.storage.sync.get('disableIFRAME_SCRIPT', function(result) {
-	var disableIFRAME_SCRIPT = result.disableIFRAME_SCRIPT;
-	add_JS_File('src/inject/disableIFRAME.js')
+
+chrome.storage.sync.get('disableIFRAME', function(result) {
+	var disableIFRAME = result.disableIFRAME;
+	if (disableIFRAME)
+		add_JS_File('src/inject/disableIFRAME.js');
 });
 
 

@@ -1,7 +1,7 @@
 {
   "name": "Mini JS Console with Error Detection",
   "short_name": "Mini JS Console",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "manifest_version": 2,
   "offline_enabled": true,
   "description": "Mini JS console that track console logs and detect JS errors/alerts and show them via chorme notifications",
@@ -27,7 +27,7 @@
     "default_popup": "src/popup/popup.html"
   },
   "permissions": [
-    "notifications","tabs", "storage", "browsingData"
+    "notifications","tabs", "storage", "browsingData", "webNavigation","<all_urls>"
   ],
   "content_scripts": [
     {
@@ -36,8 +36,10 @@
       ],
       "js": [
         "src/content/content.js"
+
       ],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames" : true
     }
   ],
   "web_accessible_resources": [
