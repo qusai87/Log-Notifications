@@ -43,6 +43,7 @@
   "web_accessible_resources": [
     "src/inject/console.js",
     "src/inject/evaluate.js",
+    "src/inject/disableIFRAME.js",
     "src/inject/styles.css"
   ],
   "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'"

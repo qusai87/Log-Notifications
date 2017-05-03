@@ -6,15 +6,6 @@ var console = window.console;
 if (__DEBUG)
 	console.log('content.js started!');
 
-chrome.storage.sync.get('enableLogStack', function(result) {
-	var enableLogStack = result.enableLogStack;
-	chrome.storage.sync.get('enabled', function(result) {
-		var enabled = result.enabled;
-		init(enabled,enableLogStack);
-	});
-});
-
-
 
 /**
  * @license domReady 2.0.1 Copyright jQuery Foundation and other contributors.
@@ -221,3 +212,21 @@ chrome.runtime.onMessage.addListener(function(request, sender, response)
 		init(request.enabled);
 	}   
 });
+
+
+
+
+chrome.storage.sync.get('enableLogStack', function(result) {
+	var enableLogStack = result.enableLogStack;
+	chrome.storage.sync.get('enabled', function(result) {
+		var enabled = result.enabled;
+		init(enabled,enableLogStack);
+	});
+});
+
+chrome.storage.sync.get('disableIFRAME_SCRIPT', function(result) {
+	var disableIFRAME_SCRIPT = result.disableIFRAME_SCRIPT;
+	add_JS_File('src/inject/disableIFRAME.js')
+});
+
+
