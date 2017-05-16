@@ -24,6 +24,11 @@
     display: block;
 }
 
+#wrapper.toggled #console-wrapper {
+    display: none;
+    height: 0px;
+}
+
 #wrapper.toggled a {
     color: blue;
 }

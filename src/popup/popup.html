@@ -54,60 +54,56 @@
                 <section class="container-fluid">
                     <div class="header ">
                         <div class="row">
-
-                            <div class="col-2">
-                                <a href="#menu-toggle" class="btn btn-default btn-xs js-menu-toggle" tabindex="1">
-                                    <i class="fa fa-cog" aria-hidden="true"></i>
-                                </a>
+                            <div class="col-8 text-left">
+                                <span  class="">Show Notifications on domain:</span>
+                                <span>
+                                    <div class="switch">
+                                        <input type="checkbox" id="domainSwitch" name='bootstrap-switch'  data-size='mini' class="make-switch text-right">
+                                    </div>
+                                </span>
                             </div>
-                            <div class="col-2">
-                                <div class="switch">
-                                    <input type="checkbox" id="domainSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <span>Only on this domain</span>
-                            </div>
-                            <div class="col-2">
-                                <div class="switch">
-                                    <input type="checkbox" id="enabledSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                                </div>
-                            </div>
-                            <div class="col-2">
-                                <span>Active</span>
+                            <div class="col-4 text-right">
+                                <span class="text-right">
+                                    <div class="switch">
+                                        <input type="checkbox" id="enabledSwitch" name='bootstrap-switch' 
+                                        data-on-text="Active!" data-off-text="Off" data-size='mini' class="make-switch">
+                                    </div>
+                                </span>
+                                <span class="text-right">
+                                    <a href="#menu-toggle" class="btn btn-default btn-xs js-menu-toggle" tabindex="1">
+                                        <i class="fa fa-cog" aria-hidden="true"></i>
+                                    </a>
+                                </span>
                             </div>
                         </div>
                     </div>
                     <div id="sidebar-options" class="panel-group">
                         <div class="panel panel-default">
                             <div class="row">
-                                <div class="col-2">
-                                    <div class="switch">
+                                <div class="col-6">
+                                    <span class="switch-label">Preserved Logs:</span>
+                                    <span class="switch-right"><div class="switch">
                                         <input type="checkbox" id="preserveLogsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                     </div>
+                                    </span>
                                 </div>
-                                <div class="col-4">
-                                    <span>Preserved Logs</span>
-                                </div>
-                                <div class="col-2">
-                                    <div class="switch">
+                                <div class="col-6">
+                                    <span class="switch-label">Theme:</span>
+                                    <span class="switch-right"><div class="switch">
                                         <input type="checkbox" id="themeSwitch" name='bootstrap-switch' data-on-text="ON" data-size='mini' class="make-switch">
                                     </div>
+                                    </span>
                                     
-                                </div>
-                                <div class="col-4">
-                                    <span>Theme</span>
                                 </div>
                             </div>
 
                             <div class="row">
-                                <div class="col-2">
-                                    <div class="switch">
+                                <div class="col-6">
+                                    <span class="switch-label">Enable Log Stack:</span>
+                                    <span class="switch-right"><div class="switch">
                                         <input type="checkbox" id="enableLogStackSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                     </div>
-                                </div>
-                                <div class="col-4">
-                                    <span>Enable Log Stack</span>
+                                    </span>
                                 </div>
                             </div>
 
@@ -116,22 +112,20 @@
                         <div class="panel panel-default">
                             <div class="">
                                 <div class="row">
-                                    <div class="col-2">
-                                        <div class="switch">
+                                    <div class="col-6">
+                                        <span class="switch-label">Disable Cache:</span>
+                                        <span class="switch-right"><div class="switch">
                                             <input type="checkbox" id="disableCacheSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <span>Disable Cache</span>
+                                        </span>
                                     </div>
 
-                                    <div class="col-2">
-                                        <div class="switch">
+                                    <div class="col-6">
+                                        <span class="switch-label">Disable iFrame:</span>
+                                        <span class="switch-right"><div class="switch">
                                             <input type="checkbox" id="disableIFRAMESwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <span>Disable iFrame</span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -140,41 +134,38 @@
                         <div class="panel panel-default">
                             <div class="">
                                 <div class="row">
-                                    <div class="col-2">
-                                        <div class="switch">
-                                            <input type="checkbox" id="notificationSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
+                                    <div class="col-6">
+                                        <span class="switch-label">Show Notifications:</span>
+                                        <span class="switch-right"><div class="switch">
+                                            <input type="checkbox" id="notificationSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <span>Enable all</span>
+                                        </span>
                                     </div>
 
-                                    <div class="col-2">
-                                        <div class="switch">
+                                    <div class="col-6">
+                                        <span class="switch-label">Disable Warnings:</span>
+                                        <span class="switch-right"><div class="switch">
                                             <input type="checkbox" id="disableWarningsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
+                                        </span>
                                     </div>
-                                    <div class="col-4">
-                                        <span>Disable Warnings</span>
-                                    </div>
+ 
                                 </div>
                                 <div class="row">
-                                    <div class="col-2">
-                                        <div class="switch">
-                                            <input type="checkbox" id="disableAlertsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
+                                    <div class="col-6">
+                                        <span class="switch-label">Disable Alerts</span>
+                                        <span class="switch-right"><div class="switch">
+                                            <input type="checkbox" id="disableAlertsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <span>Disable Alerts</span>
+                                        </span>
                                     </div>
 
-                                    <div class="col-2">
-                                        <div class="switch">
-                                            <input type="checkbox" id="disableErrorsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch text-right">
+                                    <div class="col-6">
+                                        <span class="switch-label">Disable Errors</span>
+                                        <span class="switch-right"><div class="switch">
+                                            <input type="checkbox" id="disableErrorsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <span>Disable Errors</span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -185,7 +176,7 @@
                         </div>
                     </div>
                     
-                    <div class="">
+                    <div id="console-wrapper">
                         <span class="">
                         <input type="text" class="filter-text" id="include_filters" value="" placeholder="filter (regex)" tabindex="2"></input>
                     </span>
@@ -201,13 +192,13 @@
                         <div class="note ">
                             <small> Note: you can also debug global JS variables & expressions!</small>
                         </div>
-                    </div>
-                    <div class="footer">
-                        <div class="col-6">
-                            <a href="https://paypal.me/qusaitabbal" tabindex="4">donate</a>
-                        </div>
-                        <div class="col-6 text-right">
-                            <a href="https://goo.gl/forms/or4ydvjfTbaVQPyP2" tabindex="5">feedback</a>
+                        <div class="footer">
+                            <!-- <div class="col-6">
+                                <a href="https://paypal.me/qusaitabbal" tabindex="4">donate</a>
+                            </div> -->
+                            <div class="col-12 text-right">
+                                <a href="https://goo.gl/forms/or4ydvjfTbaVQPyP2" tabindex="5">feedback</a>
+                            </div>
                         </div>
                     </div>
                     </header>

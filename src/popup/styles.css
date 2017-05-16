@@ -32,6 +32,15 @@ label {
 .switch {
     height: 27px;
     margin-left: 20px;
+    display: inline-block;
+}
+
+.switch-label {
+    /* color: #943f3f !important; */
+    color: black;
+    font-size: 12px;
+    width: 50%;
+    display: inline-block;
 }
 
 .filter-text {
