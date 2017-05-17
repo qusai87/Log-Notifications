@@ -26,10 +26,10 @@ var includeFilterRegex = null;
 var notificationTimeout = -1;
 var notificationCounter = 1;
 
-chrome.webNavigation.onCommitted.addListener(function (data) {
-	// if (data && data.url && data.url.indexOf('http')!=-1)
-	// 	chrome.tabs.executeScript( data.tabId, {file:"src/inject/disableIFRAME.js", frameId: data.frameId});
-});
+// chrome.webNavigation.onCommitted.addListener(function (data) {
+// 	// if (data && data.url && data.url.indexOf('http')!=-1)
+// 	// 	chrome.tabs.executeScript( data.tabId, {file:"src/inject/disableIFRAME.js", frameId: data.frameId});
+// });
 
 chrome.storage.sync.get('enabled', function (result) {
 	if (typeof result.enabled === 'boolean') {

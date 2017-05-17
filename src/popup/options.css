@@ -25,8 +25,7 @@
 }
 
 #wrapper.toggled #console-wrapper {
-    display: none;
-    height: 0px;
+    height: 225px;
 }
 
 #wrapper.toggled a {

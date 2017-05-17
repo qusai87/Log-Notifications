@@ -451,7 +451,7 @@ function loadOptions () {
 	loadSwitch('disableAlertsSwitch','disableAlerts');
 	loadSwitch('disableErrorsSwitch','disableErrors');
 	
-	loadSwitch('disableIFRAMESwitch','disableIFRAME')
+	//loadSwitch('disableIFRAMESwitch','disableIFRAME')
 }
 
 function loadSwitch(switchName, key, callback) {
@@ -609,9 +609,10 @@ function saveOption(id, checked) {
 		});
 	} else if (id === 'disableConsoleErrorsSwitch') {
 		saveSwitch('disableConsoleErrorsSwitch', 'disableConsoleErrors', checked, function () {});
-	}  else if (id === 'disableIFRAMESwitch') {
-		saveSwitch('disableIFRAMESwitch', 'disableIFRAME', checked, function () {});
-	}
+	} 
+	//  else if (id === 'disableIFRAMESwitch') {
+	// 	saveSwitch('disableIFRAMESwitch', 'disableIFRAME', checked, function () {});
+	// }
 }
 
 // Listen for messages

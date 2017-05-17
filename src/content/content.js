@@ -227,10 +227,10 @@ chrome.storage.sync.get('enableLogStack', function(result) {
 });
 
 
-chrome.storage.sync.get('disableIFRAME', function(result) {
-	var disableIFRAME = result.disableIFRAME;
-	if (disableIFRAME)
-		add_JS_File('src/inject/disableIFRAME.js');
-});
+// chrome.storage.sync.get('disableIFRAME', function(result) {
+// 	var disableIFRAME = result.disableIFRAME;
+// 	if (disableIFRAME)
+// 		add_JS_File('src/inject/disableIFRAME.js');
+// });
 
 
