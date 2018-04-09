@@ -55,12 +55,12 @@
                     <div class="header ">
                         <div class="row">
                             <div class="col-8 text-left">
-                                <span  class="">Show Notifications on domain:</span>
                                 <span>
                                     <div class="switch">
-                                        <input type="checkbox" id="domainSwitch" name='bootstrap-switch'  data-size='mini' class="make-switch text-right">
+                                        <input type="checkbox" id="domainSwitch" name='bootstrap-switch'  data-size='mini' class="make-switch text-left">
                                     </div>
                                 </span>
+                                <span  class="">Notifications on this domain only</span>
                             </div>
                             <div class="col-4 text-right">
                                 <span class="text-right">
@@ -69,67 +69,17 @@
                                         data-on-text="Active!" data-off-text="Off" data-size='mini' class="make-switch">
                                     </div>
                                 </span>
-                                <span class="text-right">
-                                    <a href="#menu-toggle" class="btn btn-default btn-xs js-menu-toggle" tabindex="1">
-                                        <i class="fa fa-cog" aria-hidden="true"></i>
-                                    </a>
-                                </span>
                             </div>
                         </div>
                     </div>
                     <div id="sidebar-options" class="panel-group">
                         <div class="panel panel-default">
-                            <div class="row">
-                                <div class="col-6">
-                                    <span class="switch-label">Preserved Logs:</span>
-                                    <span class="switch-right"><div class="switch">
-                                        <input type="checkbox" id="preserveLogsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                                    </div>
-                                    </span>
-                                </div>
-                                <div class="col-6">
-                                    <span class="switch-label">Theme:</span>
-                                    <span class="switch-right"><div class="switch">
-                                        <input type="checkbox" id="themeSwitch" name='bootstrap-switch' data-on-text="ON" data-size='mini' class="make-switch">
-                                    </div>
-                                    </span>
-                                    
-                                </div>
-
-                                <div class="col-6">
-                                    <span class="switch-label">Enable Log Stack:</span>
-                                    <span class="switch-right"><div class="switch">
-                                        <input type="checkbox" id="enableLogStackSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                                    </div>
-                                    </span>
-                                </div>
-
-                                <div class="col-6">
-                                    <span class="switch-label">Disable Cache:</span>
-                                    <span class="switch-right"><div class="switch">
-                                        <input type="checkbox" id="disableCacheSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                                    </div>
-                                    </span>
-                                </div>
+                            <div class="panel-heading">
+                                Global settings
+                                <button type="button" class="btn btn-default btn-xs pull-right js-menu-toggle">
+                                    <i class="fa fa-cog" aria-hidden="true"></i>
+                                </button>
                             </div>
-
-                        </div>
-
-                        <!-- <div class="panel panel-default">
-                            <div class="">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <span class="switch-label">Disable iFrame:</span>
-                                        <span class="switch-right"><div class="switch">
-                                            <input type="checkbox" id="disableIFRAMESwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                                        </div>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
-
-                        <div class="panel panel-default">
                             <div class="">
                                 <div class="row">
                                     <div class="col-6">
@@ -139,7 +89,12 @@
                                         </div>
                                         </span>
                                     </div>
-
+                                    <div class="col-6 small">
+                                        <small>Show Notifications on any console errors/warnings/alerts on all domains!</small>
+                                    </div>
+                                </div>
+                                <hr/>
+                                <div class="row">
                                     <div class="col-6">
                                         <span class="switch-label">Disable Warnings:</span>
                                         <span class="switch-right"><div class="switch">
@@ -147,8 +102,11 @@
                                         </div>
                                         </span>
                                     </div>
- 
+                                    <div class="col-6 small">
+                                        <small>Disable Warning Notifications on all domains!</small>
+                                    </div>
                                 </div>
+                                <hr/>
                                 <div class="row">
                                     <div class="col-6">
                                         <span class="switch-label">Disable Alerts</span>
@@ -157,7 +115,12 @@
                                         </div>
                                         </span>
                                     </div>
-
+                                    <div class="col-6 small">
+                                        <small>Disable Alert Notifications on all domains!</small>
+                                    </div>
+                                </div>
+                                <hr/>
+                                <div class="row">
                                     <div class="col-6">
                                         <span class="switch-label">Disable Errors</span>
                                         <span class="switch-right"><div class="switch">
@@ -165,22 +128,104 @@
                                         </div>
                                         </span>
                                     </div>
+                                    <div class="col-6 small">
+                                        <small>Disable Errors Notifications on all domains!</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">Options</div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <span class="switch-label">Preserved Logs:</span>
+                                    <span class="switch-right"><div class="switch">
+                                        <input type="checkbox" id="preserveLogsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                    </div>
+                                    </span>
+                                </div>
+                                <div class="col-6 small">
+                                    <small>Will keep all console logs after refreshing the page</small>
+                                </div>
+                                <!-- <div class="col-6">
+                                    <span class="switch-label">Theme:</span>
+                                    <span class="switch-right"><div class="switch">
+                                        <input type="checkbox" id="themeSwitch" name='bootstrap-switch' data-on-text="ON" data-size='mini' class="make-switch">
+                                    </div>
+                                    </span>
+                                </div> -->
+                            </div>
+                            <hr/>
+                            <div class="row">
+                                <div class="col-6">
+                                    <span class="switch-label">Enable Log Stack:</span>
+                                    <span class="switch-right"><div class="switch">
+                                        <input type="checkbox" id="enableLogStackSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                    </div>
+                                    </span>
+                                </div>
+                                <div class="col-6 small">
+                                    <small>Show log stack on ChromeDevTools console</small>
+                                </div>
+                            </div>
+
+                            <div class="">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="switch-label">Disable Cache:</span>
+                                        <span class="switch-right"><div class="switch">
+                                            <input type="checkbox" id="disableCacheSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                        </div>
+                                        </span>
+                                    </div>
+                                    <div class="col-6 small">
+                                        <small>Disable Local Cache functionality</small>
+                                    </div>
+                                </div>
+                                <hr/>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="switch-label">Disable iFrame:</span>
+                                        <span class="switch-right"><div class="switch">
+                                            <input type="checkbox" id="disableIFRAMESwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                        </div>
+                                        </span>
+                                    </div>
+                                    <div class="col-6 small">
+                                        <small>Disable iFrame functionality</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="section section-library">
-                            <button type="button" class="btn btn-success btn-xs js-jquery-button">Load JQuery</button>
-                            <button type="button" class="btn btn-success btn-xs js-underscore-button">Load Underscore</button>
+                            <button type="button" class="btn btn-success btn-xs js-jquery-button">Load JQuery on this page</button>
+                            <button type="button" class="btn btn-success btn-xs js-underscore-button">Load Underscore on this page</button>
                         </div>
                     </div>
                     
                     <div id="console-wrapper">
-                        <span class="">
-                        <input type="text" class="filter-text" id="include_filters" value="" placeholder="filter (regex)" tabindex="2"></input>
-                    </span>
-                        <span class="">
-                        <input type="text" class="filter-text" id="exclude_filters" value="" placeholder="exclude (regex)" tabindex="3"></input>
-                    </span>
+                        <div class="container-fluid">
+                            <div class="row">
+                                <span class="col-5 nopadding">
+                                    <input type="text" class="filter-text" id="include_filters" value="" placeholder="filter (regex)" tabindex="2"></input>
+                                </span>
+                                <span class="col-5 nopadding">
+                                    <input type="text" class="filter-text" id="exclude_filters" value="" placeholder="exclude (regex)" tabindex="3"></input>
+                                </span>
+                                <span class="col-2 text-left nopadding">
+                                    <button type="button" class="btn btn-default btn-xs js-history">
+                                        <i class="fa fa-history" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-default btn-xs js-clear-console">
+                                        <i class="fa fa-ban" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-default btn-xs js-menu-toggle">
+                                        <i class="fa fa-cog" aria-hidden="true"></i>
+                                    </button>
+                                </span>
+
+                            </div>
+                        </div>
                         <div class="console">
                             Pleae wait, or reopen this popup again!
                         </div>

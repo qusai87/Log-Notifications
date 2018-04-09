@@ -26,6 +26,24 @@ $(function() {
 		return false;
 	});
 
+	$(".js-clear-console").click(function(e) {
+		e.preventDefault();
+		clear();
+		setTimeout(function () {
+			controller.focus();
+		}, 100);
+		return false;
+	});
+
+	$(".js-history").click(function(e) {
+		e.preventDefault();
+		showLogs();
+		setTimeout(function () {
+			controller.focus();
+		}, 100);
+		return false;
+	});
+
 	// init bootstrap switch
 	$("[name='bootstrap-switch']").bootstrapSwitch();
 
@@ -158,7 +176,7 @@ $(function() {
 				return e.toString();
 			}
 		},
-		autofocus: false,
+		autofocus: true,
 		animateScroll: true,
 		promptHistory: true
 	});
@@ -190,7 +208,9 @@ function init(logsHistoryJSON) {
 
 	$("#include_filters").removeAttr('disabled');
 	$("#exclude_filters").removeAttr('disabled');
-	controller.focus();
+	setTimeout(function () {
+		controller.focus();
+	}, 100);
 }
 
 function loadCommandsHistory() {

@@ -28,6 +28,6 @@
     height: 225px;
 }
 
-#wrapper.toggled a {
+#wrapper.toggled .js-menu-toggle {
     color: blue;
 }
