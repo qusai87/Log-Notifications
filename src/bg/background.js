@@ -1,6 +1,7 @@
-//test notifications : var count=0;var timer =setInterval(function () {count++;console.warn('bla bla bla');if (count===3) console.warn('after 3 times');if (count>5) clearTimeout(timer);},350)
+//test notifications : 
+// var count=0;var timer =setInterval(function () {count++;console.warn('bla bla bla');if (count===3) console.warn('after 3 times');if (count>15) clearTimeout(timer);},350)
 
-DEBUG = false;
+var __DEBUG = false;
 
 // Switches
 var isEnabled = true;
@@ -24,7 +25,7 @@ var notifications = {};
 var excludeFilterRegex = null;
 var includeFilterRegex = null;
 var notificationTimeout = -1;
-var notificationCounter = 1;
+var notificationCounter = 0;
 
 // chrome.webNavigation.onCommitted.addListener(function (data) {
 // 	// if (data && data.url && data.url.indexOf('http')!=-1)
@@ -38,7 +39,7 @@ chrome.storage.sync.get('enabled', function (result) {
 	else {
 		isEnabled =  true || localStorage.isEnabled;
 		chrome.storage.sync.set({'enabled': isEnabled}, function() {
-		  if (DEBUG)
+		  if (__DEBUG)
 			console.log('enabled saved');
 		});
 	}
@@ -50,7 +51,7 @@ chrome.storage.sync.get('disableCache', function (result) {
 		disableCache = result.disableCache;
 	} else {
 		chrome.storage.sync.set({'disableCache': disableCache}, function() {
-			if (DEBUG)
+			if (__DEBUG)
 				console.log('disableCache saved');
 		});
 	}
@@ -61,7 +62,7 @@ chrome.storage.sync.get('disableWarnings', function (result) {
 		disableWarnings = result.disableWarnings;
 	} else {
 		chrome.storage.sync.set({'disableWarnings': disableWarnings}, function() {
-			if (DEBUG)
+			if (__DEBUG)
 				console.log('disableWarnings saved');
 		});
 	}
@@ -78,7 +79,7 @@ chrome.storage.sync.get('disableAlerts', function (result) {
 		disableAlerts = result.disableAlerts;
 	} else {
 		chrome.storage.sync.set({'disableAlerts': disableAlerts}, function() {
-			if (DEBUG)
+			if (__DEBUG)
 				console.log('disableAlerts saved');
 		});
 	}
@@ -90,7 +91,7 @@ chrome.storage.sync.get('notification_enabled', function (result) {
 	}
 	else {
 		chrome.storage.sync.set({'notification_enabled': isNotificationEnabled}, function() {
-			if (DEBUG)
+			if (__DEBUG)
 				console.log('notification_enabled saved');
 		});
 	}
@@ -103,7 +104,7 @@ chrome.storage.sync.get('domain_notifications', function (result) {
 	}
 	else {
 		chrome.storage.sync.set({'domain_notifications': domainNotifications}, function() {
-			if (DEBUG)
+			if (__DEBUG)
 				console.log('domainNotifications saved', domainNotifications);
 		});
 	}
@@ -119,7 +120,7 @@ chrome.storage.sync.get('commandsHistory', function (result) {
 		}
 	} else if (!result.commandsHistory) {
 		chrome.storage.sync.set({'commandsHistory': []}, function() {
-		  if (DEBUG)
+		  if (__DEBUG)
 			console.log('commandsHistory saved');
 		});
 	}
@@ -141,54 +142,70 @@ function updateFilters () {
 	});
 }
 
-function showChromeNotification (notificationData) {
-	if (!notificationData)
+function showChromeNotification (notification) {
+	if (!notification || !notification.message)
 		return;
 
-	if (lastNotificatation) {
-		if (_.isEqual(lastNotificatation,notificationData)) {
-			if (notificationTimeout !== -1) {
-				clearTimeout(notificationTimeout);       
-				notificationCounter++; 
-			}
-
-			notificationTimeout = setTimeout(function () {
-				if (notificationCounter > 1)
-					lastNotificatation.title = '['+notificationCounter+'] ' + lastNotificatation.title ;
-				
-				createNotification(notificationData);
-				notificationCounter = 1;
-				lastNotificatation = null;
-			},500);
-
-		} else {
-			createNotification(notificationData);
-			notificationCounter = 1; 
-		}
-	} else {
-		createNotification(notificationData);
-		notificationCounter = 1;
+	if (!lastNotificatation) {
+		notificationCounter = 0;
 	}
 
-	lastNotificatation = notificationData;
+	notificationCounter++; 
+
+	if (!lastNotificatation  || _.isEqual(lastNotificatation , notification) ) {
+		var currentNotification = notification;
+
+		if (notificationTimeout !== -1) {
+			clearTimeout(notificationTimeout);
+			notificationTimeout = -1;
+		}
+
+		notificationTimeout = setTimeout(function () {
+			console.log('show notification for last notification',currentNotification );
+			createNotification(currentNotification, notificationCounter);
+			notification = null;
+			lastNotificatation = null;
+		}, !lastNotificatation ? 100 : 1000);
+
+		lastNotificatation = currentNotification;
+
+	} else {
+		var currentNotification = notification;
+		setTimeout(function () {
+			console.log('show notification for current notification',notification );
+			createNotification(currentNotification, notificationCounter);
+			notification = null;
+			lastNotificatation = null;
+		},  1500);
+	}	
 }
 
-function createNotification (notificationData) {
-	if (DEBUG)
-		console.log('notification created!', notificationData);
+function createNotification (notification, messageCount) {
+	if (!notification || !notification.message)
+		return;
+
+	if (__DEBUG) {
+		console.log('notification created!', notification);
+	}
 	
-	if (typeof notificationData.message ==='object') {
-		if (notificationData.message.length) {
-			notificationData.message = notificationData.message.join(' ');
+	if (typeof notification.message === 'object') {
+		if (notification.message.length) {
+			notification.message = notification.message.join(' ');
 		} else{
-			notificationData.message = String(notificationData.message);
+			notification.message = String(notification.message);
 		}
 	}
+	if (messageCount > 1) {
+		notification.message = '['+messageCount+'] ' + notification.message;
+	}
 
-	chrome.notifications.create('', notificationData ,  _.bind(function(id) {
-		if (this.context)
+	chrome.notifications.create('', notification ,  _.bind(function(id) {
+		if (this.context) {
 			this.context.notifications[id] = this.message;
-	},{message :notificationData.message , context: this}));
+		}
+	},{message : notification.message , context: this}));
+
+	notificationCounter = 0;
 }
 
 /* Respond to the user's clicking one of the buttons */
@@ -255,7 +272,7 @@ function isValidMessage (msg) {
 }
 
 function updateNotificationCounter(tabId,pageId, domain) {
-	if (DEBUG)
+	if (__DEBUG)
 		console.log('update notifications count: ',pageId);
 	if (pageId && activePageID === pageId) {
 		if (!_pages[pageId]) {
@@ -389,20 +406,23 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	if ((request.from === 'content') && (request.subject === 'console_action')) {
 		if (!isEnabled || !request.msg)
 			return;
-		var msg= request.msg;
+		var msg = request.msg;
 
 		if (pageId) {
+			//msg = '[' + pageId + ']' + request.msg;
 			var count = countMessages(_logs[pageId],msg);
-			if (count>5) {
+			if (count > 10) {
 				return;
-			} else if (count==5) {
-				msg = 'This Message repeat many times and it will be disabled from notifications. \n' +request.msg;
+			} else if (count == 10) {
+				msg += '\nThis Message repeat many times and it will be disabled from notifications.';
 			}
 
-			if (!_logs[pageId])
+			if (!_logs[pageId]) {
 				_logs[pageId] = [];
+			}
 
 			_logs[pageId].push(request);
+
 			if (_logs[pageId].length> 300) {
 				_logs[pageId] = _logs[pageId].slice(Math.max(_logs[pageId].length - 300, 1));
 			}
@@ -487,7 +507,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		refreshBadge(request.tabId,pageId,request.domain);
 
 		chrome.storage.sync.set({'enabled': isEnabled}, function() {
-		  if (DEBUG)
+		  if (__DEBUG)
 			console.log('enabled saved');
 		});
 	} else if ((request.from === 'popup') && (request.subject === 'disable_notifications')) {
@@ -510,7 +530,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 			subject: 'preserved_logs',
 			logsHistoryJSON: pageId && JSON.stringify(_logs[pageId])
 		}, function(response) {
-			if (DEBUG)
+			if (__DEBUG)
 				console.log(response);
 		});
 	} else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
@@ -532,7 +552,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });*/
 
 chrome.tabs.onActivated.addListener(function(tabInfo) {
-	if (DEBUG)
+	if (__DEBUG)
 		console.log('tab opened!',tabInfo.tabId);
 	if (tabInfo) {
 		var pageId = tabInfo.windowId  + ':' + tabInfo.tabId;
@@ -554,7 +574,7 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 	// page reload
 	var pageId = tabInfo.windowId  + ':' + tabId;
 	var domain = getDomain(tabInfo.url);
-	if (DEBUG)
+	if (__DEBUG)
 		console.log('tab status:',changeInfo.status);
 
 	if (changeInfo.status === "loading" ) {
@@ -574,7 +594,7 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 		}
 	} else if (changeInfo.status === "complete" )
 	{
-		if (DEBUG)
+		if (__DEBUG)
 			console.log('page reloaded!',tabId);
 	}
 });
@@ -586,7 +606,7 @@ chrome.tabs.onCreated.addListener(function(tabInfo) {
 	var domain = getDomain(tabInfo.url);
 	refreshBadge(tabInfo.tabId,pageId, domain);
 
-	if (DEBUG)
+	if (__DEBUG)
 		console.log("Tab created event caught: " , tabInfo);
 
 	if (domain) {
@@ -605,11 +625,11 @@ chrome.tabs.onRemoved.addListener(function(tabId,tab) {
 		// No Need to refresh the badge since there will be another tab activated!
 	}
 
-	if (DEBUG)
+	if (__DEBUG)
 		console.log("Tab removed event caught: " , tabId);
 });
 
-if (DEBUG)
+if (__DEBUG)
 	console.log('background.js started!');
 
 var _gaq = [];

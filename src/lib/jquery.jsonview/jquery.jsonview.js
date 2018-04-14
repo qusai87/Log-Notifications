@@ -127,7 +127,7 @@ Licensed under the MIT License.
       }
       if (hasContents) {
         collapsible = level === 0 ? '' : ' collapsible';
-        return "{<ul class=\"obj level" + level + collapsible + "\">" + output + "</ul>}";
+        return "<ul class=\"obj level" + level + collapsible + "\">" + output + "</ul>";
       } else {
         return '{ }';
       }

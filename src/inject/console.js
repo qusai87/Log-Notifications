@@ -1,5 +1,6 @@
 // Paulirish Log wrapper : http://www.paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
-__DEBUG = false;
+var __DEBUG = false;
+var debuggerMode = false;
 var enableStack = false;
 
 if (!window.console.isOverrided && !window.console.isModified) {
@@ -38,24 +39,26 @@ if (!window.console.isOverrided && !window.console.isModified) {
     // Completelety overrride log console.
     // http://stackoverflow.com/questions/7042611/override-console-log-for-production
     // 
-    function $debug() {
-        if (__DEBUG) {
+    function $debugger() {
+        if (debuggerMode) {
             debugger;
         }
     }
 
     function $start_debug() {
-        __DEBUG = true;
+        debuggerMode = true;
     }
 
     function $stop_debug() {
-        __DEBUG = false;
+        debuggerMode = false;
     }
 
     // Take shallow copy of console methods
     var _console = shallowCopy(window.console || {}); 
+    window._console = _console;
     // Add flag to detect if current console methods is overrided!
     window.console.isOverrided = true;
+    window.console.original = _console;
 
 
     window._JSConsole.messages = [];
@@ -130,50 +133,56 @@ if (!window.console.isOverrided && !window.console.isModified) {
 
     addLogStackNumber = addLogStackWrapper();
 
-    window.console.log = function(){
-        var args = Array.prototype.slice.call(arguments, 0);
+    window.console.log = function() {
+        $debugger();
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         _JSConsole.messages.push({msg:args,action:'log'});
         startLogDispatchTimer();
 
         var output = addLogStackNumber.apply(null,arguments);
 
-        if (!_console.isOverrided)
+        if (!_console.isOverrided && _console.log)
             _console.log.apply(_console,output);
 
     };
     window.console.info = function () {
-        var args = Array.prototype.slice.call(arguments, 0);
+        $debugger();
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         _JSConsole.messages.push({msg:args,action:'info'});
         startLogDispatchTimer();
-        if (!_console.isOverrided)
+        if (!_console.isOverrided && _console.info)
             _console.info.apply(_console,arguments);
     };
 
     window.console.table = function () {
+        $debugger();
         if (!_console.isOverrided)
             _console.table.apply(_console,arguments);
     };
     window.console.dir = function () {
-        if (!_console.isOverrided)
+        $debugger();
+        if (!_console.isOverrided && _console.dir)
             _console.dir.apply(_console,arguments);
     };
     window.console.warn = function () {
-        var args = Array.prototype.slice.call(arguments, 0);
+        $debugger();
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         _JSConsole.messages.push({msg:args,action:'warn'});
         startLogDispatchTimer();
 
         var output = addLogStackNumber.apply(null,arguments);
-        if (!_console.isOverrided)
+        if (!_console.isOverrided && _console.warn)
             _console.warn.apply(_console,output);
     };
 
     window.console.error = function () {
-        var args = Array.prototype.slice.call(arguments, 0);
+        $debugger();
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         _JSConsole.messages.push({msg:args,action:'error'});
         startLogDispatchTimer();
 
         var output = addLogStackNumber.apply(null,arguments);
-        if (!_console.isOverrided)
+        if (!_console.isOverrided && _console.error)
             _console.error.apply(_console,output);
     };
 
@@ -209,13 +218,13 @@ if (!window.console.isOverrided && !window.console.isModified) {
     }));
 
     window.alert = function() {
-        // do something here
-        var args = Array.prototype.slice.call(arguments, 0);
+        $debugger();
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         
         _JSConsole.messages.push({msg:args,action:'alert'});
         startLogDispatchTimer();
 
-        if (!_console.isOverrided)
+        if (!_console.isOverrided && _console.info)
             _console.info.apply(_console,arguments);
     };
 

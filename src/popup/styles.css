@@ -12,6 +12,19 @@ section {
 	padding: 5px;
 }
 
+h1 {
+	font-size: 1.2em;
+	margin-top: 0;
+}
+label {
+	padding-right: 3px;
+}
+
+hr {
+	margin: 10px 0;
+}
+
+
 .container-fluid {
 	overflow: hidden;
 	padding: 0 10px;
@@ -61,17 +74,6 @@ section {
 }
 .navbar { margin-bottom: 2px; }
 
-h1 {
-	font-size: 1.2em;
-	margin-top: 0;
-}
-label {
-	padding-right: 3px;
-}
-
-hr {
-	margin: 10px 0;
-}
 
 .switch, .switch-right {
     display: inline-block;
@@ -137,12 +139,7 @@ hr {
 	width: 300px;
 	margin-right: 20px;
 }
-.console { 
-	word-wrap: break-word; 
-	clear: both;
-	font-size: 12px;
-	height: 80%;
-}
+
 
 .ad img {
 	max-width: 100%;
@@ -153,6 +150,13 @@ hr {
 
 #console-wrapper {
 	height: 450px;
+}
+
+div.console { 
+	word-wrap: break-word; 
+	clear: both;
+	font-size: 12px;
+	height: 100%;
 }
 
 div.console div.jquery-console-inner
@@ -166,8 +170,22 @@ div.console div.jquery-console-inner
 }
 div.console div.jquery-console-prompt-box
 { 
+	float: left;
+	clear: both;
 	color:#444; 
-	font-family:monospace; 
+	font-family:Menlo, monospace; 
+}
+
+div.console div.jquery-console-prompt-box:last-of-type {
+	clear: both;
+}
+
+div.console div.jquery-console-prompt-box + div.jquery-console-message {
+	float: left;
+}
+
+div.console div.json {
+	display: inline-block;
 }
 
 div.console span.jquery-console-prompt-label 
@@ -185,12 +203,14 @@ div.console div.jquery-console-focus span.jquery-console-cursor
 div.console div.jquery-console-message 
 {
 	background: #fff;
-	border-bottom: 1px #dedede solid;
-/*	font-family: monospace;*/
+	/*border-bottom: 1px #dedede solid;*/
+	font-family: Menlo, monospace;
 }
 
 div.console div.jquery-console-welcome 
 {
+	clear: both;
+	width: 100%;
     padding: 5px;
     margin: 0;
     color: #fff;
@@ -200,13 +220,17 @@ div.console div.jquery-console-welcome
 }
 
 div.console div.jquery-console-message-value 
-{
+{	
+	clear: both;
+	width: 100%;
 	padding: 5px;
-	color: #00631f;
+	color: rgb(28, 0, 207);
 }
 
 div.console div.jquery-console-message-log 
 {
+	clear: both;
+	width: 100%;
 	padding: 5px;
 	color: #171717;
 	font-size: 12px;
@@ -218,12 +242,13 @@ div.console div.jquery-console-message-log:before {
 div.console div.jquery-console-message-value:before
 {
 	content: "\f104";
-	color: grey;
+	color: #b3b3b3;
 	font-family: FontAwesome;
 	margin: 0 7px 0 2px;
 }
 div.console div.jquery-console-message-info 
 {
+	clear: both;
 	padding: 5px;
 	color: #171717;
 
@@ -238,6 +263,8 @@ div.console div.jquery-console-message-info:before
 
 div.console div.jquery-console-message-alert 
 {
+	clear: both;
+	width: 100%;
 	padding: 5px;
 	color: #171717;
 
@@ -251,22 +278,32 @@ div.console div.jquery-console-message-alert:before
 }
 div.console div.jquery-console-message-warn 
 {
+	clear: both;
+	width: 100%;
 	padding: 5px;
 	color: #171717;
 	background: #fdfdd7;
 }
 div.console div.jquery-console-message-table 
 {
+	clear: both;
+	width: 100%;
 	padding: 5px;
 	color: #9e9c9c;
 }
 
 div.console div.jquery-console-message-error,div.console div.jquery-console-message-unknown
 { 
-	color:#ef0505; 
-	background: #ffe7e7;
+	clear: both;
+	width: 100%;
+	color: red; 
+	background: #fff0f0;
 	font-weight:bold;
 	padding: 5px;
+}
+
+div.console div.jquery-console-message-system {
+	color: #b3b3b3;
 }
 
 div.console div.jquery-console-message-error:before,div.console div.jquery-console-message-unknown:before {
@@ -289,7 +326,7 @@ div.console div.jquery-console-message-warn:before {
 div.console div.jquery-console-message-success
 { 
 	color:#187718; 
-	font-family:monospace;
+	font-family:Menlo, monospace;
 	padding: 5px;
 }
 

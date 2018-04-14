@@ -1,5 +1,5 @@
 // GLOBAL Variables
-DEBUG = false;
+var __DEBUG = false;
 
 notification_enabled = false;
 respone_not_received_timer = -1;
@@ -47,14 +47,14 @@ $(function() {
 	// init bootstrap switch
 	$("[name='bootstrap-switch']").bootstrapSwitch();
 
-	$('#include_filters').on('change keyup',function () {
+	$('#include_filters').on('change keyup', _.debounce(function () {
 		if ($('#include_filters').data('oldVal') != $('#include_filters').val()) {
 			_gaq.push(['_trackEvent',$('#include_filters').val(),'include filter']);
 			$('#include_filters').data('oldVal', $('#include_filters').val());
 			chrome.storage.sync.set({
 				'include_filters': $('#include_filters').val()
 			}, function() {
-				if (DEBUG)
+				if (__DEBUG)
 					console.log('include_filters saved');
 				chrome.runtime.sendMessage({
 					from: 'popup',
@@ -63,16 +63,16 @@ $(function() {
 			});
 			showLogs();
 		}
-	});
+	},300,1));
 
-	$('#exclude_filters').on('change keyup',function () {
+	$('#exclude_filters').on('change keyup', _.debounce(function () {
 		if ($('#exclude_filters').data('oldVal') != $('#exclude_filters').val()) {
 			_gaq.push(['_trackEvent',$('#exclude_filters').val(),'exclude filter']);
 			$('#exclude_filters').data('oldVal', $('#exclude_filters').val());
 			chrome.storage.sync.set({
 				'exclude_filters': $('#exclude_filters').val()
 			}, function() {
-				if (DEBUG)
+				if (__DEBUG)
 					console.log('exclude_filters saved');
 				chrome.runtime.sendMessage({
 					from: 'popup',
@@ -81,7 +81,7 @@ $(function() {
 			});
 			showLogs();
 		}
-	});
+	},300,1));
 
 	$('input[name="bootstrap-switch"]').on('switchChange.bootstrapSwitch', function(event, state) {
 		var id = this.id;
@@ -129,7 +129,7 @@ $(function() {
 	controller = $('.console').empty().console({
 		promptLabel: '> ',
 		commandValidate: function(line) {
-			if (DEBUG)
+			if (__DEBUG)
 				console.log('validate command:',line);
 
 			if (line === 'domains' || line === 'domains()') {
@@ -215,7 +215,7 @@ function init(logsHistoryJSON) {
 
 function loadCommandsHistory() {
 	chrome.storage.sync.get('commandsHistory', function (result) {
-		if (DEBUG)
+		if (__DEBUG)
 			console.log('result.commandsHistory.length: ', result.commandsHistory.length)
 		if (result.commandsHistory && result.commandsHistory.length) {
 			var uniqueHistory = getUniqueArray(result.commandsHistory);
@@ -247,34 +247,38 @@ function showLogs() {
 	var logs = [];
 	var filters = $('#include_filters').val();
 	var excludeFilters = $('#exclude_filters').val();
-	var logs_history_filtered = reduce(logs_history,filters,excludeFilters);
+	var logs_history_with_filters = reduce(logs_history,filters,excludeFilters);
 
-	for (var key in logs_history_filtered) {
-		var value = logs_history_filtered[key];
+	if (logs_history_with_filters.results) {
+		for (var key in logs_history_with_filters.results) {
+			var value = logs_history_with_filters.results[key];
 
-		var msg = normalizeText(value.msg);
+			var msg = normalizeText(value.msg);
 
-		if (value.action) {
-			if (msg && msg.length === 1) {
-				logs.push({
-					msg: msg,
-					count: value.count,
-					className: "jquery-console-message-"+value.action
-				});
-			} else {
-				logs.push({
-					msg: msg,
-					className: "jquery-console-message-"+value.action
-				});
+			if (value.action) {
+				if (msg) {
+					logs.push({
+						msg: msg,
+						count: value.count,
+						className: "jquery-console-message-"+value.action
+					});
+				}
 			}
 		}
 	}
 	if (typeof controller =='object') {
+		clear();
 		if (logs.length) {
-			clear();
+			if (logs_history_with_filters.excluded) {
+				controller.commandResult(sprintf('Excluded %d logs \n', logs_history_with_filters.excluded), "jquery-console-message-system");
+			}
 			controller.commandResult(logs);
 		} else {
-			//controller.commandResult('No Console logs received!');
+			if (logs_history_with_filters.excluded) {
+				controller.commandResult(sprintf('Excluded %d logs, remove filters to show more!', logs_history_with_filters.excluded), "jquery-console-message-system");
+			} else {
+				controller.commandResult('No Console logs received!');
+			}
 		}
 	}
 }
@@ -293,7 +297,7 @@ function normalizeText(text) {
 			}
 		}
 		if (checkStringObject) {
-			 text = stringArr.join(' ');
+			 text = sprintf.apply(this, text);
 		}      
 	} else if (typeof text !== 'undefined') {
 		text = String(text);
@@ -399,6 +403,8 @@ function evaluateJSExpression(_expression, callback) {
 
 function reduce(arr,filters,exclude) {
 	var results =[];
+	var excluded = 0;
+
 	if (!arr) {
 		return null;
 	}
@@ -414,10 +420,14 @@ function reduce(arr,filters,exclude) {
 			if (typeof arr[i].msg === 'object') {
 				msg = arr[i].msg.join('');
 			}
-			if (!msg.match(includeFilterRegex))
+			if (!msg.match(includeFilterRegex)) {
+				excluded++;
 				continue;
-			else if (exclude && msg.match(excludeFilterRegex))
+			}
+			else if (exclude && msg.match(excludeFilterRegex)) {
+				excluded++;
 				continue;
+			}
 		}
 		if (_.isEqual(arr[i+1],arr[i])) {
 			count++;
@@ -432,12 +442,13 @@ function reduce(arr,filters,exclude) {
 		}
 		count = 1;
 	}
-	return results;
+	return {results: results, excluded: excluded};
 }
 
 function clear() {
-	if (controller)
+	if (controller) {
 		controller.clearScreen();
+	}
 }
 
 function loadOptions () {
@@ -480,7 +491,7 @@ function loadSwitch(switchName, key, callback) {
 		loading_counts++;
 
 		_switches[key] = result[key];
-		if (DEBUG)
+		if (__DEBUG)
 			console.log(key , ':' , _switches[key]);
 
 		if (key != 'domain_notifications') {
@@ -508,7 +519,7 @@ function saveSwitch(switchName, key, value, callback) {
 	data[key] = value;
 
 	chrome.storage.sync.set(data, function() {
-		if (DEBUG)
+		if (__DEBUG)
 			console.log('switch saved ['+switchName+']', key+ '=', value);
 
 		if (callback && typeof callback === 'function') {
@@ -690,5 +701,5 @@ _gaq.push(['_trackEvent','popup','opened']);
   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
 
-if (DEBUG)
+if (__DEBUG)
 	console.log('popup.js opened!');

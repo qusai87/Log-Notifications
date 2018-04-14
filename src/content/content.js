@@ -1,10 +1,17 @@
 // Stackoverflow : http://stackoverflow.com/questions/9515704/building-a-chrome-extension-inject-code-in-a-page-using-a-content-script/9517879#9517879
 // Read it from the storage
-__DEBUG = false;
+var __DEBUG = false;
+
+var injectedFiles = [];
+
+var __mini_js_console_loaded = false;
 
 var console = window.console;
+
+var isTopWindow = window == window.top;
+
 if (__DEBUG)
-	console.log('content.js started!');
+    console.log('content.js started!', window.location.hostname);
 
 
 /**
@@ -17,10 +24,11 @@ if (__DEBUG)
   self: false, setInterval: false */
 
 var isTop, testDiv, scrollIntervalId,
-        isBrowser = typeof window !== "undefined" && window.document,
-        isPageLoaded = !isBrowser,
-        doc = isBrowser ? document : null,
-        readyCalls = [], times = 0;
+    isBrowser = typeof window !== "undefined" && window.document,
+    isPageLoaded = !isBrowser,
+    doc = isBrowser ? document : null,
+    readyCalls = [],
+    times = 0;
 
 function pageLoaded() {
     if (!isPageLoaded) {
@@ -28,8 +36,6 @@ function pageLoaded() {
         if (scrollIntervalId) {
             clearInterval(scrollIntervalId);
         }
-
-        var completed = false;
     }
 }
 
@@ -51,7 +57,7 @@ if (isBrowser) {
         //Diego Perini: http://javascript.nwbox.com/IEContentLoaded/,
         //but modified by other contributors, including jdalton
         if (testDiv.doScroll && isTop && window.external) {
-            scrollIntervalId = setInterval(function () {
+            scrollIntervalId = setInterval(function() {
                 try {
                     testDiv.doScroll();
                     pageLoaded();
@@ -76,154 +82,160 @@ if (isBrowser) {
     }
 }
 
-var injectedFiles = [];
+function guid() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
 function add_JS_File(src) {
-	if (injectedFiles.indexOf(src) === -1) {
-		injectedFiles.push(src);
-		var s = document.createElement('script');
-		// TODO: add "script.js" to web_accessible_resources in manifest.json
-		s.src = chrome.extension.getURL(src);
-		s.onload = function() {
-			this.parentNode.removeChild(this);
-		};
-		(document.head || document.documentElement).appendChild(s);
+    if (injectedFiles.indexOf(src) === -1) {
+        injectedFiles.push(src);
+        var s = document.createElement('script');
+        // TODO: add "script.js" to web_accessible_resources in manifest.json
+        s.src = chrome.extension.getURL(src);
+        s.onload = function() {
+            this.parentNode.removeChild(this);
+        };
+        (document.head || document.documentElement).appendChild(s);
 
-		return true;
-	} else {
-		return false;
-	}
+        return true;
+    } else {
+        return false;
+    }
 }
+
 function add_CSS_File(src) {
-	if (injectedFiles.indexOf(src) === -1) {
-		injectedFiles.push(src);
+    if (injectedFiles.indexOf(src) === -1) {
+        injectedFiles.push(src);
 
-		var link = document.createElement("link");
-		link.href = chrome.extension.getURL(src);
-		link.type = "text/css";
-		link.rel = "stylesheet";
-		(document.head || document.documentElement).appendChild(link);
+        var link = document.createElement("link");
+        link.href = chrome.extension.getURL(src);
+        link.type = "text/css";
+        link.rel = "stylesheet";
+        (document.head || document.documentElement).appendChild(link);
 
-		return true;
-	} else {
-		return false;
-	}
+        return true;
+    } else {
+        return false;
+    }
 }
+
 function init(enabled, enableLogStack) {
-	// Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
-	document.addEventListener('Msg_LogNotificationExtension_enabled', function(e) {
-		if (__DEBUG)
-			console.log('enabled',enabled);
+    if (!__mini_js_console_loaded) {
+        if (isTopWindow) {
+            // Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
+            document.addEventListener('Msg_LogNotificationExtension_enabled', function(e) {
+                if (__DEBUG)
+                    console.log('enabled', enabled);
 
-		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enabled', {
-			detail: enabled
-		}));
+                document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enabled', {
+                    detail: enabled
+                }));
 
-		return enabled;
-	});
+                return enabled;
+            });
 
-	document.addEventListener('Msg_LogNotificationExtension_enableLogStack', function(e) {
-		if (__DEBUG)
-			console.log('enableLogStack',enableLogStack);
-		
-		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enableLogStack', {
-			detail: enableLogStack
-		}));
+            document.addEventListener('Msg_LogNotificationExtension_enableLogStack', function(e) {
+                if (__DEBUG)
+                    console.log('enableLogStack', enableLogStack);
 
-		return enableLogStack;
-	});
+                document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enableLogStack', {
+                    detail: enableLogStack
+                }));
 
-	if (enabled) {
-		if (add_JS_File('src/inject/evaluate.js')) {
-			document.addEventListener('Msg_LogNotificationExtension_js_expression_found', function(e) {
-				if (__DEBUG)
-					console.log('js_expression_found:', e);
-				if (e && e.detail) {
-					chrome.runtime.sendMessage({
-						from: 'content',
-						subject: 'expression_found',
-						output: e.detail.results,
-						expression : e.detail.expression,
-					}, function(response) {});
-				}
-			});
-		}
-		
+                return enableLogStack;
+            });
+            document.addEventListener('Msg_LogNotificationExtension_js_expression_found', function(e) {
+                if (__DEBUG)
+                    console.log('js_expression_found:', e);
+                if (e && e.detail) {
+                    chrome.runtime.sendMessage({
+                        from: 'content',
+                        subject: 'expression_found',
+                        output: e.detail.results,
+                        expression: e.detail.expression,
+                    }, function(response) {});
+                }
+            });
+            document.addEventListener('Msg_LogNotificationExtension_messages', function(e) {
+                if (e && e.detail && e.detail.length) {
+                    for (var i = 0; i < e.detail.length; i++) {
+                        var msg = e.detail[i].msg;
+                        var action = e.detail[i].action;
+                        chrome.runtime.sendMessage({
+                            from: 'content',
+                            subject: 'console_action',
+                            domain: window.location.hostname,
+                            msg: msg,
+                            action: action
+                        }, function(response) {
+                            if (__DEBUG)
+                                console.log('messages:', response);
+                            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', { detail: '' }));
+                        });
+                    }
+                }
+            });
 
-		if (add_JS_File('src/inject/console.js')) {
-			document.addEventListener('Msg_LogNotificationExtension_messages', function(e) {
-				if (e && e.detail && e.detail.length) {
-					for (var i = 0; i < e.detail.length; i++) {
-						var msg = e.detail[i].msg;
-						var action = e.detail[i].action;
-						chrome.runtime.sendMessage({
-							from: 'content',
-							subject: 'console_action',
-							domain: window.location.hostname,
-							msg: msg,
-							action: action
-						}, function(response) {
-							if (__DEBUG)
-								console.log('messages:',response);
-							document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', {detail:''}));
-						});
-					}
-				}
-			});
+            document.addEventListener('Msg_LogNotificationExtension_history_found', function(e) {
+                if (e && e.detail) {
+                    chrome.runtime.sendMessage({
+                        from: 'content',
+                        subject: 'logs_history_found',
+                        logsHistoryJSON: e.detail
+                    }, function(response) {
+                        if (__DEBUG)
+                            console.log('history_found', response);
+                    });
+                }
+            });
+        }
 
-			document.addEventListener('Msg_LogNotificationExtension_history_found', function(e) {
-				if (e && e.detail) {
-					chrome.runtime.sendMessage({
-						from: 'content',
-						subject: 'logs_history_found',
-						logsHistoryJSON: e.detail
-					}, function(response) {
-						if (__DEBUG)
-							console.log('history_found',response);
-					});
-				}
-			});
-		}
 
-		if (window.location.hostname.indexOf('dev.booking') != -1)
-			add_CSS_File('src/inject/styles.css');
+        __mini_js_console_loaded = true;
+    }
 
-	}
+    if (enabled) {
+        add_JS_File('src/inject/evaluate.js');
+        add_JS_File('src/inject/console.js');
+    }
 }
-
 
 
 // Listen for messages from the popup
-chrome.runtime.onMessage.addListener(function(request, sender, response) 
-{
-	// First, validate the message's structure
-	if (__DEBUG)
-		console.log('request:',request);
+chrome.runtime.onMessage.addListener(function(request, sender, response) {
+    // First, validate the message's structure
+    if (__DEBUG)
+        console.log('request:', request);
 
-	if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
-		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_history', {}));
-	} 
-	else if ((request.from === 'popup') && (request.subject === 'evaluate_js_expression')) {
-		document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_evaluate_js_expression', {
-			detail: request.expression
-		}));
-	}   
-	else if ((request.from === 'popup') && (request.subject === 'init')) {
-		if (__DEBUG) {
-			console.log('init message received');
-		}
-		init(request.enabled);
-	}   
+    if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
+        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_history', {}));
+    } else if ((request.from === 'popup') && (request.subject === 'evaluate_js_expression')) {
+        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_evaluate_js_expression', {
+            detail: {
+            	expression: request.expression,
+            	id: guid()
+            }
+        }));
+    } else if ((request.from === 'popup') && (request.subject === 'init')) {
+        if (__DEBUG) {
+            console.log('init message received');
+        }
+        init(request.enabled);
+    }
 });
 
 
-
-
 chrome.storage.sync.get('enableLogStack', function(result) {
-	var enableLogStack = result.enableLogStack;
-	chrome.storage.sync.get('enabled', function(result) {
-		var enabled = result.enabled;
-		init(enabled,enableLogStack);
-	});
+    var enableLogStack = result.enableLogStack;
+    chrome.storage.sync.get('enabled', function(result) {
+        var enabled = result.enabled;
+        init(enabled, enableLogStack);
+    });
 });
 
 
@@ -232,5 +244,3 @@ chrome.storage.sync.get('enableLogStack', function(result) {
 // 	if (disableIFRAME)
 // 		add_JS_File('src/inject/disableIFRAME.js');
 // });
-
-
