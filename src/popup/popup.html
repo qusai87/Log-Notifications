@@ -72,7 +72,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id="sidebar-options" class="panel-group">
+                    <div id="sidebar-options" class="">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 Global settings
@@ -80,7 +80,7 @@
                                     <i class="fa fa-cog" aria-hidden="true"></i>
                                 </button>
                             </div>
-                            <div class="">
+                            <div class="container-fluid">
                                 <div class="row">
                                     <div class="col-6">
                                         <span class="switch-label">Show Notifications:</span>
@@ -136,63 +136,64 @@
                         </div>
                         <div class="panel panel-default">
                             <div class="panel-heading">Options</div>
-                            <div class="row">
-                                <div class="col-6">
-                                    <span class="switch-label">Preserved Logs:</span>
-                                    <span class="switch-right"><div class="switch">
-                                        <input type="checkbox" id="preserveLogsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                                    </div>
-                                    </span>
-                                </div>
-                                <div class="col-6 small">
-                                    <small>Will keep all console logs after refreshing the page</small>
-                                </div>
-                                <!-- <div class="col-6">
-                                    <span class="switch-label">Theme:</span>
-                                    <span class="switch-right"><div class="switch">
-                                        <input type="checkbox" id="themeSwitch" name='bootstrap-switch' data-on-text="ON" data-size='mini' class="make-switch">
-                                    </div>
-                                    </span>
-                                </div> -->
-                            </div>
-                            <hr/>
-                            <div class="row">
-                                <div class="col-6">
-                                    <span class="switch-label">Enable Log Stack:</span>
-                                    <span class="switch-right"><div class="switch">
-                                        <input type="checkbox" id="enableLogStackSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
-                                    </div>
-                                    </span>
-                                </div>
-                                <div class="col-6 small">
-                                    <small>Show log stack on ChromeDevTools console</small>
-                                </div>
-                            </div>
-
-                            <div class="">
+                            <div class="container-fluid">
                                 <div class="row">
                                     <div class="col-6">
-                                        <span class="switch-label">Disable Cache:</span>
+                                        <span class="switch-label">Preserved Logs:</span>
                                         <span class="switch-right"><div class="switch">
-                                            <input type="checkbox" id="disableCacheSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                            <input type="checkbox" id="preserveLogsSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
                                         </span>
                                     </div>
                                     <div class="col-6 small">
-                                        <small>Disable Local Cache functionality</small>
+                                        <small>Will keep all console logs after refreshing the page</small>
                                     </div>
+                                    <!-- <div class="col-6">
+                                        <span class="switch-label">Theme:</span>
+                                        <span class="switch-right"><div class="switch">
+                                            <input type="checkbox" id="themeSwitch" name='bootstrap-switch' data-on-text="ON" data-size='mini' class="make-switch">
+                                        </div>
+                                        </span>
+                                    </div> -->
                                 </div>
                                 <hr/>
                                 <div class="row">
                                     <div class="col-6">
-                                        <span class="switch-label">Disable iFrame:</span>
+                                        <span class="switch-label">Enable Log Stack:</span>
                                         <span class="switch-right"><div class="switch">
-                                            <input type="checkbox" id="disableIFRAMESwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                            <input type="checkbox" id="enableLogStackSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                         </div>
                                         </span>
                                     </div>
                                     <div class="col-6 small">
-                                        <small>Disable iFrame functionality</small>
+                                        <small>Show log stack on ChromeDevTools console</small>
+                                    </div>
+                                </div>
+                                <div class="">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span class="switch-label">Disable Cache:</span>
+                                            <span class="switch-right"><div class="switch">
+                                                <input type="checkbox" id="disableCacheSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                            </div>
+                                            </span>
+                                        </div>
+                                        <div class="col-6 small">
+                                            <small>Disable Local Cache functionality</small>
+                                        </div>
+                                    </div>
+                                    <hr/>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span class="switch-label">Disable iFrame:</span>
+                                            <span class="switch-right"><div class="switch">
+                                                <input type="checkbox" id="disableIFRAMESwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                            </div>
+                                            </span>
+                                        </div>
+                                        <div class="col-6 small">
+                                            <small>Disable iFrame functionality</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -212,18 +213,17 @@
                                 <span class="col-5 nopadding">
                                     <input type="text" class="filter-text" id="exclude_filters" value="" placeholder="exclude (regex)" tabindex="3"></input>
                                 </span>
-                                <span class="col-2 text-left nopadding">
-                                    <button type="button" class="btn btn-default btn-xs js-history">
+                                <span class="col-2 text-right nopadding">
+                                    <button type="button" class="btn btn-default btn-xs js-history" data-toggle="tooltip" data-placement="bottom" title="Log History">
                                         <i class="fa fa-history" aria-hidden="true"></i>
                                     </button>
-                                    <button type="button" class="btn btn-default btn-xs js-clear-console">
+                                    <button type="button" class="btn btn-default btn-xs js-clear-console" data-toggle="tooltip" data-placement="bottom" title="Clear">
                                         <i class="fa fa-ban" aria-hidden="true"></i>
                                     </button>
-                                    <button type="button" class="btn btn-default btn-xs js-menu-toggle">
+                                    <button type="button" class="btn btn-default btn-xs js-menu-toggle" data-toggle="tooltip" data-placement="bottom" title="Settings">
                                         <i class="fa fa-cog" aria-hidden="true"></i>
                                     </button>
                                 </span>
-
                             </div>
                         </div>
                         <div class="console">
@@ -235,13 +235,18 @@
                         <div class="note ">
                             <small> Note: you can also debug global JS variables & expressions!</small>
                         </div>
-                        <div class="footer">
-                            <!-- <div class="col-6">
-                                <a href="https://paypal.me/qusaitabbal" tabindex="4">donate</a>
-                            </div> -->
-                            <div class="col-12 text-right">
-                                <a href="https://goo.gl/forms/or4ydvjfTbaVQPyP2" tabindex="5">feedback</a>
-                            </div>
+                        <div class="ad">
+                            <a href="https://optipic.io/en/?my_coupon=SkiXNalPXzeSyZfEom2sn18hra4oN6fg" target="_blank">
+                                <img src="/assets/optipic-1-en.gif"/>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <!-- <div class="col-6">
+                            <a href="https://paypal.me/qusaitabbal" tabindex="4">donate</a>
+                        </div> -->
+                        <div class="col-12 text-right">
+                            <a href="https://goo.gl/forms/or4ydvjfTbaVQPyP2" tabindex="5">feedback</a>
                         </div>
                     </div>
                     </header>

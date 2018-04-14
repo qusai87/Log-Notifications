@@ -25,7 +25,7 @@
 }
 
 #wrapper.toggled #console-wrapper {
-    height: 225px;
+    display: none;
 }
 
 #wrapper.toggled .js-menu-toggle {

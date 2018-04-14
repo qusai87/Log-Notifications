@@ -12,13 +12,48 @@ section {
 	padding: 5px;
 }
 
-.nopadding {
-   padding: 0 !important;
-   margin: 0 !important;
+.container-fluid {
+	overflow: hidden;
+	padding: 0 10px;
+	margin-top: 7px;
+}
+
+.panel .container-fluid {
+	padding:4px 6px;
+}
+
+.row {
+	margin-left: -10px;
+    margin-right: -10px;
+}
+
+.col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
+	padding-left: 10px;
+    padding-right: 10px;
+}
+.panel {
+	margin-bottom: 0px;
+	border: 0;
+	margin: 1px 0;
+}
+
+.panel-default>.panel-heading {
+	background-color: #f3f3f4;
+	border: 0;
 }
 
 .panel-group .panel {
 	padding: 4px;
+}
+
+.panel-heading {
+	padding: 10px 0px;
+	margin-bottom: 10px;
+}
+
+.nopadding {
+   padding: 0 !important;
+   margin: 0 !important;
 }
 
 .section {
@@ -38,13 +73,10 @@ hr {
 	margin: 10px 0;
 }
 
-.panel-heading {
-	padding-left: 5px;
-	margin-bottom: 10px;
-}
-.switch {
-    height: 27px;
+.switch, .switch-right {
     display: inline-block;
+	height: 27px;
+    vertical-align: middle;
 }
 .switch-right .switch {
     margin-left: 20px;
@@ -54,7 +86,7 @@ hr {
     /* color: #943f3f !important; */
     color: black;
     font-size: 12px;
-    width: 50%;
+    width: 55%;
     display: inline-block;
 }
 
@@ -73,15 +105,15 @@ hr {
 	padding: 0 10px 10px 0;
 	margin: 10 0px;
 	width: 100%;
+	position: fixed;
+    bottom: 0;
+    right: 0;
 }
 
 .well-sm {
 	padding: 9px 0;
 }
 
-.panel {
-	margin-bottom: 0px;
-}
 
 .badge {
     display: inline-block;
@@ -105,16 +137,22 @@ hr {
 	width: 300px;
 	margin-right: 20px;
 }
-div.console { 
+.console { 
 	word-wrap: break-word; 
 	clear: both;
-}      
-div.console { 
 	font-size: 12px;
+	height: 80%;
+}
+
+.ad img {
+	max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    width: auto;
 }
 
 #console-wrapper {
-	height: 400px;
+	height: 450px;
 }
 
 div.console div.jquery-console-inner
@@ -148,7 +186,7 @@ div.console div.jquery-console-message
 {
 	background: #fff;
 	border-bottom: 1px #dedede solid;
-	font-family: monospace;
+/*	font-family: monospace;*/
 }
 
 div.console div.jquery-console-welcome 
