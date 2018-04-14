@@ -156,7 +156,7 @@ div.console {
 	word-wrap: break-word; 
 	clear: both;
 	font-size: 12px;
-	height: 100%;
+	height: 80%;
 }
 
 div.console div.jquery-console-inner

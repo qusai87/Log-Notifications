@@ -5,7 +5,7 @@
   "manifest_version": 2,
   "offline_enabled": true,
   "description": "Mini JS console that track console logs and detect JS errors/alerts and show them via chorme notifications",
-  "homepage_url": "https://chrome.google.com/webstore/detail/log-notifications/dadmdcdjlhmpdaljigckcimampbmkegm?utm_source=plus",
+  "homepage_url": "https://chrome.google.com/webstore/detail/log-notifications/dkebpeehodefnopcpggkdgeljadommmm?utm_source=plus",
   "icons": {
     "16": "icons/icon-16.png",
     "19": "icons/icon-19.png",
