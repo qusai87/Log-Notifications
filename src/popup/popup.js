@@ -283,6 +283,21 @@ function showLogs() {
 	}
 }
 
+function splitter(data) {
+    var i = 0;
+    var results = _.chain(data)
+    .map((x) => (x.match(/%/g) || []).length)
+    .filter((x) => x)
+    .map(function(x) {
+        var index = i;
+        i += x + 1;
+        return data.slice(index, index + x + 1)
+    })
+    .value();
+    results.push(data.slice(i));
+    return results;
+}
+
 function normalizeText(text) {
 	// Fix MSG param depend of type!
 	if (typeof text === 'object') {
@@ -297,6 +312,7 @@ function normalizeText(text) {
 			}
 		}
 		if (checkStringObject) {
+
 			 text = sprintf.apply(this, text);
 		}      
 	} else if (typeof text !== 'undefined') {
