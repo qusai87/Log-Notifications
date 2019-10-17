@@ -127,6 +127,7 @@ $(function() {
 	});
 
 	controller = $('.console').empty().console({
+		welcomeMessage: 'New: you can use `$JSC.log` to get log notifications only if the domain enabled!',
 		promptLabel: '> ',
 		commandValidate: function(line) {
 			if (__DEBUG)
@@ -139,7 +140,7 @@ $(function() {
 			} else if (line === 'clear' || line === 'clear()') {
 				_gaq.push(['_trackEvent',line,'command']);
 				addToHistory(line);
-				evaluateJSExpression('_JSConsole.history = [];', function () {
+				evaluateJSExpression('$JSC.history = [];', function () {
 					clear();
 				});
 			} else if (line === 'clearHistory' || line === 'clearHistory()') {
@@ -154,10 +155,10 @@ $(function() {
 			} else if (line === 'cookie') {
 				_gaq.push(['_trackEvent',line,'command']);
 				addToHistory(line);
-				evaluateJSExpression('_JSConsole.cookie()');
+				evaluateJSExpression('$JSC.cookie()');
 			} else if (line.indexOf('cookie(') === 0) {
 				addToHistory(line);
-				evaluateJSExpression('_JSConsole.' + line);
+				evaluateJSExpression('$JSC.' + line);
 			} else if (line) {
 				_gaq.push(['_trackEvent',line,'expression']);
 				addToHistory(line);

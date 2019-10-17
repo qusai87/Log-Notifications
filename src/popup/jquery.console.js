@@ -673,7 +673,7 @@
         if (!exp)
           exp = msg.toString();
         else 
-          exp = exp.replace('_JSConsole.','');
+          exp = exp.replace('$JSC.','');
 
         if (exp.indexOf('[object') === 0)  {
           json = msg;

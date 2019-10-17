@@ -3,23 +3,23 @@ var __DEBUG = false;
 if (__DEBUG)
     console.log('evaluate.js injected!');
 
-window._JSConsole = window._JSConsole || {};
+window.$JSC = window.$JSC || {};
 
 requests = [];
 
 if (typeof jQuery === 'function' && jQuery.fn)
-    window._JSConsole.jQuery = jQuery;
+    window.$JSC.jQuery = jQuery;
 else if (typeof require === 'function') {
     try {
-        window._JSConsole.jQuery = require('jquery');
+        window.$JSC.jQuery = require('jquery');
     } catch (e) {
 
     }
 }
 
-window._JSConsole.cookie = function(name) {
-    if (window._JSConsole.jQuery && window._JSConsole.jQuery.cookie) {
-        return window._JSConsole.jQuery.cookie(name);
+window.$JSC.cookie = function(name) {
+    if (window.$JSC.jQuery && window.$JSC.jQuery.cookie) {
+        return window.$JSC.jQuery.cookie(name);
     }
 
     var cookies = {};

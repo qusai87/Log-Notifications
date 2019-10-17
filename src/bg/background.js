@@ -22,10 +22,14 @@ var _pages = [];
 var _logs = {};
 var _commands = [];
 var notifications = {};
+var disabled_messages = [];
+
 var excludeFilterRegex = null;
 var includeFilterRegex = null;
 var notificationTimeout = -1;
 var notificationCounter = 0;
+
+var myNotificationID = null;
 
 // chrome.webNavigation.onCommitted.addListener(function (data) {
 // 	// if (data && data.url && data.url.indexOf('http')!=-1)
@@ -199,24 +203,34 @@ function createNotification (notification, messageCount) {
 		notification.message = '['+messageCount+'] ' + notification.message;
 	}
 
+	notification.buttons = [
+		{ title: 'Copy' },
+		{ title: 'Don\'t show again!' },
+		{ title: 'Close' }
+	];
+
 	chrome.notifications.create('', notification ,  _.bind(function(id) {
+		myNotificationID = id;
 		if (this.context) {
 			this.context.notifications[id] = this.message;
 		}
-	},{message : notification.message , context: this}));
+	}, {
+		message : notification.message , 
+		context: this,
+	}));
 
 	notificationCounter = 0;
 }
 
 /* Respond to the user's clicking one of the buttons */
 chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
-	if (btnIdx === 0 && notifId) {
+	if (notifId === myNotificationID) {
 		var log = getNotificationData(notifId);
-		if (log) {
+		if (btnIdx === 0 && log) {
 			copyToClipboard(log);
-			chrome.notifications.clear(notifId);
-		}
-	} else {
+		} else if (btnIdx === 1 && log) {
+			disableMessage(log);
+		} 
 		chrome.notifications.clear(notifId);
 	}
 });
@@ -224,6 +238,10 @@ chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
 function getNotificationData(id) {
 	return notifications[id];
 }
+function disableMessage (txt) {
+	disabled_messages.push(txt);
+}
+
 function copyToClipboard (txt) {
 	var input = document.createElement('textarea');
 	document.body.appendChild(input);
@@ -256,6 +274,8 @@ function getDomain (url) {
 
 function isValidMessage (msg) {
 	var message = null;
+	var isValid = false;
+
 	if  (typeof msg === 'string' ) {
 		message = msg;
 	} else if  (typeof msg === 'object' ) {
@@ -266,9 +286,18 @@ function isValidMessage (msg) {
 			message = msg.toString();
 		}
 	}
-	if (message)
-		return !(excludeFilterRegex && message.match(excludeFilterRegex)) && (!includeFilterRegex || message.match(includeFilterRegex));
-	return false;
+	if (message) {
+		isValid = !(excludeFilterRegex && message.match(excludeFilterRegex)) && (!includeFilterRegex || message.match(includeFilterRegex));
+
+		if (disabled_messages.length) {
+			for (var i = disabled_messages.length - 1; i >= 0; i--) {
+				if (disabled_messages[i] == message) {
+					isValid = false;
+				}
+			}
+		}
+	}
+	return isValid;
 }
 
 function updateNotificationCounter(tabId,pageId, domain) {
@@ -434,11 +463,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 						type: "basic",
 						title: "Error!",
 						message: msg,
-						iconUrl: "icons/icon-error.png",
-						buttons: [
-							{ title: 'Copy' },
-							{ title: 'Close' }
-						]
+						iconUrl: "icons/icon-error.png"
 					});
 				} else {
 					updateNotificationCounter(sender.tab.id,pageId,request.domain);
@@ -449,11 +474,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 						type: "basic",
 						title: "Warning!",
 						message: msg,
-						iconUrl: "icons/icon-warn.png",
-						buttons: [
-							{ title: 'Copy' },
-							{ title: 'Close' }
-						]
+						iconUrl: "icons/icon-warn.png"
 					});
 				} else {
 					updateNotificationCounter(sender.tab.id,pageId,request.domain);
@@ -464,11 +485,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 						type: "basic",
 						title: "Alert!",
 						message: msg,
-						iconUrl: "icons/icon-info.png",
-						buttons: [
-							{ title: 'Copy' },
-							{ title: 'Close' }
-						]
+						iconUrl: "icons/icon-info.png"
 					});
 				} else {
 					updateNotificationCounter(sender.tab.id,pageId,request.domain);
@@ -479,11 +496,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 					type: "basic",
 					title: "info!",
 					message: msg,
-					iconUrl: "icons/icon-info.png",
-					buttons: [
-						{ title: 'Copy' },
-						{ title: 'Close' }
-					]
+					iconUrl: "icons/icon-info.png"
+				});
+			} else if (request.action == '$log') {
+				showChromeNotification({
+					type: "basic",
+					title: "JSC Log!",
+					message: msg,
+					iconUrl: "icons/icon-log.png"
 				});
 			} else {
 				updateNotificationCounter(sender.tab.id,pageId,request.domain);

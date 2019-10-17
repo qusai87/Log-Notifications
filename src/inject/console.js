@@ -8,8 +8,7 @@ if (!window.console.isOverrided && !window.console.isModified) {
         console.log('console.js injected!');
     }
 
-    window._JSConsole = window._JSConsole || {};
-
+    window.$JSC = window.$JSC || {};
     var dispatchTimer = -1;
 
     // shallow copy object, thanks to http://geniuscarrier.com/copy-object-in-javascript/
@@ -27,9 +26,9 @@ if (!window.console.isOverrided && !window.console.isModified) {
         if (dispatchTimer == -1) {
             dispatchTimer = setTimeout(function () {
                 dispatchTimer = -1;
-                if (_JSConsole.messages.length) {
+                if ($JSC.messages.length) {
                     document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_messages', {
-                      detail: _JSConsole.messages
+                      detail: $JSC.messages
                     }));
                 }
             },10);
@@ -39,19 +38,6 @@ if (!window.console.isOverrided && !window.console.isModified) {
     // Completelety overrride log console.
     // http://stackoverflow.com/questions/7042611/override-console-log-for-production
     // 
-    function $debugger() {
-        if (debuggerMode) {
-            debugger;
-        }
-    }
-
-    function $start_debug() {
-        debuggerMode = true;
-    }
-
-    function $stop_debug() {
-        debuggerMode = false;
-    }
 
     // Take shallow copy of console methods
     var _console = shallowCopy(window.console || {}); 
@@ -61,8 +47,8 @@ if (!window.console.isOverrided && !window.console.isModified) {
     window.console.original = _console;
 
 
-    window._JSConsole.messages = [];
-    window._JSConsole.history = [];
+    window.$JSC.messages = [];
+    window.$JSC.history = [];
 
     var addLogStackWrapper = function (undefined) {
         if (!enableStack) {
@@ -134,40 +120,37 @@ if (!window.console.isOverrided && !window.console.isModified) {
     addLogStackNumber = addLogStackWrapper();
 
     window.console.log = function() {
-        $debugger();
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        _JSConsole.messages.push({msg:args,action:'log'});
+        $JSC.messages.push({msg:args,action:'log'});
         startLogDispatchTimer();
 
         var output = addLogStackNumber.apply(null,arguments);
 
-        if (!_console.isOverrided && _console.log)
+        if (!_console.isOverrided && _console.log) {
             _console.log.apply(_console,output);
-
+        }
     };
     window.console.info = function () {
-        $debugger();
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        _JSConsole.messages.push({msg:args,action:'info'});
+        $JSC.messages.push({msg:args,action:'info'});
         startLogDispatchTimer();
         if (!_console.isOverrided && _console.info)
             _console.info.apply(_console,arguments);
     };
 
     window.console.table = function () {
-        $debugger();
         if (!_console.isOverrided)
             _console.table.apply(_console,arguments);
     };
+
     window.console.dir = function () {
-        $debugger();
         if (!_console.isOverrided && _console.dir)
             _console.dir.apply(_console,arguments);
     };
+
     window.console.warn = function () {
-        $debugger();
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        _JSConsole.messages.push({msg:args,action:'warn'});
+        $JSC.messages.push({msg:args,action:'warn'});
         startLogDispatchTimer();
 
         var output = addLogStackNumber.apply(null,arguments);
@@ -176,9 +159,8 @@ if (!window.console.isOverrided && !window.console.isModified) {
     };
 
     window.console.error = function () {
-        $debugger();
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        _JSConsole.messages.push({msg:args,action:'error'});
+        $JSC.messages.push({msg:args,action:'error'});
         startLogDispatchTimer();
 
         var output = addLogStackNumber.apply(null,arguments);
@@ -187,41 +169,41 @@ if (!window.console.isOverrided && !window.console.isModified) {
     };
 
     document.addEventListener('Msg_LogNotificationExtension_get_history', function(e) {
-        if (_JSConsole.history) {
+        if ($JSC.history) {
             document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_history_found', {
-              detail: JSON.stringify(_JSConsole.history)
+              detail: JSON.stringify($JSC.history)
             }));
         }
     });
 
     document.addEventListener('Msg_LogNotificationExtension_received', function(e) {
-        if (_JSConsole.messages.length) {
-            _JSConsole.history = _JSConsole.history.concat(_JSConsole.messages);
-            _JSConsole.messages = [];
-            //_JSConsole.history.push(_JSConsole.messages.shift());
-            if (_JSConsole.history.length> 1000) {
-                _JSConsole.history = _JSConsole.history.slice(Math.max(_JSConsole.history.length - 1000, 1));
+        if ($JSC.messages.length) {
+            $JSC.history = $JSC.history.concat($JSC.messages);
+            $JSC.messages = [];
+            //$JSC.history.push($JSC.messages.shift());
+            if ($JSC.history.length> 1000) {
+                $JSC.history = $JSC.history.slice(Math.max($JSC.history.length - 1000, 1));
             }
-            if (_JSConsole.messages.length) {
+            if ($JSC.messages.length) {
                 startLogDispatchTimer();
             }
         }
     });
+
     document.addEventListener('Msg_LogNotificationExtension_get_enableLogStack', function(e) {
-        if (e.detail)
+        if (e.detail) {
             enableStack = e.detail;
+        }
 
         addLogStackNumber = addLogStackWrapper();
     });
 
-    document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_enableLogStack', {
-    }));
+    document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_enableLogStack', { }));
 
     window.alert = function() {
-        $debugger();
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         
-        _JSConsole.messages.push({msg:args,action:'alert'});
+        $JSC.messages.push({msg:args,action:'alert'});
         startLogDispatchTimer();
 
         if (!_console.isOverrided && _console.info)
@@ -230,9 +212,9 @@ if (!window.console.isOverrided && !window.console.isModified) {
 
     // window.onerror = function(e, url, line) {
     //     if (/Script error/.test(e)) {
-    //         _JSConsole.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
+    //         $JSC.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
     //     } else {
-    //         _JSConsole.messages.push({msg: 'error: ' + e , action: 'error'});
+    //         $JSC.messages.push({msg: 'error: ' + e , action: 'error'});
     //     }
     //     startLogDispatchTimer();
     //     return false; 
@@ -250,12 +232,37 @@ if (!window.console.isOverrided && !window.console.isModified) {
             }
             
             if (/Script error/.test(detail.message)) {
-                _JSConsole.messages.push({msg: detail.message , action: 'unknown'});
+                $JSC.messages.push({msg: detail.message , action: 'unknown'});
             } else {
-                _JSConsole.messages.push({msg: detail.message , action: 'error'});
+                $JSC.messages.push({msg: detail.message , action: 'error'});
             }
 
             startLogDispatchTimer();
         }
     });
+
+    window.$JSC.log = function () {
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
+        $JSC.messages.push({msg:args,action:'$log'});
+        startLogDispatchTimer();
+
+        var output = addLogStackNumber.apply(null,arguments);
+
+        if (!_console.isOverrided && _console.log) {
+            _console.log.apply(_console,output);
+        }
+    };
+    window.$JSC.$debugger = function () {
+        if (debuggerMode) {
+            debugger;
+        }
+    }
+
+    window.$JSC.$start_debugger = function () {
+        debuggerMode = true;
+    }
+
+    window.$JSC.$stop_debugger = function () {
+        debuggerMode = false;
+    }
 }

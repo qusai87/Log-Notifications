@@ -135,11 +135,15 @@ hr {
 	font-style: italic;
 	margin-bottom: 2px;
 }
+
 #expression {
 	width: 300px;
 	margin-right: 20px;
 }
 
+small.new {
+	color: blue;
+}
 
 .ad img {
 	max-width: 100%;
@@ -148,15 +152,17 @@ hr {
     width: auto;
 }
 
-#console-wrapper {
-	height: 450px;
+
+div.console, div.console div.jquery-console-inner {
+	min-height: 400px;
+	max-height: 472px;
 }
 
 div.console { 
 	word-wrap: break-word; 
 	clear: both;
 	font-size: 12px;
-	height: 80%;
+	height: auto;
 }
 
 div.console div.jquery-console-inner
@@ -336,3 +342,21 @@ pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
 .boolean { color: blue; }
 .null { color: magenta; }
 .key { color: red; }
+
+
+pre {
+    display: inline;
+    background: #f4f4f4;
+    border: 1px solid #9e9c9c;
+    border-left: 3px solid #f36d33;
+    color: #666;
+    page-break-inside: avoid;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 1.6em;
+    max-width: 100%;
+    overflow: auto;
+    padding: 0px 2px;
+    word-wrap: break-word;
+}
