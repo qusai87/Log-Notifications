@@ -10,8 +10,9 @@ var console = window.console;
 
 var isTopWindow = window == window.top;
 
-if (__DEBUG)
-    console.log('content.js started!', window.location.hostname);
+if (__DEBUG) {
+    console.log('[CONTENT::DEBUG] content.js started!', window.location.hostname);
+}
 
 
 /**
@@ -129,8 +130,9 @@ function init(enabled, enableLogStack) {
         if (isTopWindow) {
             // Stackoverflow : http://stackoverflow.com/questions/9602022/chrome-extension-retrieving-gmails-original-message
             document.addEventListener('Msg_LogNotificationExtension_enabled', function(e) {
-                if (__DEBUG)
-                    console.log('enabled', enabled);
+                if (__DEBUG) {
+                    console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_enabled: ', e);
+                }
 
                 document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enabled', {
                     detail: enabled
@@ -140,8 +142,9 @@ function init(enabled, enableLogStack) {
             });
 
             document.addEventListener('Msg_LogNotificationExtension_enableLogStack', function(e) {
-                if (__DEBUG)
-                    console.log('enableLogStack', enableLogStack);
+                if (__DEBUG) {
+                    console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_enableLogStack: ', e);
+                }
 
                 document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_enableLogStack', {
                     detail: enableLogStack
@@ -150,8 +153,9 @@ function init(enabled, enableLogStack) {
                 return enableLogStack;
             });
             document.addEventListener('Msg_LogNotificationExtension_js_expression_found', function(e) {
-                if (__DEBUG)
-                    console.log('js_expression_found:', e);
+                if (__DEBUG) {
+                    console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_js_expression_found: ', e);
+                }
                 if (e && e.detail) {
                     chrome.runtime.sendMessage({
                         from: 'content',
@@ -162,6 +166,9 @@ function init(enabled, enableLogStack) {
                 }
             });
             document.addEventListener('Msg_LogNotificationExtension_messages', function(e) {
+                if (__DEBUG) {
+                    console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_messages: ', e);
+                }
                 if (e && e.detail && e.detail.length) {
                     for (var i = 0; i < e.detail.length; i++) {
                         var msg = e.detail[i].msg;
@@ -182,6 +189,9 @@ function init(enabled, enableLogStack) {
             });
 
             document.addEventListener('Msg_LogNotificationExtension_history_found', function(e) {
+                if (__DEBUG) {
+                    console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_history_found: ', e);
+                }
                 if (e && e.detail) {
                     chrome.runtime.sendMessage({
                         from: 'content',
@@ -189,7 +199,23 @@ function init(enabled, enableLogStack) {
                         logsHistoryJSON: e.detail
                     }, function(response) {
                         if (__DEBUG)
-                            console.log('history_found', response);
+                            console.log('[CONTENT::DEBUG] history_found', response);
+                    });
+                }
+            });
+
+            document.addEventListener('Msg_LogNotificationExtension_all_history_found', function(e) {
+                if (__DEBUG) {
+                    console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_all_history_found: ', e);
+                }
+                if (e && e.detail) {
+                    chrome.runtime.sendMessage({
+                        from: 'content',
+                        subject: 'logs_all_history_found',
+                        logsHistoryJSON: e.detail
+                    }, function(response) {
+                        if (__DEBUG)
+                            console.log('[CONTENT::DEBUG] all_history_found', response);
                     });
                 }
             });
@@ -207,12 +233,15 @@ function init(enabled, enableLogStack) {
 
 
 // Listen for messages from the popup
-chrome.runtime.onMessage.addListener(function(request, sender, response) {
-    // First, validate the message's structure
-    if (__DEBUG)
-        console.log('request:', request);
 
-    if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
+chrome.runtime.onMessage.addListener(function(request, sender, response) {
+    if (__DEBUG) {
+        console.log('[CONTENT::DEBUG] chrome.runtime.onMessage:', request , sender, response);
+    }
+    // First, validate the message's structure
+    if ((request.from === 'popup') && (request.subject === 'get_console_all_history')) {
+        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_all_history', {}));
+    } else if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
         document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_history', {}));
     } else if ((request.from === 'popup') && (request.subject === 'evaluate_js_expression')) {
         document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_evaluate_js_expression', {
@@ -227,6 +256,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
         }
         init(request.enabled);
     }
+    return true;
 });
 
 

@@ -1,25 +1,26 @@
-var __DEBUG = false;
+$JSC = window.$JSC || {};
 
-if (__DEBUG)
-    console.log('evaluate.js injected!');
+$JSC.__DEBUG = false;
 
-window.$JSC = window.$JSC || {};
+if ($JSC.__DEBUG) {
+    console.log('[EVALUATE::DEBUG] evaluate.js injected!');
+}
 
-requests = [];
+$JSC.requests = [];
 
 if (typeof jQuery === 'function' && jQuery.fn)
-    window.$JSC.jQuery = jQuery;
+    $JSC.jQuery = jQuery;
 else if (typeof require === 'function') {
     try {
-        window.$JSC.jQuery = require('jquery');
+        $JSC.jQuery = require('jquery');
     } catch (e) {
 
     }
 }
 
-window.$JSC.cookie = function(name) {
-    if (window.$JSC.jQuery && window.$JSC.jQuery.cookie) {
-        return window.$JSC.jQuery.cookie(name);
+$JSC.cookie = function(name) {
+    if ($JSC.jQuery && $JSC.jQuery.cookie) {
+        return $JSC.jQuery.cookie(name);
     }
 
     var cookies = {};
@@ -52,13 +53,16 @@ function censor(censor) {
 }
 
 document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression', function(e) {
-	if (e.detail && e.detail.id in requests) {
-		_console.log('found', e.detail);
+    if ($JSC.__DEBUG) {
+        $JSC._console.log('[EVALUATE::DEBUG] Msg_LogNotificationExtension_evaluate_js_expression: ', e);
+    }
+	if (e.detail && e.detail.id in $JSC.requests) {
+		$JSC._console.log('found', e.detail);
 	}
 
-	requests.push(e.detail.id);
-    if (__DEBUG)
-        _console.log('evaluate_js_expression', e);
+	$JSC.requests.push(e.detail.id);
+    if ($JSC.__DEBUG)
+        $JSC._console.log('[EVALUATE::DEBUG] evaluate_js_expression', e);
     var results = '';
     try {
         results = eval(e.detail.expression);

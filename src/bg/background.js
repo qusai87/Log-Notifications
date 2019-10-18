@@ -424,6 +424,9 @@ function clearCache() {
 
 // Listener - Put this in the background script to listen to all the events.
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (__DEBUG) {
+        console.log('[BACKGROUND::DEBUG] chrome.runtime.onMessage:', request , sender, response);
+    }
 	var pageId;
 	if (sender && sender.tab) {
 		pageId = sender.tab.windowId + ':' + sender.tab.id;
@@ -452,7 +455,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
 			_logs[pageId].push(request);
 
-			if (_logs[pageId].length> 300) {
+			if (_logs[pageId].length > 300) {
 				_logs[pageId] = _logs[pageId].slice(Math.max(_logs[pageId].length - 300, 1));
 			}
 		}
@@ -564,7 +567,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	}  else if ((request.from === 'popup') && (request.subject === 'disable_alerts')) {
 		disableAlerts = request.enabled;
 	}
+	return true;
 });
+
 
 /*chrome.browserAction.onClicked.addListener(function () {
 	// it will not fire if there is popup

@@ -29,6 +29,7 @@ $(function() {
 	$(".js-clear-console").click(function(e) {
 		e.preventDefault();
 		clear();
+		evaluateJSExpression('$JSC.history = [];', function () {});
 		setTimeout(function () {
 			controller.focus();
 		}, 100);
@@ -37,7 +38,7 @@ $(function() {
 
 	$(".js-history").click(function(e) {
 		e.preventDefault();
-		showLogs();
+		loadLogs(true);
 		setTimeout(function () {
 			controller.focus();
 		}, 100);
@@ -63,7 +64,7 @@ $(function() {
 			});
 			showLogs();
 		}
-	},300,1));
+	},300,false));
 
 	$('#exclude_filters').on('change keyup', _.debounce(function () {
 		if ($('#exclude_filters').data('oldVal') != $('#exclude_filters').val()) {
@@ -81,7 +82,7 @@ $(function() {
 			});
 			showLogs();
 		}
-	},300,1));
+	},300,false));
 
 	$('input[name="bootstrap-switch"]').on('switchChange.bootstrapSwitch', function(event, state) {
 		var id = this.id;
@@ -127,7 +128,7 @@ $(function() {
 	});
 
 	controller = $('.console').empty().console({
-		welcomeMessage: 'New: you can use `$JSC.log` to get log notifications only if the domain enabled!',
+		// welcomeMessage: 'New: you can use `$JSC.log` to get log notifications only if the domain enabled!',
 		promptLabel: '> ',
 		commandValidate: function(line) {
 			if (__DEBUG)
@@ -140,9 +141,7 @@ $(function() {
 			} else if (line === 'clear' || line === 'clear()') {
 				_gaq.push(['_trackEvent',line,'command']);
 				addToHistory(line);
-				evaluateJSExpression('$JSC.history = [];', function () {
-					clear();
-				});
+				clear();
 			} else if (line === 'clearHistory' || line === 'clearHistory()') {
 				_gaq.push(['_trackEvent',line,'command']);
 				addToHistory(line);
@@ -228,7 +227,7 @@ function loadCommandsHistory() {
 	});
 }
 
-function loadLogs () {
+function loadLogs (loadAll) {
 	if (_switches.preserveLogs) {
 		// update console history from background history
 		sendRuntimeMessage({
@@ -237,10 +236,17 @@ function loadLogs () {
 		}, function(response) {});
 	} else {
 		// update console history from current active tab
-		sendMessage({
-			from: 'popup',
-			subject: 'get_console_history'
-		}, function(response) {});
+		if (loadAll) {
+			sendMessage({
+				from: 'popup',
+				subject: 'get_console_all_history'
+			}, function(response) {});
+		} else {
+			sendMessage({
+				from: 'popup',
+				subject: 'get_console_history'
+			}, function(response) {});
+		}
 	}
 }
 
@@ -254,7 +260,7 @@ function showLogs() {
 		for (var key in logs_history_with_filters.results) {
 			var value = logs_history_with_filters.results[key];
 
-			var msg = normalizeText(value.msg);
+			var msg = normalizeMessage(value.msg);
 
 			if (value.action) {
 				if (msg) {
@@ -299,38 +305,40 @@ function splitter(data) {
     return results;
 }
 
-function normalizeText(text) {
+function normalizeMessage(message) {
 	// Fix MSG param depend of type!
-	if (typeof text === 'object') {
+	if (_.isArray(message)) {
+		return message.join(' ');
+	}
+	if (typeof message === 'object') {
 		var checkStringObject = true;
 		var stringArr = [];
-		for (obj in text) {
-			if (typeof text[obj] !== 'string' && typeof text[obj] !== 'number') {
+		for (obj in message) {
+			if (typeof message[obj] !== 'string' && typeof message[obj] !== 'number') {
 				checkStringObject = false;
 				break;
 			} else {
-				stringArr.push(text[obj]);
+				stringArr.push(message[obj]);
 			}
 		}
 		if (checkStringObject) {
-
-			 text = sprintf.apply(this, text);
+			 message = sprintf.apply(this, message);
 		}      
-	} else if (typeof text !== 'undefined') {
-		text = String(text);
+	} else if (typeof message !== 'undefined') {
+		message = String(message);
 	}
 
-	if (typeof text === 'string' && text.indexOf('%c') != -1) {
+	if (typeof message === 'string' && message.indexOf('%c') != -1) {
 		// Detect %c color cases
 		//var regex  = /%c(.+?)\s([a-z0-9\-]+?)\:([a-z0-9\-]+?)\;/g;
-		text = text.replace(/%c(\w+)\s(\w+:#.+;)+/g,'[$1]');
-		//var matches = regex.exec(text);
+		message = message.replace(/%c(\w+)\s(\w+:#.+;)+/g,'[$1]');
+		//var matches = regex.exec(message);
 
 		// if (matches && matches.length >= 4) {
-		// 	text = matches[1];
+		// 	message = matches[1];
 		// }
 	}
-	return text;
+	return message;
 }
 function showNewLogs(logsHistoryJSON) {
 	var _old_logs = logs_history;
@@ -524,8 +532,8 @@ function loadSwitch(switchName, key, callback) {
 		}
 
 		if (loading_counts == totalLoad) {
-			loaded = true;
 			loadLogs();
+			loaded = true;
 		}
 	});
 }
@@ -664,10 +672,16 @@ function saveOption(id, checked) {
 }
 
 // Listen for messages
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(request, sender, response) {
+    if (__DEBUG) {
+        console.log('[POPUP::DEBUG] chrome.runtime.onMessage:', request , sender, response);
+    }
 	// If the received message has the expected format...
 	if (request.from === 'content' && request.subject === 'console_action') {
 		loadLogs();
+	}
+	else if (request.from === 'content' && request.subject === 'logs_all_history_found') {
+		init(request.logsHistoryJSON);
 	}
 	else if (request.from === 'content' && request.subject === 'logs_history_found') {
 		if (!logs_history) {
@@ -705,6 +719,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 			controller.commandResult('undefined','jquery-console-message-error');
 		}
 	}
+	return true;
 });
 
 _gaq = [];
