@@ -23,7 +23,7 @@ if (!window.console.isOverrided && !window.console.isModified) {
         return newObj;
     }
 
-    $JSC.startLogDispatchTimer = function () {
+    $JSC.startSendMessagestimer = function () {
         if ($JSC.dispatchTimer != -1) {
             clearTimeout($JSC.dispatchTimer);
         }
@@ -123,52 +123,105 @@ if (!window.console.isOverrided && !window.console.isModified) {
     addLogStackNumber = addLogStackWrapper();
 
     window.console.log = function() {
-        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        $JSC.messages.push({msg:args,action:'log'});
-        $JSC.startLogDispatchTimer();
+        var stack = (new Error()).stack.split("\n").splice(2, 4).join("\n");
+        var stackLines = stack.split("\n");
+        var callSrc = (stackLines.length > 1 && (/^.*?\((.*?):(\d+):(\d+)/.exec(stackLines[1]) || /(\w+:\/\/.*?):(\d+):(\d+)/.exec(stackLines[1]))) || [null, null, null, null];
 
-        var output = addLogStackNumber.apply(null,arguments);
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
+        $JSC.messages.push({
+            msg:args,
+            stack: stackLines.join("\n"),
+            url: callSrc[1],
+            line: callSrc[2],
+            col: callSrc[3],
+            action:'log',
+        });
+        $JSC.startSendMessagestimer();
+
+        var output = addLogStackNumber.apply(null, arguments);
 
         if (! $JSC._console.isOverrided &&  $JSC._console.log) {
-             $JSC._console.log.apply( $JSC._console,output);
+            $JSC._console.log.apply( $JSC._console, output);
         }
     };
     window.console.info = function () {
+        var stack = (new Error()).stack.split("\n").splice(2, 4).join("\n");
+        var stackLines = stack.split("\n");
+        var callSrc = (stackLines.length > 1 && (/^.*?\((.*?):(\d+):(\d+)/.exec(stackLines[1]) || /(\w+:\/\/.*?):(\d+):(\d+)/.exec(stackLines[1]))) || [null, null, null, null];
+
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        $JSC.messages.push({msg:args,action:'info'});
-        $JSC.startLogDispatchTimer();
-        if (! $JSC._console.isOverrided &&  $JSC._console.info)
-             $JSC._console.info.apply( $JSC._console,arguments);
+        $JSC.messages.push({
+            msg:args,
+            stack: stackLines.join("\n"),
+            url: callSrc[1],
+            line: callSrc[2],
+            col: callSrc[3],
+            action:'info',
+        });
+        $JSC.startSendMessagestimer();
+
+        var output = addLogStackNumber.apply(null, arguments);
+        if (! $JSC._console.isOverrided &&  $JSC._console.info) {
+            $JSC._console.info.apply( $JSC._console, output);
+        }
     };
 
     window.console.table = function () {
-        if (! $JSC._console.isOverrided)
-             $JSC._console.table.apply( $JSC._console,arguments);
+        var output = addLogStackNumber.apply(null, arguments);
+        if (! $JSC._console.isOverrided) {
+            $JSC._console.table.apply( $JSC._console, output);
+        }
     };
 
     window.console.dir = function () {
-        if (! $JSC._console.isOverrided &&  $JSC._console.dir)
-             $JSC._console.dir.apply( $JSC._console,arguments);
+        var output = addLogStackNumber.apply(null, arguments);
+        if (! $JSC._console.isOverrided &&  $JSC._console.dir) {
+            $JSC._console.dir.apply( $JSC._console, output);
+        }
     };
 
     window.console.warn = function () {
-        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        $JSC.messages.push({msg:args,action:'warn'});
-        $JSC.startLogDispatchTimer();
+        var stack = (new Error()).stack.split("\n").splice(2, 4).join("\n");
+        var stackLines = stack.split("\n");
+        var callSrc = (stackLines.length > 1 && (/^.*?\((.*?):(\d+):(\d+)/.exec(stackLines[1]) || /(\w+:\/\/.*?):(\d+):(\d+)/.exec(stackLines[1]))) || [null, null, null, null];
 
-        var output = addLogStackNumber.apply(null,arguments);
-        if (! $JSC._console.isOverrided &&  $JSC._console.warn)
-             $JSC._console.warn.apply( $JSC._console,output);
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
+        $JSC.messages.push({
+            msg:args,
+            stack: stackLines.join("\n"),
+            url: callSrc[1],
+            line: callSrc[2],
+            col: callSrc[3],
+            action:'warn',
+        });
+        $JSC.startSendMessagestimer();
+
+        var output = addLogStackNumber.apply(null, arguments);
+        if (! $JSC._console.isOverrided &&  $JSC._console.warn) {
+            $JSC._console.warn.apply( $JSC._console,output);
+        }
     };
 
     window.console.error = function () {
-        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
-        $JSC.messages.push({msg:args,action:'error'});
-        $JSC.startLogDispatchTimer();
+        var stack = (new Error()).stack.split("\n").splice(2, 4).join("\n");
+        var stackLines = stack.split("\n");
+        var callSrc = (stackLines.length > 1 && (/^.*?\((.*?):(\d+):(\d+)/.exec(stackLines[1]) || /(\w+:\/\/.*?):(\d+):(\d+)/.exec(stackLines[1]))) || [null, null, null, null];
 
-        var output = addLogStackNumber.apply(null,arguments);
-        if (! $JSC._console.isOverrided &&  $JSC._console.error)
-             $JSC._console.error.apply( $JSC._console,output);
+        var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
+        $JSC.messages.push({
+            msg:args,
+            stack: stackLines.join("\n"),
+            url: callSrc[1],
+            line: callSrc[2],
+            col: callSrc[3],
+            action:'error',
+        });
+        $JSC.startSendMessagestimer();
+
+        var output = addLogStackNumber.apply(null, arguments);
+        if (! $JSC._console.isOverrided &&  $JSC._console.error) {
+            $JSC._console.error.apply( $JSC._console,output);
+        }
     };
 
     document.addEventListener('Msg_LogNotificationExtension_get_history', function(e) {
@@ -209,7 +262,7 @@ if (!window.console.isOverrided && !window.console.isModified) {
                 $JSC.all_history = $JSC.all_history.slice(Math.max($JSC.all_history.length - 1000, 1));
             }
             if ($JSC.messages.length) {
-                $JSC.startLogDispatchTimer();
+                $JSC.startSendMessagestimer();
             }
         }
     });
@@ -231,50 +284,74 @@ if (!window.console.isOverrided && !window.console.isModified) {
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         
         $JSC.messages.push({msg:args,action:'alert'});
-        $JSC.startLogDispatchTimer();
+        $JSC.startSendMessagestimer();
 
-        if (! $JSC._console.isOverrided &&  $JSC._console.info)
-             $JSC._console.info.apply( $JSC._console,arguments);
+        var output = addLogStackNumber.apply(null, arguments);
+        if (! $JSC._console.isOverrided &&  $JSC._console.info) {
+            $JSC._console.info.apply( $JSC._console, output);
+        }
     };
 
+    // handle errors
+    window.addEventListener('error', function(e) {
+        if ($JSC.__DEBUG) {
+            $JSC._console.log('[CONSOLE::DEBUG] handle errors: ', e);
+        }
+        var src = e.target.src || e.target.href;
+        var baseUrl = e.target.baseURI;
+
+        if(src && baseUrl && src != baseUrl) {
+            $JSC.messages.push({msg:'file not found: ' + src , action: 'error'});
+        } else if (e.message) {
+            if (/Script error/.test(e.message)) {
+                $JSC.messages.push({
+                    stack: e.error ? e.error.stack : null,
+                    url: e.filename,
+                    line: e.lineno,
+                    col: e.colno,
+                    msg: e.message, 
+                    action: 'unknown'
+                });
+            } else {
+                $JSC.messages.push({
+                    stack: e.error ? e.error.stack : null,
+                    url: e.filename,
+                    line: e.lineno,
+                    col: e.colno,
+                    msg: e.message, 
+                    action: 'error'
+                });
+            }
+
+        }
+        $JSC.startSendMessagestimer();
+    }, true);
+
+    // // handle uncaught errors
+    // window.addEventListener('error', function(e) {
+    //     if ($JSC.__DEBUG) {
+    //         $JSC._console.log('[CONSOLE::DEBUG] handle uncaught errors: ', e);
+    //     }
+        
+    // });
+
     // window.onerror = function(e, url, line) {
+    //     debugger;
     //     if (/Script error/.test(e)) {
     //         $JSC.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
     //     } else {
     //         $JSC.messages.push({msg: 'error: ' + e , action: 'error'});
     //     }
-    //     $JSC.startLogDispatchTimer();
+    //     $JSC.startSendMessagestimer();
     //     return false; 
     // }
-
-    // handle uncaught errors
-    window.addEventListener('error', function(e) {
-        if ($JSC.__DEBUG) {
-            $JSC._console.log('[CONSOLE::DEBUG] error listener: ', e);
-        }
-        var detail = {
-            stack: e.error ? e.error.stack : null,
-            url: e.filename,
-            line: e.lineno,
-            col: e.colno,
-            message: e.message
-        }
-
-        if (/Script error/.test(detail.message)) {
-            $JSC.messages.push({msg: detail.message , action: 'unknown'});
-        } else {
-            $JSC.messages.push({msg: detail.message , action: 'error'});
-        }
-
-        $JSC.startLogDispatchTimer();
-    });
 
     $JSC.log = function () {
         var args = (arguments.length == 1) ? arguments[0] : Array.prototype.slice.call(arguments, 0);
         $JSC.messages.push({msg:args,action:'$log'});
-        $JSC.startLogDispatchTimer();
+        $JSC.startSendMessagestimer();
 
-        var output = addLogStackNumber.apply(null,arguments);
+        var output = addLogStackNumber.apply(null, arguments);
 
         if (! $JSC._console.isOverrided &&  $JSC._console.log) {
              $JSC._console.log.apply( $JSC._console,output);

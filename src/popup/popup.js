@@ -258,16 +258,15 @@ function showLogs() {
 
 	if (logs_history_with_filters.results) {
 		for (var key in logs_history_with_filters.results) {
-			var value = logs_history_with_filters.results[key];
-
-			var msg = normalizeMessage(value.msg);
-
-			if (value.action) {
+			var details = logs_history_with_filters.results[key];
+			debugger;
+			if (details.msg && details.action) {
+				var msg = prettifyMessage(details);
 				if (msg) {
 					logs.push({
 						msg: msg,
-						count: value.count,
-						className: "jquery-console-message-"+value.action
+						count: details.count,
+						className: "jquery-console-message-"+details.action
 					});
 				}
 			}
@@ -278,11 +277,13 @@ function showLogs() {
 		if (logs.length) {
 			if (logs_history_with_filters.excluded) {
 				controller.commandResult(sprintf('Excluded %d logs \n', logs_history_with_filters.excluded), "jquery-console-message-system");
+			} else {
+				controller.commandResult(sprintf('%d logs found!\n', logs.length), "jquery-console-message-system");
 			}
 			controller.commandResult(logs);
 		} else {
 			if (logs_history_with_filters.excluded) {
-				controller.commandResult(sprintf('Excluded %d logs, remove filters to show more!', logs_history_with_filters.excluded), "jquery-console-message-system");
+				controller.commandResult(sprintf('Excluded %d logs, remove filters to show logs!', logs_history_with_filters.excluded), "jquery-console-message-system");
 			} else {
 				controller.commandResult('No Console logs received!');
 			}
@@ -290,22 +291,28 @@ function showLogs() {
 	}
 }
 
-function splitter(data) {
-    var i = 0;
-    var results = _.chain(data)
-    .map((x) => (x.match(/%/g) || []).length)
-    .filter((x) => x)
-    .map(function(x) {
-        var index = i;
-        i += x + 1;
-        return data.slice(index, index + x + 1)
-    })
-    .value();
-    results.push(data.slice(i));
-    return results;
-}
+// function splitter(data) {
+//     var i = 0;
+//     var results = _.chain(data)
+//     .map((x) => (x.match(/%/g) || []).length)
+//     .filter((x) => x)
+//     .map(function(x) {
+//         var index = i;
+//         i += x + 1;
+//         return data.slice(index, index + x + 1)
+//     })
+//     .value();
+//     results.push(data.slice(i));
+//     return results;
+// }
 
-function normalizeMessage(message) {
+function prettifyMessage(details) {
+	var message = details.msg;
+	var prettifier = JSON.stringify(message);
+	if (details.url) {
+		prettifier = prettifier + ' at ' + details.url + ':' + details.line + ":" + details.col;
+	}
+	return prettifier;
 	// Fix MSG param depend of type!
 	if (_.isArray(message)) {
 		return message.join(' ');
@@ -441,10 +448,8 @@ function reduce(arr,filters,exclude) {
 	}
 	for (var i=0;i<arr.length;i++) {
 		if (filters || exclude) {
-			var msg = arr[i].msg;
-			if (typeof arr[i].msg === 'object') {
-				msg = arr[i].msg.join('');
-			}
+			var msg = prettifyMessage(arr[i]);
+
 			if (!msg.match(includeFilterRegex)) {
 				excluded++;
 				continue;

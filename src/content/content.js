@@ -172,12 +172,20 @@ function init(enabled, enableLogStack) {
                 if (e && e.detail && e.detail.length) {
                     for (var i = 0; i < e.detail.length; i++) {
                         var msg = e.detail[i].msg;
+                        var url = e.detail[i].url;
+                        var col = e.detail[i].col;
+                        var line = e.detail[i].line;
+                        var stack = e.detail[i].stack;
                         var action = e.detail[i].action;
                         chrome.runtime.sendMessage({
                             from: 'content',
                             subject: 'console_action',
                             domain: window.location.hostname,
                             msg: msg,
+                            url: url,
+                            line: line,
+                            col: col,
+                            stack: stack,
                             action: action
                         }, function(response) {
                             if (__DEBUG)
