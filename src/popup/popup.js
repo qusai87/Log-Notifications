@@ -252,14 +252,14 @@ function loadLogs (loadAll) {
 
 function showLogs() {
 	var logs = [];
-	var filters = $('#include_filters').val();
-	var excludeFilters = $('#exclude_filters').val();
-	var logs_history_with_filters = reduce(logs_history,filters,excludeFilters);
 
-	if (logs_history_with_filters.results) {
+	if (logs_history) {
+		var filters = $('#include_filters').val();
+		var excludeFilters = $('#exclude_filters').val();
+		var logs_history_with_filters = reduce(logs_history,filters,excludeFilters);
 		for (var key in logs_history_with_filters.results) {
 			var details = logs_history_with_filters.results[key];
-			debugger;
+
 			if (details.msg && details.action) {
 				var msg = prettifyMessage(details);
 				if (msg) {
@@ -281,6 +281,7 @@ function showLogs() {
 				controller.commandResult(sprintf('%d logs found!\n', logs.length), "jquery-console-message-system");
 			}
 			controller.commandResult(logs);
+
 		} else {
 			if (logs_history_with_filters.excluded) {
 				controller.commandResult(sprintf('Excluded %d logs, remove filters to show logs!', logs_history_with_filters.excluded), "jquery-console-message-system");
@@ -308,44 +309,48 @@ function showLogs() {
 
 function prettifyMessage(details) {
 	var message = details.msg;
-	var prettifier = JSON.stringify(message);
-	if (details.url) {
-		prettifier = prettifier + ' at ' + details.url + ':' + details.line + ":" + details.col;
-	}
-	return prettifier;
-	// Fix MSG param depend of type!
-	if (_.isArray(message)) {
-		return message.join(' ');
-	}
-	if (typeof message === 'object') {
-		var checkStringObject = true;
-		var stringArr = [];
-		for (obj in message) {
-			if (typeof message[obj] !== 'string' && typeof message[obj] !== 'number') {
-				checkStringObject = false;
-				break;
-			} else {
-				stringArr.push(message[obj]);
-			}
+	try {
+		message = JSON.parse(message);
+	} finally {
+		if (details.url) {
+			message = message + ' at ' + details.url + ':' + details.line + ":" + details.col;
 		}
-		if (checkStringObject) {
-			 message = sprintf.apply(this, message);
-		}      
-	} else if (typeof message !== 'undefined') {
-		message = String(message);
+		return message;
 	}
 
-	if (typeof message === 'string' && message.indexOf('%c') != -1) {
-		// Detect %c color cases
-		//var regex  = /%c(.+?)\s([a-z0-9\-]+?)\:([a-z0-9\-]+?)\;/g;
-		message = message.replace(/%c(\w+)\s(\w+:#.+;)+/g,'[$1]');
-		//var matches = regex.exec(message);
+	// Fix MSG param depend of type!
+	// if (_.isArray(message)) {
+	// 	return message.join(' ');
+	// }
+	// if (typeof message === 'object') {
+	// 	var checkStringObject = true;
+	// 	var stringArr = [];
+	// 	for (obj in message) {
+	// 		if (typeof message[obj] !== 'string' && typeof message[obj] !== 'number') {
+	// 			checkStringObject = false;
+	// 			break;
+	// 		} else {
+	// 			stringArr.push(message[obj]);
+	// 		}
+	// 	}
+	// 	if (checkStringObject) {
+	// 		 message = sprintf.apply(this, message);
+	// 	}      
+	// } else if (typeof message !== 'undefined') {
+	// 	message = String(message);
+	// }
 
-		// if (matches && matches.length >= 4) {
-		// 	message = matches[1];
-		// }
-	}
-	return message;
+	// if (typeof message === 'string' && message.indexOf('%c') != -1) {
+	// 	// Detect %c color cases
+	// 	//var regex  = /%c(.+?)\s([a-z0-9\-]+?)\:([a-z0-9\-]+?)\;/g;
+	// 	message = message.replace(/%c(\w+)\s(\w+:#.+;)+/g,'[$1]');
+	// 	//var matches = regex.exec(message);
+
+	// 	// if (matches && matches.length >= 4) {
+	// 	// 	message = matches[1];
+	// 	// }
+	// }
+	// return message;
 }
 function showNewLogs(logsHistoryJSON) {
 	var _old_logs = logs_history;
@@ -423,7 +428,7 @@ function addToHistory(command) {
 
 function evaluateJSExpression(_expression, callback) {
 	respone_not_received_timer = setTimeout(function () {
-		controller.commandResult('can\'t access page!','jquery-console-message-error');
+		controller.commandResult(`can't access page, please reload and try again!`,'jquery-console-message-error');
 	},1000);
 	// ...query for the active tab...
 	sendMessage({
@@ -508,9 +513,10 @@ function loadOptions () {
 	loadSwitch('preserveLogsSwitch','preserveLogs')
 	loadSwitch('enableLogStackSwitch','enableLogStack')
 	loadSwitch('disableCacheSwitch','disableCache')
-	loadSwitch('disableWarningsSwitch','disableWarnings');
-	loadSwitch('disableAlertsSwitch','disableAlerts');
-	loadSwitch('disableErrorsSwitch','disableErrors');
+	loadSwitch('enableWarningsSwitch','enableWarnings');
+	loadSwitch('enableAlertsSwitch','enableAlerts');
+	loadSwitch('enableErrorsSwitch','enableErrors');
+	loadSwitch('enableInfoSwitch','enableInfo');
 	
 	//loadSwitch('disableIFRAMESwitch','disableIFRAME')
 }
@@ -603,18 +609,18 @@ function saveOption(id, checked) {
 				$('#preserveLogsSwitch').bootstrapSwitch('disabled', false);
 				$('#enableLogStackSwitch').bootstrapSwitch('disabled', false);
 				$('#disableCacheSwitch').bootstrapSwitch('disabled', false);
-				$('#disableWarningsSwitch').bootstrapSwitch('disabled', false);
-				$('#disableAlertsSwitch').bootstrapSwitch('disabled', false);
-				$('#disableErrorsSwitch').bootstrapSwitch('disabled', false);
+				$('#enableWarningsSwitch').bootstrapSwitch('disabled', false);
+				$('#enableAlertsSwitch').bootstrapSwitch('disabled', false);
+				$('#enableErrorsSwitch').bootstrapSwitch('disabled', false);
 			} else {
 				$('#domainSwitch').bootstrapSwitch('disabled', true);
 				$('#notificationSwitch').bootstrapSwitch('disabled', true);
 				$('#preserveLogsSwitch').bootstrapSwitch('disabled', true);
 				$('#enableLogStackSwitch').bootstrapSwitch('disabled', true);
 				$('#disableCacheSwitch').bootstrapSwitch('disabled', true);
-				$('#disableWarningsSwitch').bootstrapSwitch('disabled', true);
-				$('#disableAlertsSwitch').bootstrapSwitch('disabled', true);
-				$('#disableErrorsSwitch').bootstrapSwitch('disabled', true);
+				$('#enableWarningsSwitch').bootstrapSwitch('disabled', true);
+				$('#enableAlertsSwitch').bootstrapSwitch('disabled', true);
+				$('#enableErrorsSwitch').bootstrapSwitch('disabled', true);
 			}
 			sendRuntimeMessage({
 				from: 'popup',
@@ -638,11 +644,11 @@ function saveOption(id, checked) {
 				enabled: checked
 			}, function(response) {});
 		});
-	} else if (id === 'disableWarningsSwitch') {
-		saveSwitch('disableWarningsSwitch', 'disableWarnings', checked, function () {
+	} else if (id === 'enableWarningsSwitch') {
+		saveSwitch('enableWarningsSwitch', 'enableWarnings', checked, function () {
 			sendRuntimeMessage({
 				from: 'popup',
-				subject: 'disable_warnings',
+				subject: 'enable_warnings',
 				enabled: checked
 			}, function(response) {});
 		});
@@ -651,19 +657,28 @@ function saveOption(id, checked) {
 		saveSwitch('themeSwitch', 'theme', checked, function () {
 			loadTheme();
 		});
-	} else if (id === 'disableAlertsSwitch') {
-		saveSwitch('disableAlertsSwitch', 'disableAlerts', checked, function () {
+	} else if (id === 'enableAlertsSwitch') {
+		saveSwitch('enableAlertsSwitch', 'enableAlerts', checked, function () {
 			sendRuntimeMessage({
 				from: 'popup',
-				subject: 'disable_alerts',
+				subject: 'enable_alerts',
 				enabled: checked
 			}, function(response) {});
 		});
-	} else if (id === 'disableErrorsSwitch') {
-		saveSwitch('disableErrorsSwitch', 'disableErrors', checked, function () {
+	} else if (id === 'enableErrorsSwitch') {
+		saveSwitch('enableErrorsSwitch', 'enableErrors', checked, function () {
 			sendRuntimeMessage({
 				from: 'popup',
-				subject: 'disable_errors',
+				subject: 'enable_errors',
+				enabled: checked
+			}, function(response) {});
+
+		});
+	} else if (id === 'enableInfoSwitch') {
+		saveSwitch('enableInfoSwitch', 'enableInfo', checked, function () {
+			sendRuntimeMessage({
+				from: 'popup',
+				subject: 'enable_info',
 				enabled: checked
 			}, function(response) {});
 
@@ -678,52 +693,54 @@ function saveOption(id, checked) {
 
 // Listen for messages
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
-    if (__DEBUG) {
-        console.log('[POPUP::DEBUG] chrome.runtime.onMessage:', request , sender, response);
-    }
-	// If the received message has the expected format...
-	if (request.from === 'content' && request.subject === 'console_action') {
-		loadLogs();
-	}
-	else if (request.from === 'content' && request.subject === 'logs_all_history_found') {
-		init(request.logsHistoryJSON);
-	}
-	else if (request.from === 'content' && request.subject === 'logs_history_found') {
-		if (!logs_history) {
+	setTimeout(function() {
+	    if (__DEBUG) {
+	        console.log('[POPUP::DEBUG] chrome.runtime.onMessage:', request , sender, response);
+	    }
+		// If the received message has the expected format...
+		if (request.from === 'content' && request.subject === 'console_action') {
+			loadLogs();
+		}
+		else if (request.from === 'content' && request.subject === 'logs_all_history_found') {
 			init(request.logsHistoryJSON);
 		}
-		else {
-			showNewLogs(request.logsHistoryJSON);
-		}
-	} else if (request.from === 'background' && request.subject === 'preserved_logs') {
-		if (request.logsHistoryJSON) {
+		else if (request.from === 'content' && request.subject === 'logs_history_found') {
 			if (!logs_history) {
 				init(request.logsHistoryJSON);
 			}
 			else {
 				showNewLogs(request.logsHistoryJSON);
 			}
-		}
-	} else if (request.from === 'content' && request.subject === 'expression_found') {
-		clearTimeout(respone_not_received_timer);
-		respone_not_received_timer = -1;
-
-		if (request.output) {
-			var data = JSON.parse(request.output);
-
-			if (typeof data==='string' && (data.indexOf('ReferenceError') > 0)) {
-				controller.commandResult(data,'jquery-console-message-error');
-			} else if (typeof data==='string' && (data.indexOf('SyntaxError') > 0)) {
-				controller.commandResult(data,'jquery-console-message-error');
-			} else if (typeof data==='string' && (data.indexOf('TypeError') > 0)) {
-				controller.commandResult(data,'jquery-console-message-error');
-			} else {
-				controller.commandResult(data,'jquery-console-message-value',0,request.expression);
+		} else if (request.from === 'background' && request.subject === 'preserved_logs') {
+			if (request.logsHistoryJSON) {
+				if (!logs_history) {
+					init(request.logsHistoryJSON);
+				}
+				else {
+					showNewLogs(request.logsHistoryJSON);
+				}
 			}
-		} else {
-			controller.commandResult('undefined','jquery-console-message-error');
+		} else if (request.from === 'content' && request.subject === 'expression_found') {
+			clearTimeout(respone_not_received_timer);
+			respone_not_received_timer = -1;
+
+			if (request.output) {
+				var data = JSON.parse(request.output);
+
+				if (typeof data==='string' && (data.indexOf('ReferenceError') > 0)) {
+					controller.commandResult(data,'jquery-console-message-error');
+				} else if (typeof data==='string' && (data.indexOf('SyntaxError') > 0)) {
+					controller.commandResult(data,'jquery-console-message-error');
+				} else if (typeof data==='string' && (data.indexOf('TypeError') > 0)) {
+					controller.commandResult(data,'jquery-console-message-error');
+				} else {
+					controller.commandResult(data,'jquery-console-message-value',0,request.expression);
+				}
+			} else {
+				controller.commandResult('undefined','jquery-console-message-error');
+			}
 		}
-	}
+	}, 1);
 	return true;
 });
 

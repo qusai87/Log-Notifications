@@ -9,10 +9,12 @@ var isNotificationEnabled = false;
 var domainNotifications = {
 	localhost : true
 };
+var enableInfo = false;
+var enableErrors = false;
+var enableAlerts = false;
+var enableWarnings = false;
+
 var disableCache = false;
-var disableWarnings = true;
-var disableAlerts = true;
-var disableErrors = false;
 
 // Variables
 var clearCacheRunning = false;
@@ -61,30 +63,46 @@ chrome.storage.sync.get('disableCache', function (result) {
 	}
 });
 
-chrome.storage.sync.get('disableWarnings', function (result) {
-	if (typeof result.disableWarnings === 'boolean') {
-		disableWarnings = result.disableWarnings;
+chrome.storage.sync.get('enableWarnings', function (result) {
+	if (typeof result.enableWarnings === 'boolean') {
+		enableWarnings = result.enableWarnings;
 	} else {
-		chrome.storage.sync.set({'disableWarnings': disableWarnings}, function() {
+		chrome.storage.sync.set({'enableWarnings': enableWarnings}, function() {
 			if (__DEBUG)
-				console.log('disableWarnings saved');
+				console.log('enableWarnings saved');
 		});
 	}
 });
 
-chrome.storage.sync.get('disableErrors', function (result) {
-	if (typeof result.disableErrors === 'boolean') {
-		disableErrors = result.disableErrors;
+chrome.storage.sync.get('enableErrors', function (result) {
+	if (typeof result.enableErrors === 'boolean') {
+		enableErrors = result.enableErrors;
+	} else {
+		chrome.storage.sync.set({'enableErrors': enableErrors}, function() {
+			if (__DEBUG)
+				console.log('enableErrors saved');
+		});
 	}
 });
 
-chrome.storage.sync.get('disableAlerts', function (result) {
-	if (typeof result.disableAlerts === 'boolean') {
-		disableAlerts = result.disableAlerts;
+chrome.storage.sync.get('enableInfo', function (result) {
+	if (typeof result.enableInfo === 'boolean') {
+		enableInfo = result.enableInfo;
 	} else {
-		chrome.storage.sync.set({'disableAlerts': disableAlerts}, function() {
+		chrome.storage.sync.set({'enableInfo': enableInfo}, function() {
 			if (__DEBUG)
-				console.log('disableAlerts saved');
+				console.log('enableInfo saved');
+		});
+	}
+});
+
+chrome.storage.sync.get('enableAlerts', function (result) {
+	if (typeof result.enableAlerts === 'boolean') {
+		enableAlerts = result.enableAlerts;
+	} else {
+		chrome.storage.sync.set({'enableAlerts': enableAlerts}, function() {
+			if (__DEBUG)
+				console.log('enableAlerts saved');
 		});
 	}
 });
@@ -224,15 +242,13 @@ function createNotification (notification, messageCount) {
 
 /* Respond to the user's clicking one of the buttons */
 chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
-	if (notifId === myNotificationID) {
-		var log = getNotificationData(notifId);
-		if (btnIdx === 0 && log) {
-			copyToClipboard(log);
-		} else if (btnIdx === 1 && log) {
-			disableMessage(log);
-		} 
-		chrome.notifications.clear(notifId);
-	}
+	var log = getNotificationData(notifId);
+	if (btnIdx === 0 && log) {
+		copyToClipboard(log);
+	} else if (btnIdx === 1 && log) {
+		disableMessage(log);
+	} 
+	chrome.notifications.clear(notifId);
 });
 
 function getNotificationData(id) {
@@ -288,16 +304,34 @@ function isValidMessage (msg) {
 	}
 	if (message) {
 		isValid = !(excludeFilterRegex && message.match(excludeFilterRegex)) && (!includeFilterRegex || message.match(includeFilterRegex));
+	}
+	return isValid;
+}
 
+function isDisabledMessage (msg) {
+	var message = null;
+	var isDisabled = false;
+
+	if  (typeof msg === 'string' ) {
+		message = msg;
+	} else if  (typeof msg === 'object' ) {
+		if (msg.length) {
+			message = msg.join(' ');
+		}
+		else {
+			message = msg.toString();
+		}
+	}
+	if (message) {
 		if (disabled_messages.length) {
 			for (var i = disabled_messages.length - 1; i >= 0; i--) {
 				if (disabled_messages[i] == message) {
-					isValid = false;
+					isDisabled = false;
 				}
 			}
 		}
 	}
-	return isValid;
+	return isDisabled;
 }
 
 function updateNotificationCounter(tabId,pageId, domain) {
@@ -317,39 +351,42 @@ function refreshBadge(tabId, pageId, domain) {
 
 	var count = _pages[pageId] || 0;
 
-	if (pageId && activePageID == pageId) {
-		if (isEnabled) {
-			if (isNotificationEnabled || domainNotifications[domain]) {
-				enableIcon();
-			} else {
-				count = 0;
-				muteIcon();
-			}
-		} else {
+	if (isEnabled) {
+		if (pageId && activePageID == pageId && (isNotificationEnabled || domainNotifications[domain])) {
+			enableIcon(count);
+		}  else {
 			count = 0;
-			disableIcon();
+			muteIcon(count);
 		}
-		if (count) {
-			chrome.browserAction.setBadgeText({
-				text: String(count)
-			});
-		} else {
-			chrome.browserAction.setBadgeText({
-				text: ''
-			});
-		}
+	}  else {
+		count = 0;
+		disableIcon(count);
 	}
 }
-function enableIcon() {
+function updateBadgeCount(count) {
+	if (count) {
+		chrome.browserAction.setBadgeText({
+			text: String(count)
+		});
+	} else {
+		chrome.browserAction.setBadgeText({
+			text: ''
+		});
+	}
+}
+function enableIcon(count) {
 	setIcon('');
+	updateBadgeCount(count);
 }
 
-function muteIcon() {
+function muteIcon(count) {
 	setIcon('muted');
+	updateBadgeCount(count);
 }
 
-function disableIcon() {
+function disableIcon(count) {
 	setIcon('disabled');
+	updateBadgeCount(count);
 }
 
 function setIcon(type) {
@@ -425,7 +462,7 @@ function clearCache() {
 // Listener - Put this in the background script to listen to all the events.
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (__DEBUG) {
-        console.log('[BACKGROUND::DEBUG] chrome.runtime.onMessage:', request , sender, response);
+        console.log('[BACKGROUND::DEBUG] chrome.runtime.onMessage:', request , sender);
     }
 	var pageId;
 	if (sender && sender.tab) {
@@ -461,7 +498,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		}
 		if (isValidMessage(msg) && (isNotificationEnabled || domainNotifications[request.domain])) {
 			if (request.action == 'error' || request.action == 'unknown') {
-				if (!disableErrors) {
+				if (enableErrors && !isDisabledMessage(msg)) {
 					showChromeNotification({
 						type: "basic",
 						title: "Error!",
@@ -472,7 +509,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 					updateNotificationCounter(sender.tab.id,pageId,request.domain);
 				}
 			} else if (request.action == 'warn') {
-				if (!disableWarnings) {
+				if (enableWarnings && !isDisabledMessage(msg)) {
 					showChromeNotification({
 						type: "basic",
 						title: "Warning!",
@@ -483,7 +520,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 					updateNotificationCounter(sender.tab.id,pageId,request.domain);
 				}
 			} else if (request.action == 'alert') {
-				if (!disableAlerts) {
+				if (enableAlerts && !isDisabledMessage(msg)) {
 					showChromeNotification({
 						type: "basic",
 						title: "Alert!",
@@ -495,12 +532,16 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 				}
 
 			} else if (request.action == 'info') {
-				showChromeNotification({
-					type: "basic",
-					title: "info!",
-					message: msg,
-					iconUrl: "icons/icon-info.png"
-				});
+				if (enableInfo && !isDisabledMessage(msg)) {
+					showChromeNotification({
+						type: "basic",
+						title: "info!",
+						message: msg,
+						iconUrl: "icons/icon-info.png"
+					});
+				} else {
+					updateNotificationCounter(sender.tab.id,pageId,request.domain);
+				}
 			} else if (request.action == '$log') {
 				showChromeNotification({
 					type: "basic",
@@ -560,13 +601,16 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		updateFilters();
 	} else if ((request.from === 'popup') && (request.subject === 'disable_cache')) {
 		disableCache = request.enabled;
-	} else if ((request.from === 'popup') && (request.subject === 'disable_warnings')) {
-		disableWarnings = request.enabled;
-	}  else if ((request.from === 'popup') && (request.subject === 'disable_errors')) {
-		disableErrors = request.enabled;
-	}  else if ((request.from === 'popup') && (request.subject === 'disable_alerts')) {
-		disableAlerts = request.enabled;
+	} else if ((request.from === 'popup') && (request.subject === 'enable_warnings')) {
+		enableWarnings = request.enabled;
+	}  else if ((request.from === 'popup') && (request.subject === 'enable_errors')) {
+		enableErrors = request.enabled;
+	}  else if ((request.from === 'popup') && (request.subject === 'enable_alerts')) {
+		enableAlerts = request.enabled;
+	}  else if ((request.from === 'popup') && (request.subject === 'enable_info')) {
+		enableInfo = request.enabled;
 	}
+
 	return true;
 });
 
@@ -577,22 +621,26 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });*/
 
 chrome.tabs.onActivated.addListener(function(tabInfo) {
-	if (__DEBUG)
-		console.log('tab opened!',tabInfo.tabId);
-	if (tabInfo) {
-		var pageId = tabInfo.windowId  + ':' + tabInfo.tabId;
-		activePageID = pageId;
-		chrome.tabs.query({
-				currentWindow: true,
-				active: true
-			}, function (tab) {
-				if (tab && tab.length) {
-					var domain = getDomain(tab[0].url);
-					refreshBadge(tabInfo.tabId,pageId, domain);
+	setTimeout(() => {
+		if (__DEBUG)
+			console.log('tab opened!',tabInfo.tabId);
+		if (tabInfo) {
+			var pageId = tabInfo.windowId  + ':' + tabInfo.tabId;
+			activePageID = pageId;
+			chrome.tabs.query({
+					currentWindow: true,
+					active: true
+				}, function (tab) {
+					if (tab && tab.length) {
+						var domain = getDomain(tab[0].url);
+						refreshBadge(tabInfo.tabId,pageId, domain);
+					} else {
+						refreshBadge(tabInfo.tabId,pageId, null);
+					}
 				}
-			}
-		);
-	}
+			);
+		}
+	}, 250);
 });
 
 chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
@@ -609,7 +657,7 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 		if (activePageID)
 			_pages[activePageID] = 0;
 		
-		refreshBadge(tabId, pageId,domain);
+		refreshBadge(tabId, pageId, domain);
 		if (isEnabled && disableCache) {
 			 if (domain) {
 				if (isNotificationEnabled || domainNotifications[domain]) {

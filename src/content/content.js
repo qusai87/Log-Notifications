@@ -157,12 +157,16 @@ function init(enabled, enableLogStack) {
                     console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_js_expression_found: ', e);
                 }
                 if (e && e.detail) {
-                    chrome.runtime.sendMessage({
-                        from: 'content',
-                        subject: 'expression_found',
-                        output: e.detail.results,
-                        expression: e.detail.expression,
-                    }, function(response) {});
+                    try {
+                        chrome.runtime.sendMessage({
+                            from: 'content',
+                            subject: 'expression_found',
+                            output: e.detail.results,
+                            expression: e.detail.expression,
+                        }, function(response) {});
+                    } catch (e) {
+                        // nothing
+                    }
                 }
             });
             document.addEventListener('Msg_LogNotificationExtension_messages', function(e) {
@@ -177,21 +181,26 @@ function init(enabled, enableLogStack) {
                         var line = e.detail[i].line;
                         var stack = e.detail[i].stack;
                         var action = e.detail[i].action;
-                        chrome.runtime.sendMessage({
-                            from: 'content',
-                            subject: 'console_action',
-                            domain: window.location.hostname,
-                            msg: msg,
-                            url: url,
-                            line: line,
-                            col: col,
-                            stack: stack,
-                            action: action
-                        }, function(response) {
-                            if (__DEBUG)
-                                console.log('messages:', response);
-                            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', { detail: '' }));
-                        });
+
+                        try {
+                            chrome.runtime.sendMessage({
+                                from: 'content',
+                                subject: 'console_action',
+                                domain: window.location.hostname,
+                                msg: msg,
+                                url: url,
+                                line: line,
+                                col: col,
+                                stack: stack,
+                                action: action
+                            }, function(response) {
+                                if (__DEBUG)
+                                    console.log('messages:', response);
+                                document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', { detail: '' }));
+                            });
+                        } catch (e) {
+                            // nothing
+                        }
                     }
                 }
             });
@@ -201,14 +210,18 @@ function init(enabled, enableLogStack) {
                     console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_history_found: ', e);
                 }
                 if (e && e.detail) {
-                    chrome.runtime.sendMessage({
-                        from: 'content',
-                        subject: 'logs_history_found',
-                        logsHistoryJSON: e.detail
-                    }, function(response) {
-                        if (__DEBUG)
-                            console.log('[CONTENT::DEBUG] history_found', response);
-                    });
+                    try {
+                        chrome.runtime.sendMessage({
+                            from: 'content',
+                            subject: 'logs_history_found',
+                            logsHistoryJSON: e.detail
+                        }, function(response) {
+                            if (__DEBUG)
+                                console.log('[CONTENT::DEBUG] history_found', response);
+                        });
+                    } catch (e) {
+                        // nothing
+                    }
                 }
             });
 
@@ -217,14 +230,18 @@ function init(enabled, enableLogStack) {
                     console.log('[CONTENT::DEBUG] Msg_LogNotificationExtension_all_history_found: ', e);
                 }
                 if (e && e.detail) {
-                    chrome.runtime.sendMessage({
-                        from: 'content',
-                        subject: 'logs_all_history_found',
-                        logsHistoryJSON: e.detail
-                    }, function(response) {
-                        if (__DEBUG)
-                            console.log('[CONTENT::DEBUG] all_history_found', response);
-                    });
+                    try {
+                        chrome.runtime.sendMessage({
+                            from: 'content',
+                            subject: 'logs_all_history_found',
+                            logsHistoryJSON: e.detail
+                        }, function(response) {
+                            if (__DEBUG)
+                                console.log('[CONTENT::DEBUG] all_history_found', response);
+                        });
+                    } catch (e) {
+                        // nothing
+                    }
                 }
             });
         }
@@ -264,6 +281,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
         }
         init(request.enabled);
     }
+
     return true;
 });
 

@@ -278,7 +278,7 @@
       } else {
         typer.css('position', 'fixed').focus();
       }
-      scrollToBottom();
+      // scrollToBottom();
       return false;
     });
 
