@@ -1,5 +1,5 @@
 body, section {			/* Change width and height to own preferences */
-	width: 800px;
+	width: 700px;
 	height: 590px;
 	overflow: hidden;
 }
@@ -161,9 +161,9 @@ div.console {
 
 div.console div.jquery-console-inner
 {
-	height: 450px;
-	max-height: 450px;
-	background:#fff; 
+	height: 420px;
+	max-height: 420px;
+	background: #fff; 
 	padding: 0;
  	overflow:auto;
  	margin-bottom: 10px;

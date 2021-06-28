@@ -20,7 +20,8 @@ var disableCache = false;
 var clearCacheRunning = false;
 var activePageID = null;
 var lastNotificatation;
-var _pages = [];
+var _domains = {};
+var _pages = {};
 var _logs = {};
 var _commands = [];
 var notifications = {};
@@ -350,10 +351,20 @@ function refreshBadge(tabId, pageId, domain) {
 	pageId = pageId || activePageID;
 
 	var count = _pages[pageId] || 0;
+	var pageLogs = _logs[pageId];
+	var hasErrors = false;
+
+	if (pageLogs) {
+		for (var i =0; i< pageLogs.length; i++) {
+			if (pageLogs[i].action == 'error') {
+				hasErrors = true;
+			}
+		}
+	}
 
 	if (isEnabled) {
 		if (pageId && activePageID == pageId && (isNotificationEnabled || domainNotifications[domain])) {
-			enableIcon(count);
+			enableIcon(count, hasErrors);
 		}  else {
 			count = 0;
 			muteIcon(count);
@@ -374,8 +385,12 @@ function updateBadgeCount(count) {
 		});
 	}
 }
-function enableIcon(count) {
-	setIcon('');
+function enableIcon(count, hasErrors) {
+	if (!hasErrors) {
+		setIcon('');
+	} else {
+		setIcon('error');
+	}
 	updateBadgeCount(count);
 }
 
@@ -461,156 +476,167 @@ function clearCache() {
 
 // Listener - Put this in the background script to listen to all the events.
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (__DEBUG) {
-        console.log('[BACKGROUND::DEBUG] chrome.runtime.onMessage:', request , sender);
-    }
-	var pageId;
-	if (sender && sender.tab) {
-		pageId = sender.tab.windowId + ':' + sender.tab.id;
-	} else {
-		pageId = activePageID;
-	}
-
-	// First, validate the message's structure
-	if ((request.from === 'content') && (request.subject === 'console_action')) {
-		if (!isEnabled || !request.msg)
-			return;
-		var msg = request.msg;
-
-		if (pageId) {
-			//msg = '[' + pageId + ']' + request.msg;
-			var count = countMessages(_logs[pageId],msg);
-			if (count > 10) {
-				return;
-			} else if (count == 10) {
-				msg += '\nThis Message repeat many times and it will be disabled from notifications.';
-			}
-
-			if (!_logs[pageId]) {
-				_logs[pageId] = [];
-			}
-
-			_logs[pageId].push(request);
-
-			if (_logs[pageId].length > 300) {
-				_logs[pageId] = _logs[pageId].slice(Math.max(_logs[pageId].length - 300, 1));
-			}
+	try {
+	    if (__DEBUG) {
+	        console.log('[BACKGROUND::DEBUG] chrome.runtime.onMessage:', request , sender);
+	    }
+		var pageId;
+		if (sender && sender.tab) {
+			pageId = sender.tab.windowId + ':' + sender.tab.id;
+		} else {
+			pageId = activePageID;
 		}
-		if (isValidMessage(msg) && (isNotificationEnabled || domainNotifications[request.domain])) {
-			if (request.action == 'error' || request.action == 'unknown') {
-				if (enableErrors && !isDisabledMessage(msg)) {
-					showChromeNotification({
-						type: "basic",
-						title: "Error!",
-						message: msg,
-						iconUrl: "icons/icon-error.png"
-					});
-				} else {
-					updateNotificationCounter(sender.tab.id,pageId,request.domain);
-				}
-			} else if (request.action == 'warn') {
-				if (enableWarnings && !isDisabledMessage(msg)) {
-					showChromeNotification({
-						type: "basic",
-						title: "Warning!",
-						message: msg,
-						iconUrl: "icons/icon-warn.png"
-					});
-				} else {
-					updateNotificationCounter(sender.tab.id,pageId,request.domain);
-				}
-			} else if (request.action == 'alert') {
-				if (enableAlerts && !isDisabledMessage(msg)) {
-					showChromeNotification({
-						type: "basic",
-						title: "Alert!",
-						message: msg,
-						iconUrl: "icons/icon-info.png"
-					});
-				} else {
-					updateNotificationCounter(sender.tab.id,pageId,request.domain);
+
+		// First, validate the message's structure
+		if ((request.from === 'content') && (request.subject === 'console_action')) {
+			if (!isEnabled || !request.msg) {
+				return true;
+				// return Promise.resolve("Dummy response to keep the console quiet");	
+			}
+			var msg = request.msg;
+
+			if (pageId) {
+				//msg = '[' + pageId + ']' + request.msg;
+				var count = countMessages(_logs[pageId],msg);
+				if (count > 10) {
+					return;
+				} else if (count == 10) {
+					msg += '\nThis Message repeat many times and it will be disabled from notifications.';
 				}
 
-			} else if (request.action == 'info') {
-				if (enableInfo && !isDisabledMessage(msg)) {
+				if (!_logs[pageId]) {
+					_logs[pageId] = [];
+				}
+
+				_logs[pageId].push(request);
+
+				if (_logs[pageId].length > 300) {
+					_logs[pageId] = _logs[pageId].slice(Math.max(_logs[pageId].length - 300, 1));
+				}
+			}
+			if (isValidMessage(msg) && (isNotificationEnabled || domainNotifications[request.domain])) {
+				if (request.action == 'error' || request.action == 'unknown') {
+					if (enableErrors && !isDisabledMessage(msg)) {
+						showChromeNotification({
+							type: "basic",
+							title: "Error!",
+							message: msg,
+							iconUrl: "icons/icon-error.png"
+						});
+					} else {
+						updateNotificationCounter(sender.tab.id,pageId,request.domain);
+					}
+				} else if (request.action == 'warn') {
+					if (enableWarnings && !isDisabledMessage(msg)) {
+						showChromeNotification({
+							type: "basic",
+							title: "Warning!",
+							message: msg,
+							iconUrl: "icons/icon-warn.png"
+						});
+					} else {
+						updateNotificationCounter(sender.tab.id,pageId,request.domain);
+					}
+				} else if (request.action == 'alert') {
+					if (enableAlerts && !isDisabledMessage(msg)) {
+						showChromeNotification({
+							type: "basic",
+							title: "Alert!",
+							message: msg,
+							iconUrl: "icons/icon-info.png"
+						});
+					} else {
+						updateNotificationCounter(sender.tab.id,pageId,request.domain);
+					}
+
+				} else if (request.action == 'info') {
+					if (enableInfo && !isDisabledMessage(msg)) {
+						showChromeNotification({
+							type: "basic",
+							title: "info!",
+							message: msg,
+							iconUrl: "icons/icon-info.png"
+						});
+					} else {
+						updateNotificationCounter(sender.tab.id,pageId,request.domain);
+					}
+				} else if (request.action == '$log') {
 					showChromeNotification({
 						type: "basic",
-						title: "info!",
+						title: "JSC Log!",
 						message: msg,
-						iconUrl: "icons/icon-info.png"
+						iconUrl: "icons/icon-log.png"
 					});
 				} else {
 					updateNotificationCounter(sender.tab.id,pageId,request.domain);
 				}
-			} else if (request.action == '$log') {
-				showChromeNotification({
-					type: "basic",
-					title: "JSC Log!",
-					message: msg,
-					iconUrl: "icons/icon-log.png"
-				});
-			} else {
+			} else if (isValidMessage(msg)) {
 				updateNotificationCounter(sender.tab.id,pageId,request.domain);
 			}
-		} else if (isValidMessage(msg)) {
-			updateNotificationCounter(sender.tab.id,pageId,request.domain);
+
+			sendResponse({
+				success: true
+			});
+		} else if ((request.from === 'popup') && (request.subject === 'popup_opened')) {
+			activePageID = pageId;
+			_pages[pageId] = 0;
+			refreshBadge(request.tabId,pageId,request.domain);
+			sendResponse({
+				success: true
+			});
+		} else if ((request.from === 'popup') && (request.subject === 'disable_extension')) {
+			isEnabled = request.enabled;
+			refreshBadge(request.tabId,pageId,request.domain);
+
+			chrome.storage.sync.set({'enabled': isEnabled}, function() {
+			  if (__DEBUG)
+				console.log('enabled saved');
+			});
+		} else if ((request.from === 'popup') && (request.subject === 'disable_notifications')) {
+			isNotificationEnabled = request.enabled;
+			refreshBadge(request.tabId,pageId,request.domain);
+		} else if ((request.from === 'popup') && (request.subject === 'modify_domain_Notifications')) {
+			domainNotifications[request.domain] = request.enabled;
+			refreshBadge(request.tabId,pageId,request.domain);
+		} else if ((request.from === 'popup') && (request.subject === 'save_command')) {
+			_commands.push(request.command);
+			if (_commands> 100)
+				_commands = _commands.slice(Math.max(_commands.length - 100, 1));
+			chrome.storage.sync.set({'commandsHistory': unique(_commands)});
+		} else if ((request.from === 'popup') && (request.subject === 'clear_logs')) {
+			_commands = [];
+			chrome.storage.sync.set({'commandsHistory': _commands});
+		} else if ((request.from === 'popup') && (request.subject === 'get_preserved_logs')) {
+			chrome.runtime.sendMessage({
+				from: 'background',
+				subject: 'preserved_logs',
+				logsHistoryJSON: pageId && JSON.stringify(_logs[pageId])
+			},  response => {
+                if(chrome.runtime.lastError) {
+                } else {
+                    if (__DEBUG)
+                        console.log('[BACKGROUND::DEBUG] send message', response);
+                }
+            });
+		} else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
+			updateFilters();
+		} else if ((request.from === 'popup') && (request.subject === 'disable_cache')) {
+			disableCache = request.enabled;
+		} else if ((request.from === 'popup') && (request.subject === 'enable_warnings')) {
+			enableWarnings = request.enabled;
+		}  else if ((request.from === 'popup') && (request.subject === 'enable_errors')) {
+			enableErrors = request.enabled;
+		}  else if ((request.from === 'popup') && (request.subject === 'enable_alerts')) {
+			enableAlerts = request.enabled;
+		}  else if ((request.from === 'popup') && (request.subject === 'enable_info')) {
+			enableInfo = request.enabled;
 		}
 
-		sendResponse({
-			success: true
-		});
-	} else if ((request.from === 'popup') && (request.subject === 'popup_opened')) {
-		activePageID = pageId;
-		_pages[pageId] = 0;
-		refreshBadge(request.tabId,pageId,request.domain);
-		sendResponse({
-			success: true
-		});
-	} else if ((request.from === 'popup') && (request.subject === 'disable_extension')) {
-		isEnabled = request.enabled;
-		refreshBadge(request.tabId,pageId,request.domain);
+	} catch (e) {
 
-		chrome.storage.sync.set({'enabled': isEnabled}, function() {
-		  if (__DEBUG)
-			console.log('enabled saved');
-		});
-	} else if ((request.from === 'popup') && (request.subject === 'disable_notifications')) {
-		isNotificationEnabled = request.enabled;
-		refreshBadge(request.tabId,pageId,request.domain);
-	} else if ((request.from === 'popup') && (request.subject === 'modify_domain_Notifications')) {
-		domainNotifications[request.domain] = request.enabled;
-		refreshBadge(request.tabId,pageId,request.domain);
-	} else if ((request.from === 'popup') && (request.subject === 'save_command')) {
-		_commands.push(request.command);
-		if (_commands> 100)
-			_commands = _commands.slice(Math.max(_commands.length - 100, 1));
-		chrome.storage.sync.set({'commandsHistory': unique(_commands)});
-	} else if ((request.from === 'popup') && (request.subject === 'clear_logs')) {
-		_commands = [];
-		chrome.storage.sync.set({'commandsHistory': _commands});
-	} else if ((request.from === 'popup') && (request.subject === 'get_preserved_logs')) {
-		chrome.runtime.sendMessage({
-			from: 'background',
-			subject: 'preserved_logs',
-			logsHistoryJSON: pageId && JSON.stringify(_logs[pageId])
-		}, function(response) {
-			if (__DEBUG)
-				console.log(response);
-		});
-	} else if ((request.from === 'popup') && (request.subject === 'update_filters')) {
-		updateFilters();
-	} else if ((request.from === 'popup') && (request.subject === 'disable_cache')) {
-		disableCache = request.enabled;
-	} else if ((request.from === 'popup') && (request.subject === 'enable_warnings')) {
-		enableWarnings = request.enabled;
-	}  else if ((request.from === 'popup') && (request.subject === 'enable_errors')) {
-		enableErrors = request.enabled;
-	}  else if ((request.from === 'popup') && (request.subject === 'enable_alerts')) {
-		enableAlerts = request.enabled;
-	}  else if ((request.from === 'popup') && (request.subject === 'enable_info')) {
-		enableInfo = request.enabled;
+	} finally {
+		// return Promise.resolve("Dummy response to keep the console quiet");	
 	}
-
 	return true;
 });
 
@@ -654,8 +680,13 @@ chrome.tabs.onUpdated.addListener(function ( tabId, changeInfo, tabInfo) {
 		if (!activePageID) {
 			activePageID = pageId;
 		}
-		if (activePageID)
-			_pages[activePageID] = 0;
+		if (activePageID) {
+			if (_domains[activePageID] != domain) {
+				_pages[activePageID] = 0;
+				_logs[activePageID] = [];
+				_domains[activePageID] = domain;
+			}
+		}
 		
 		refreshBadge(tabId, pageId, domain);
 		if (isEnabled && disableCache) {

@@ -31,3 +31,12 @@
 #wrapper.toggled .js-menu-toggle {
     color: blue;
 }
+
+.js-btn-toggle {
+    color: blue !important;
+}
+.js-btn-toggle.toggled {
+    color: grey !important;
+    background:  transparent !important;
+    border:  none !important;
+}

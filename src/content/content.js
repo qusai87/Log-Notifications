@@ -163,7 +163,12 @@ function init(enabled, enableLogStack) {
                             subject: 'expression_found',
                             output: e.detail.results,
                             expression: e.detail.expression,
-                        }, function(response) {});
+                        }, response => {
+                            if(chrome.runtime.lastError) {
+                            } else if (typeof callback == 'function') {
+                                callback();
+                            }
+                        });
                     } catch (e) {
                         // nothing
                     }
@@ -193,10 +198,13 @@ function init(enabled, enableLogStack) {
                                 col: col,
                                 stack: stack,
                                 action: action
-                            }, function(response) {
-                                if (__DEBUG)
-                                    console.log('messages:', response);
-                                document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', { detail: '' }));
+                            }, response => {
+                                if(chrome.runtime.lastError) {
+                                } else {
+                                    if (__DEBUG)
+                                        console.log('messages:', response);
+                                    document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_received', { detail: '' }));
+                                }
                             });
                         } catch (e) {
                             // nothing
@@ -215,9 +223,12 @@ function init(enabled, enableLogStack) {
                             from: 'content',
                             subject: 'logs_history_found',
                             logsHistoryJSON: e.detail
-                        }, function(response) {
-                            if (__DEBUG)
-                                console.log('[CONTENT::DEBUG] history_found', response);
+                        }, response => {
+                            if(chrome.runtime.lastError) {
+                            } else {
+                                if (__DEBUG)
+                                    console.log('[CONTENT::DEBUG] history_found', response);
+                            }
                         });
                     } catch (e) {
                         // nothing
@@ -235,9 +246,12 @@ function init(enabled, enableLogStack) {
                             from: 'content',
                             subject: 'logs_all_history_found',
                             logsHistoryJSON: e.detail
-                        }, function(response) {
-                            if (__DEBUG)
-                                console.log('[CONTENT::DEBUG] all_history_found', response);
+                        },  response => {
+                            if(chrome.runtime.lastError) {
+                            } else {
+                                if (__DEBUG)
+                                    console.log('[CONTENT::DEBUG] all_history_found', response);
+                            }
                         });
                     } catch (e) {
                         // nothing
@@ -260,28 +274,34 @@ function init(enabled, enableLogStack) {
 // Listen for messages from the popup
 
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
-    if (__DEBUG) {
-        console.log('[CONTENT::DEBUG] chrome.runtime.onMessage:', request , sender, response);
-    }
-    // First, validate the message's structure
-    if ((request.from === 'popup') && (request.subject === 'get_console_all_history')) {
-        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_all_history', {}));
-    } else if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
-        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_history', {}));
-    } else if ((request.from === 'popup') && (request.subject === 'evaluate_js_expression')) {
-        document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_evaluate_js_expression', {
-            detail: {
-            	expression: request.expression,
-            	id: guid()
-            }
-        }));
-    } else if ((request.from === 'popup') && (request.subject === 'init')) {
+    try {
         if (__DEBUG) {
-            console.log('init message received');
+            console.log('[CONTENT::DEBUG] chrome.runtime.onMessage:', request , sender, response);
         }
-        init(request.enabled);
-    }
+        // First, validate the message's structure
+        if ((request.from === 'popup') && (request.subject === 'get_console_all_history')) {
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_all_history', {}));
+        } else if ((request.from === 'popup') && (request.subject === 'get_console_history')) {
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_get_history', {}));
+        } else if ((request.from === 'popup') && (request.subject === 'evaluate_js_expression') && isTopWindow) {
+            document.dispatchEvent(new CustomEvent('Msg_LogNotificationExtension_evaluate_js_expression', {
+                detail: {
+                	expression: request.expression,
+                	id: guid()
+                }
+            }));
+        } else if ((request.from === 'popup') && (request.subject === 'init')) {
+            if (__DEBUG) {
+                console.log('init message received');
+            }
+            init(request.enabled);
+        }
 
+    } catch (e) {
+
+    } finally {
+        // return Promise.resolve("Dummy response to keep the console quiet"); 
+    }
     return true;
 });
 

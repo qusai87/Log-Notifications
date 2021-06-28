@@ -233,10 +233,12 @@
                         <div class="container-fluid">
                             <div class="row">
                                 <span class="col-5 nopadding" style="display: flex;">
-                                    <span style="padding: 4px;">Filter: </span> <input type="text" class="filter-text" id="include_filters" value="" placeholder="filter (regex)" tabindex="2"></input>
+                                    <span style="padding-right: 4px;">Filter by: </span>
+                                    <input style="flex: 1" type="text" class="filter-text" id="include_filters" value="" placeholder="filter (regex)" tabindex="2"></input>
                                 </span>
-                                <span class="col-6 nopadding" style="display: flex;">
-                                    <span style="padding: 4px;">Exclude:</span> <input type="text" class="filter-text" id="exclude_filters" value="" placeholder="exclude (regex)" tabindex="3"></input>
+                                <span class="col-6" style="display: flex;">
+                                    <span style="padding-right: 4px;">Exclude:</span>
+                                    <input style="flex: 1" type="text" class="filter-text" id="exclude_filters" value="" placeholder="exclude (regex)" tabindex="3"></input>
                                 </span>
                                 <span class="col-1 text-right nopadding">
                                     <button type="button" class="btn btn-default btn-xs js-history" data-toggle="tooltip" data-placement="bottom" title="Log History">
@@ -246,6 +248,24 @@
                                         <i class="fa fa-ban" aria-hidden="true"></i>
                                     </button>
                                 </span>
+                            </div>
+                            <div class="row">Or, exclude logs by type: 
+                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Errors">
+                                    <i class="fa fa-times-circle" aria-hidden="true"></i> Errors
+                                </button>
+                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Warnings">
+                                    <i class="fa fa-warning" aria-hidden="true"></i> Warnings
+                                </button>
+                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Info">
+                                    <i class="fa fa-info" aria-hidden="true"></i> Info
+                                </button>
+                                <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Logs">
+                                    <i class="fa fa-log" aria-hidden="true"></i> Logs
+                                </button>
+
+                                <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Styles">
+                                    <i class="fa fa-paint-brush" aria-hidden="true"></i> custom styles
+                                </button>
                             </div>
                         </div>
                         <div class="console">

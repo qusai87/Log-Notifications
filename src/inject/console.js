@@ -324,7 +324,6 @@ $JSC = window.$JSC || {
         // });
 
         // window.onerror = function(e, url, line) {
-        //     debugger;
         //     if (/Script error/.test(e)) {
         //         $JSC.messages.push({msg: 'unkown error: ' + e , action: 'unknown'});
         //     } else {
