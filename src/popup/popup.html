@@ -26,7 +26,7 @@
         <script src="./../lib/bower_components/underscore/underscore.js"></script>
 
         <script src="./jquery.console.js"></script>
-        <script src="./popup.js"></script>
+        <script src="./popup.js" type="module"></script>
 
     </head>
 
@@ -58,7 +58,7 @@
                             <div class="col-8 text-left">
                                 <span>
                                     <div class="switch">
-                                        <input type="checkbox" id="domainSwitch" name='bootstrap-switch'  data-size='mini' class="make-switch text-left">
+                                        <input type="checkbox" id="domainNotificationsSwitch" name='bootstrap-switch'  data-size='mini' class="make-switch text-left">
                                     </div>
                                 </span>
                                 <span class="switch-label"><b>Show extension Notifications on this tab only</b></span>
@@ -66,7 +66,7 @@
                             <div class="col-4 text-right">
                                 <span class="text-right">
                                     <div class="switch">
-                                        <input type="checkbox" id="enabledSwitch" name='bootstrap-switch' 
+                                        <input type="checkbox" id="extensionActiveSwitch" name='bootstrap-switch' 
                                         data-on-text="Active!" data-off-text="Off" data-size='mini' class="make-switch">
                                     </div>
                                 </span>
@@ -76,7 +76,7 @@
                             <div class="col-12">
                                 <span class="switch-center">
                                     <div class="switch">
-                                        <input type="checkbox" id="notificationSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
+                                        <input type="checkbox" id="extensionNotificationSwitch" name='bootstrap-switch' data-size='mini' class="make-switch">
                                     </div>
                                 </span>
                                 <span class="switch-label">
@@ -250,20 +250,20 @@
                                 </span>
                             </div>
                             <div class="row">Or, exclude logs by type: 
-                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Errors">
+                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" data-type="Errors">
                                     <i class="fa fa-times-circle" aria-hidden="true"></i> Errors
                                 </button>
-                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Warnings">
+                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" data-type="Warnings">
                                     <i class="fa fa-warning" aria-hidden="true"></i> Warnings
                                 </button>
-                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Info">
+                                 <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" data-type="Info">
                                     <i class="fa fa-info" aria-hidden="true"></i> Info
                                 </button>
-                                <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Logs">
+                                <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" data-type="Logs">
                                     <i class="fa fa-log" aria-hidden="true"></i> Logs
                                 </button>
 
-                                <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" title="Styles">
+                                <button type="button" class="btn btn-default btn-xs js-btn-toggle" data-toggle="tooltip" data-placement="bottom" data-type="Styles">
                                     <i class="fa fa-paint-brush" aria-hidden="true"></i> custom styles
                                 </button>
                             </div>
@@ -275,7 +275,6 @@
                             <small>Commands: 
                                 <pre>cookie</pre>,
                                 <pre>logs</pre>,
-                                <pre>domains</pre>,
                                 <pre>clear</pre>
                                 or <pre>clearHistory</pre>
                             </small>

@@ -40,17 +40,29 @@ $JSC = window.$JSC || {
         if (messageObj instanceof Node) {
             messageObj = `<${messageObj.nodeName}>` + messageObj.innerText + `</${messageObj.nodeName}>`;
         }
+        if (messageObj &&  messageObj.length) {
+            for (var i=0; i < messageObj.length; i++) {
+                if (messageObj[i] instanceof Error) {
+                    messageObj[i] = messageObj[i].message;
+                }
+            }
+        }
+        try {
+            var msg = JSON.stringify(messageObj);
+            $JSC.messages.push({
+                msg: msg,
+                stack: stack,
+                url: url,
+                line: line,
+                col: col,
+                action: action,
+            });
+            __startSendMessagestimer();
+        } catch (e) {
+            if (__DEBUG)
+                console.warn(e);
+        }
 
-        $JSC.messages.push({
-            msg: JSON.stringify(messageObj),
-            stack: stack,
-            url: url,
-            line: line,
-            col: col,
-            action: action,
-        });
-
-        __startSendMessagestimer();
     }
 
     if (!console.isOverrided) {
@@ -115,6 +127,8 @@ $JSC = window.$JSC || {
                         );
                     
                 } catch (e) {
+                    if (__DEBUG)
+                        console.warn(e);
                     return '';
                 }
                 // I should find a better way to align line ref to right (as chrome dev tools)

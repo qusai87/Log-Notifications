@@ -1,7 +1,7 @@
 {
   "name": "Mini JS Console",
   "short_name": "Mini JS Console",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "manifest_version": 2,
   "offline_enabled": true,
   "description": "Mini JS console that track console logs and detect JS errors/alerts and show them via Chrome notifications",
@@ -15,11 +15,7 @@
   },
   "default_locale": "en",
   "background": {
-    "scripts": [
-      "src/bg/background.js",
-      "src/lib/bower_components/sprintf/src/sprintf.js",
-      "src/lib/bower_components/underscore/underscore.js"
-    ],
+    "page": "src/bg/background.html",
     "persistent": false
   },
   "browser_action": {
@@ -46,7 +42,10 @@
   "web_accessible_resources": [
     "src/inject/console.js",
     "src/inject/evaluate.js",
-    "src/inject/styles.css"
+    "src/inject/styles.css",
+    "src/modules/preferences.js",
+    "src/content/content-main.js"
+
   ],
   "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'"
 }

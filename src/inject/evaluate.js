@@ -1,3 +1,5 @@
+var __DEBUG = false;
+
 $JSC = window.$JSC || {
     debuggerMode: false,
     enableStack: false,
@@ -5,9 +7,7 @@ $JSC = window.$JSC || {
 
 
 (function ($JSC, console) {
-    $JSC.__DEBUG = false;
-
-    if ($JSC.__DEBUG) {
+    if (__DEBUG) {
         console.log('[EVALUATE::DEBUG] evaluate.js started!');
     }
 
@@ -23,6 +23,8 @@ $JSC = window.$JSC || {
             $JSC.jQuery = require('jquery');
             $JSC.useJQuery = true;
         } catch (e) {
+            if (__DEBUG)
+                console.warn(e);
             // failed to load jQuery
         }
     }
@@ -33,6 +35,8 @@ $JSC = window.$JSC || {
                 _cookie = $JSC.jQuery.cookie(name);
                 return _cookie;
             } catch (e) {
+                if (__DEBUG)
+                    console.warn(e);
             }
         }
 
@@ -66,7 +70,7 @@ $JSC = window.$JSC || {
     }
 
     document.addEventListener('Msg_LogNotificationExtension_evaluate_js_expression', function(e) {
-        if ($JSC.__DEBUG) {
+        if (__DEBUG) {
             $JSC._console.log('[EVALUATE::DEBUG] Msg_LogNotificationExtension_evaluate_js_expression: ', e);
         }
     	if (e.detail && e.detail.id in $JSC.requests) {
@@ -74,7 +78,7 @@ $JSC = window.$JSC || {
     	}
 
     	$JSC.requests.push(e.detail.id);
-        if ($JSC.__DEBUG)
+        if (__DEBUG)
             $JSC._console.log('[EVALUATE::DEBUG] evaluate_js_expression', e);
         var results = '';
         try {

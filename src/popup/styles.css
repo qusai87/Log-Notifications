@@ -1,67 +1,67 @@
-body, section {			/* Change width and height to own preferences */
-	width: 700px;
-	height: 590px;
-	overflow: hidden;
+body, section {         /* Change width and height to own preferences */
+    width: 700px;
+    height: 590px;
+    overflow: hidden;
 }
 body, .header  {
-	background-color: #f3f3f4;
+    background-color: #f3f3f4;
 }
 
 /* Basic style tweaks */
 section { 
-	padding: 5px;
+    padding: 5px;
 }
 
 h1 {
-	font-size: 1.2em;
-	margin-top: 0;
+    font-size: 1.2em;
+    margin-top: 0;
 }
 label {
-	padding-right: 3px;
+    padding-right: 3px;
 }
 
 hr {
-	margin: 10px 0;
+    margin: 10px 0;
 }
 
 
 .container-fluid {
-	overflow: hidden;
-	padding: 0 10px;
-	margin-top: 7px;
+    overflow: hidden;
+    padding: 0 10px;
+    margin-top: 7px;
 }
 
 .panel .container-fluid {
-	padding:4px 6px;
+    padding:4px 6px;
 }
 
 .row {
-	margin-left: -10px;
+    margin-left: -10px;
     margin-right: -10px;
 }
 
 .col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
-	padding-left: 10px;
+    padding-left: 10px;
     padding-right: 10px;
 }
 .panel {
-	margin-bottom: 0px;
-	border: 0;
-	margin: 1px 0;
+    margin-bottom: 0px;
+    border: 0;
+    margin: 1px 0;
 }
 
 .panel-default>.panel-heading {
-	background-color: #f3f3f4;
-	border: 0;
+    background-color: #f3f3f4;
+    border: 0;
 }
 
 .panel-group .panel {
-	padding: 4px;
+    padding: 4px;
 }
 
 .panel-heading {
-	padding: 10px 0px;
-	margin-bottom: 10px;
+    padding: 10px 0px;
+    margin-bottom: 10px;
 }
 
 .nopadding {
@@ -70,14 +70,14 @@ hr {
 }
 
 .section {
-	padding: 10px 0;
+    padding: 10px 0;
 }
 .navbar { margin-bottom: 2px; }
 
 
 .switch {
     display: inline-block;
-	height: 25px;
+    height: 25px;
     vertical-align: top;
 }
 
@@ -99,21 +99,21 @@ hr {
 }
 
 .header {
-	float: left;
-	width: 100%;
+    float: left;
+    width: 100%;
 }
 .footer {
-	float: left;
-	padding: 0 10px 10px 0;
-	margin: 10 0px;
-	width: 100%;
-	position: fixed;
+    float: left;
+    padding: 0 10px 10px 0;
+    margin: 10 0px;
+    width: 100%;
+    position: fixed;
     bottom: 0;
     right: 0;
 }
 
 .well-sm {
-	padding: 9px 0;
+    padding: 9px 0;
 }
 
 
@@ -131,87 +131,87 @@ hr {
 }
 
 .note {
-	color: #9e9c9c;
-	font-style: italic;
-	margin-bottom: 2px;
+    color: #9e9c9c;
+    font-style: italic;
+    margin-bottom: 2px;
 }
 
 #expression {
-	width: 300px;
-	margin-right: 20px;
+    width: 300px;
+    margin-right: 20px;
 }
 
 small.new {
-	color: blue;
+    color: blue;
 }
 
 .ad img {
-	max-width: 100%;
+    max-width: 100%;
     max-height: 100%;
     height: auto;
     width: auto;
 }
 
 div.console { 
-	word-wrap: break-word; 
-	clear: both;
-	font-size: 12px;
-	height: auto;
+    word-wrap: break-word; 
+    clear: both;
+    font-size: 12px;
+    height: auto;
 }
 
 div.console div.jquery-console-inner
 {
-	height: 420px;
-	max-height: 420px;
-	background: #fff; 
-	padding: 0;
- 	overflow:auto;
- 	margin-bottom: 10px;
- 	border: 1px #eee solid;
+    height: 420px;
+    max-height: 420px;
+    background: #fff; 
+    padding: 0;
+    overflow:auto;
+    margin-bottom: 10px;
+    border: 1px #eee solid;
 }
 div.console div.jquery-console-prompt-box
 { 
-	float: left;
-	clear: both;
-	color:#444; 
-	font-family:Menlo, monospace; 
+    float: left;
+    clear: both;
+    color:#444; 
+    font-family:Menlo, monospace; 
 }
 
 div.console div.jquery-console-prompt-box:last-of-type {
-	clear: both;
+    clear: both;
 }
 
 div.console div.jquery-console-prompt-box + div.jquery-console-message {
-	float: left;
+    float: left;
 }
 
 div.console div.json {
-	display: inline-block;
+    display: inline-block;
 }
 
 div.console span.jquery-console-prompt-label 
 { 
-	font-weight:bold;
-	color: #4785ff;
+    font-weight:bold;
+    color: #4785ff;
     padding-left: 5px;
 }
 
 div.console div.jquery-console-focus span.jquery-console-cursor
 { 
-	background:#333; 
-	color:#eee;
+    background:#333; 
+    color:#eee;
 }
 div.console div.jquery-console-message 
 {
-	background: #fff;
-	border-bottom: 1px #dedede solid;
-	font-family: Menlo, monospace;
+    background: #fff;
+    border-bottom: 1px #dedede solid;
+    font-family: Menlo, monospace;
 }
 
 div.console div.jquery-console-welcome 
 {
-	clear: both;
-	width: 100%;
+    clear: both;
+    width: 100%;
     padding: 5px;
     margin: 0;
     color: #fff;
@@ -221,114 +221,114 @@ div.console div.jquery-console-welcome
 }
 
 div.console div.jquery-console-message-value 
-{	
-	clear: both;
-	width: 100%;
-	padding: 5px;
-	color: rgb(28, 0, 207);
+{   
+    clear: both;
+    width: 100%;
+    padding: 5px;
+    color: rgb(28, 0, 207);
 }
 
 div.console div.jquery-console-message-log 
 {
-	clear: both;
-	width: 100%;
-	padding: 5px;
-	color: #171717;
-	font-size: 12px;
+    clear: both;
+    width: 100%;
+    padding: 5px;
+    color: #171717;
+    font-size: 12px;
 }
 div.console div.jquery-console-message-log:before {
-	content: " ";
-	margin: 0 10px 0 2px;
+    content: " ";
+    margin: 0 10px 0 2px;
 }
 div.console div.jquery-console-message-value:before
 {
-	content: "\f104";
-	color: #b3b3b3;
-	font-family: FontAwesome;
-	margin: 0 7px 0 2px;
+    content: "\f104";
+    color: #b3b3b3;
+    font-family: FontAwesome;
+    margin: 0 7px 0 2px;
 }
 div.console div.jquery-console-message-info 
 {
-	clear: both;
-	padding: 5px;
-	color: #171717;
+    clear: both;
+    padding: 5px;
+    color: #171717;
 
 }
 div.console div.jquery-console-message-info:before
 {
-	content: "\f05a";
-	color: #4a48c1;
-	font-family: FontAwesome;
-	margin: 0 7px 0 2px;
+    content: "\f05a";
+    color: #4a48c1;
+    font-family: FontAwesome;
+    margin: 0 7px 0 2px;
 }
 
 div.console div.jquery-console-message-alert 
 {
-	clear: both;
-	width: 100%;
-	padding: 5px;
-	color: #171717;
+    clear: both;
+    width: 100%;
+    padding: 5px;
+    color: #171717;
 
 }
 div.console div.jquery-console-message-alert:before
 {
-	content: "\f05a";
-	color: #171717;
-	font-family: FontAwesome;
-	margin: 0 7px 0 2px;
+    content: "\f05a";
+    color: #171717;
+    font-family: FontAwesome;
+    margin: 0 7px 0 2px;
 }
 div.console div.jquery-console-message-warn 
 {
-	clear: both;
-	width: 100%;
-	padding: 5px;
-	color: #171717;
-	background: #fdfdd7;
+    clear: both;
+    width: 100%;
+    padding: 5px;
+    color: #171717;
+    background: #fdfdd7;
 }
 div.console div.jquery-console-message-table 
 {
-	clear: both;
-	width: 100%;
-	padding: 5px;
-	color: #9e9c9c;
+    clear: both;
+    width: 100%;
+    padding: 5px;
+    color: #9e9c9c;
 }
 
 div.console div.jquery-console-message-error,div.console div.jquery-console-message-unknown
 { 
-	clear: both;
-	width: 100%;
-	color: red; 
-	background: #fff0f0;
-	font-weight:bold;
-	padding: 5px;
+    clear: both;
+    width: 100%;
+    color: red; 
+    background: #fff0f0;
+    font-weight:bold;
+    padding: 5px;
 }
 
 div.console div.jquery-console-message-system {
-	color: #b3b3b3;
+    color: #b3b3b3;
 }
 
 div.console div.jquery-console-message-error:before,div.console div.jquery-console-message-unknown:before {
-	content: "\f057";
-	color: #ef0505;
-	margin: 0 7px 0 2px;
-	font-family: FontAwesome;
+    content: "\f057";
+    color: #ef0505;
+    margin: 0 7px 0 2px;
+    font-family: FontAwesome;
 
-	/* more styling for the icon, including color, font-size, positioning, etc. */
+    /* more styling for the icon, including color, font-size, positioning, etc. */
 }
 
 div.console div.jquery-console-message-warn:before {
-	content: "\f071";
-	color: #ffbf24;
+    content: "\f071";
+    color: #ffbf24;
     margin: 0 7px 0 2px;
-	font-family: FontAwesome;
+    font-family: FontAwesome;
 
-	/* more styling for the icon, including color, font-size, positioning, etc. */
+    /* more styling for the icon, including color, font-size, positioning, etc. */
 }
 div.console div.jquery-console-message-success
 { 
-	color:#187718; 
-	font-family:Menlo, monospace;
-	padding: 5px;
+    color:#187718; 
+    font-family:Menlo, monospace;
+    padding: 5px;
 }
 
 pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
@@ -357,5 +357,5 @@ pre {
 }
 
 #sidebar-options {
-	z-index: 10;
+    z-index: 10;
 }

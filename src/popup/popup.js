@@ -1,30 +1,31 @@
+import Preferences, { UserPreferencesKeys, USER_PREFERENCES_KEY} from '../modules/preferences.js';
+
 // GLOBAL Variables
 var __DEBUG = false;
 
-notification_enabled = false;
-respone_not_received_timer = -1;
+const DEBOUNCE_TIMEOUT = 250;
 
-domain = '';
+var respone_not_received_timer = -1;
 
-logs_history = null;
-_switches = {};
+var domain = '';
 
+var logs_history = [];
 
 var _cachedMessages = {};
 
-loaded = false;
-loading_counts = 0;
-totalLoad = 10;
+var controller;
 
-var excludeLogs = false;
-var excludeErrors = false;
-var excludeWarnings = false;
-var excludeInfoMessages = false;
+var _gaq = [];
 
-var disableStyles = false;
+var isRendering = false;
 
-// Once the DOM is ready...
+if (__DEBUG)
+    console.log('[POPUP::DEBUG] started!');
+
+// Register events on DOM READY:
 $(function() {
+    if (__DEBUG)
+        console.log('[POPUP::DEBUG] DOM READY!');
     $('body').on('click', 'a', function() {
         chrome.tabs.create({ url: $(this).attr('href') });
         return false;
@@ -33,20 +34,78 @@ $(function() {
     $(".js-btn-toggle").click(function(e) {
         e.preventDefault();     
         $(e.target).toggleClass("toggled");
-        if (e.target.title == 'Errors') {
-            excludeErrors = !excludeErrors;
-
-        } else if (e.target.title == 'Warnings') {
-            excludeWarnings = !excludeWarnings;
-
-        } else if (e.target.title == 'Logs') {
-            excludeLogs = !excludeLogs;
-        } else if (e.target.title == 'Info') {
-            excludeInfoMessages = !excludeInfoMessages;
-        } else if (e.target.title == 'Styles') {
-            disableStyles = !disableStyles;
+        if ($(e.target).data('type') == 'Errors') {
+            var exclueErrors = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_ERRORS) || false;
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_ERRORS, !exclueErrors);
+            chrome.runtime.sendMessage({
+                from: 'popup',
+                subject: 'sync_preferences'
+            }, response => {
+                if(chrome.runtime.lastError) {
+                } else if (typeof callback == 'function') {
+                    callback();
+                }
+            });
+            updateUI();
+            showLogs();
+        } else if ($(e.target).data('type') == 'Warnings') {
+            var excludeWarnings = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_WARNINGS) || false;
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_WARNINGS, !excludeWarnings);
+            chrome.runtime.sendMessage({
+                from: 'popup',
+                subject: 'sync_preferences'
+            }, response => {
+                if(chrome.runtime.lastError) {
+                } else if (typeof callback == 'function') {
+                    callback();
+                }
+            });
+            updateUI();
+            showLogs();
+        } else if ($(e.target).data('type') == 'Logs') {
+            var excludeLogs = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_LOGS) || false;
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_LOGS, !excludeLogs);
+            chrome.runtime.sendMessage({
+                from: 'popup',
+                subject: 'sync_preferences'
+            }, response => {
+                if(chrome.runtime.lastError) {
+                } else if (typeof callback == 'function') {
+                    callback();
+                }
+            });
+            updateUI();
+            showLogs();
+        } else if ($(e.target).data('type') == 'Info') {
+            var excludeInfo = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_INFO) || false;
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_INFO, !excludeInfo);
+            chrome.runtime.sendMessage({
+                from: 'popup',
+                subject: 'sync_preferences'
+            }, response => {
+                if(chrome.runtime.lastError) {
+                } else if (typeof callback == 'function') {
+                    callback();
+                }
+            });
+            updateUI();
+            showLogs();
+        } else if ($(e.target).data('type') == 'Styles') {
+            var disableStyles = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.DISABLE_STYLES) || false;
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.DISABLE_STYLES, !disableStyles);
+            chrome.runtime.sendMessage({
+                from: 'popup',
+                subject: 'sync_preferences'
+            }, response => {
+                if(chrome.runtime.lastError) {
+                } else if (typeof callback == 'function') {
+                    callback();
+                }
+            });
+            updateUI();
+            showLogs();
         }
-        showLogs();
+
         return false;
     });
 
@@ -58,7 +117,9 @@ $(function() {
 
     $(".js-clear-console").click(function(e) {
         e.preventDefault();
-        clear();
+        if (controller) {
+            controller.clearScreen();
+        }
         // evaluateJSExpression('$JSC.history = [];', function() {});
         setTimeout(function() {
             controller.focus();
@@ -79,62 +140,164 @@ $(function() {
     $("[name='bootstrap-switch']").bootstrapSwitch();
 
     $('#include_filters').on('change keyup', _.debounce(function() {
+        if (__DEBUG)
+            console.log('[POPUP::DEBUG] debounce event called');
         if ($('#include_filters').data('oldVal') != $('#include_filters').val()) {
-            _gaq.push(['_trackEvent', $('#include_filters').val(), 'include filter']);
+            // _gaq.push(['_trackEvent', $('#include_filters').val(), 'include filter']);
             $('#include_filters').data('oldVal', $('#include_filters').val());
-            chrome.storage.sync.set({
-                'include_filters': $('#include_filters').val()
-            }, function() {
-                if (__DEBUG)
-                    console.log('include_filters saved');
-                chrome.runtime.sendMessage({
-                    from: 'popup',
-                    subject: 'update_filters'
-                }, response => {
-                    if(chrome.runtime.lastError) {
-                    } else if (typeof callback == 'function') {
-                        callback();
-                    }
-                });
-            });
+
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.FILTERS_INCLUDED, $('#include_filters').val());
+            updateUI();
             showLogs();
+
+            chrome.runtime.sendMessage({
+                from: 'popup',
+                subject: 'sync_preferences'
+            }, response => {
+                if(chrome.runtime.lastError) {
+                } else if (typeof callback == 'function') {
+                    callback();
+                }
+            });
         }
-    }, 300, false));
+    }, DEBOUNCE_TIMEOUT, false));
 
     $('#exclude_filters').on('change keyup', _.debounce(function() {
+        if (__DEBUG)
+            console.log('[POPUP::DEBUG] debounce event called');
         if ($('#exclude_filters').data('oldVal') != $('#exclude_filters').val()) {
-            _gaq.push(['_trackEvent', $('#exclude_filters').val(), 'exclude filter']);
+            // _gaq.push(['_trackEvent', $('#exclude_filters').val(), 'exclude filter']);
             $('#exclude_filters').data('oldVal', $('#exclude_filters').val());
-            chrome.storage.sync.set({
-                'exclude_filters': $('#exclude_filters').val()
-            }, function() {
-                if (__DEBUG)
-                    console.log('exclude_filters saved');
-                chrome.runtime.sendMessage({
-                    from: 'popup',
-                    subject: 'update_filters'
-                }, response => {
-                    if(chrome.runtime.lastError) {
-                    } else if (typeof callback == 'function') {
-                        callback();
-                    }
-                });
-            });
+
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.FILTERS_EXCLUDED, $('#exclude_filters').val());
+            updateUI();
             showLogs();
+
+            chrome.runtime.sendMessage({
+                from: 'popup',
+                subject: 'sync_preferences'
+            }, response => {
+                if(chrome.runtime.lastError) {
+                } else if (typeof callback == 'function') {
+                    callback();
+                }
+            });
         }
-    }, 300, false));
+    }, DEBOUNCE_TIMEOUT, false));
 
     $('input[name="bootstrap-switch"]').on('switchChange.bootstrapSwitch', function(event, state) {
+        if (isRendering) return;
+
+        if (__DEBUG)
+            console.log('[POPUP::DEBUG] switchChange.bootstrapSwitch event called');
         var id = this.id;
         var checked = this.checked;
-        if (loaded)
-            saveOption(id, checked);
+
+        // _gaq.push(['_trackEvent', id + "_" + checked, 'switch']);
+
+        if (id === 'extensionNotificationSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.SHOW_NOTIFICATIONS, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'domainNotificationsSwitch') {
+            Preferences.setPreferenceForDomain(UserPreferencesKeys.SHOW_NOTIFICATIONS, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'extensionActiveSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.IS_ACTIVE, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'preserveLogsSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.PRESERVE_LOGS, checked);
+            updateUI();
+            showLogs();
+            loadLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'enableLogStackSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.ENABLE_LOG_STACK, checked);
+            updateUI();
+            showLogs();
+            loadLogs();
+        } else if (id === 'disableCacheSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.DISABLE_CACHE, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'enableWarningsSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.SHOW_WARNINGS, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'themeSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.THEME, checked);
+            updateUI();
+            showLogs();
+        } else if (id === 'enableAlertsSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.SHOW_ALERTS, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'enableErrorsSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.SHOW_ERRORS, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } else if (id === 'enableInfoSwitch') {
+            Preferences.setPreference(UserPreferencesKeys.SHOW_INFO, checked);
+            updateUI();
+            showLogs();
+            sendRuntimeMessage({
+                from: 'popup',
+                subject: 'sync_preferences',
+                enabled: checked
+            }, function(response) {});
+        } 
+        //  else if (id === 'disableIFRAMESwitch') {
+        //  saveSwitch('disableIFRAMESwitch', 'disableIFRAME', checked, function () {});
+        // }
     });
 
     $('.js-jquery-button').click(function() {
+        if (__DEBUG)
+            console.log('[POPUP::DEBUG] jquery event called');
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             $.get("https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js", function(result) {
-                _gaq.push(['_trackEvent', 'jquery', 'lib']);
+                // _gaq.push(['_trackEvent', 'jquery', 'lib']);
                 evaluateJSExpression(result + ';$.fn.jquery');
                 $('.js-jquery-button').prop('disabled', true);
             }, "text");
@@ -142,15 +305,19 @@ $(function() {
     });
 
     $('.js-underscore-button').click(function() {
+        if (__DEBUG)
+            console.log('[POPUP::DEBUG] underscore event called');
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             $.get("http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.2.1/underscore-min.js", function(result) {
-                _gaq.push(['_trackEvent', 'underscore', 'lib']);
+                // _gaq.push(['_trackEvent', 'underscore', 'lib']);
                 evaluateJSExpression(result + ';_ = window._ || require("underscore");_.VERSION');
                 $('.js-underscore-button').prop('disabled', true);
             }, "text");
         });
     });
     $('.btn-toggle').click(function() {
+        if (__DEBUG)
+            console.log('[POPUP::DEBUG] underscore event called');
         $(this).find('.btn').toggleClass('active');
         if ($(this).find('.btn-primary').size() > 0) {
             $(this).find('.btn').toggleClass('btn-primary');
@@ -172,34 +339,32 @@ $(function() {
         promptLabel: '> ',
         commandValidate: function(line) {
             if (__DEBUG)
-                console.log('validate command:', line);
+                console.log('[POPUP::DEBUG] validate command', line);
 
-            if (line === 'domains' || line === 'domains()') {
-                _gaq.push(['_trackEvent', line, 'command']);
+            if (line === 'clear' || line === 'clear()') {
+                // _gaq.push(['_trackEvent', line, 'command']);
                 addToHistory(line);
-                controller.commandResult(_switches.domain_notifications, 'jquery-console-message-value');
-            } else if (line === 'clear' || line === 'clear()') {
-                _gaq.push(['_trackEvent', line, 'command']);
-                addToHistory(line);
-                clear();
+                if (controller) {
+                    controller.clearScreen();
+                }
             } else if (line === 'clearHistory' || line === 'clearHistory()') {
-                _gaq.push(['_trackEvent', line, 'command']);
+                // _gaq.push(['_trackEvent', line, 'command']);
                 addToHistory(line);
                 controller.commandResult('');
                 clearCommandsHistory();
             } else if (line === 'logs' || line === 'logs()') {
-                _gaq.push(['_trackEvent', line, 'command']);
+                // _gaq.push(['_trackEvent', line, 'command']);
                 addToHistory(line);
                 showLogs();
             } else if (line === 'cookie') {
-                _gaq.push(['_trackEvent', line, 'command']);
+                // _gaq.push(['_trackEvent', line, 'command']);
                 addToHistory(line);
                 evaluateJSExpression('$JSC.cookie()');
             } else if (line.indexOf('cookie(') === 0) {
                 addToHistory(line);
                 evaluateJSExpression('$JSC.' + line);
             } else if (line) {
-                _gaq.push(['_trackEvent', line, 'expression']);
+                // _gaq.push(['_trackEvent', line, 'expression']);
                 addToHistory(line);
                 evaluateJSExpression(line);
             } else {
@@ -213,6 +378,8 @@ $(function() {
                 if (typeof ret != 'undefined') return ret.toString();
                 else return true;
             } catch (e) {
+                if (__DEBUG)
+                    console.warn(e);
                 return e.toString();
             }
         },
@@ -220,23 +387,12 @@ $(function() {
         animateScroll: true,
         promptHistory: true
     });
-    loadCommandsHistory();
 });
 
-chrome.tabs.query({
-        active: true,
-        currentWindow: true
-    },
-    function(tabs) {
-        var parser = document.createElement('a');
-        parser.href = tabs[0].url;
-        domain = parser.hostname;
-        loadOptions();
-        listen();
-    }
-);
-
 function init(logsHistoryJSON) {
+    if (__DEBUG)
+        console.log('[POPUP::DEBUG] init called!');
+
     var logs;
     sendRuntimeMessage({
         from: 'popup',
@@ -256,7 +412,7 @@ function init(logsHistoryJSON) {
 function loadCommandsHistory() {
     chrome.storage.sync.get('commandsHistory', function(result) {
         if (__DEBUG)
-            console.log('result.commandsHistory.length: ', result.commandsHistory.length)
+            console.log('[POPUP::DEBUG] loadCommandsHistory result', result);
         if (result.commandsHistory && result.commandsHistory.length) {
             var uniqueHistory = getUniqueArray(result.commandsHistory);
             for (var key in uniqueHistory) {
@@ -268,7 +424,7 @@ function loadCommandsHistory() {
 }
 
 function loadLogs(loadAll) {
-    if (_switches.preserveLogs) {
+    if (Preferences.getPreference(UserPreferencesKeys.PRESERVE_LOGS)) {
         // update console history from background history
         sendRuntimeMessage({
             from: 'popup',
@@ -301,27 +457,28 @@ function showLogs() {
             var details = logs_history_with_filters.results[key];
 
             if (details.msg && details.action) {
-                if (details.action == 'error' && excludeErrors) {
+                if (details.action == 'error' && Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_ERRORS)) {
                     logs_history_with_filters.excluded++;
                     continue;
                 }
-                if (details.action == 'warn' && excludeWarnings) {
+                if (details.action == 'warn' && Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_WARNINGS)) {
                     logs_history_with_filters.excluded++;
                     continue;
                 }
-                if (details.action == 'info' && excludeInfoMessages) {
+                if (details.action == 'info' && Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_INFO)) {
                     logs_history_with_filters.excluded++;
                     continue;
                 }
-                if (details.action == 'alert' && excludeInfoMessages) {
+                if (details.action == 'alert' && Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_INFO)) {
                     logs_history_with_filters.excluded++;
                     continue;
                 }
-                if (details.action == 'log' && excludeLogs) {
+                if (details.action == 'log' && Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_LOGS)) {
                     logs_history_with_filters.excluded++;
                     continue;
                 }
 
+                var disableStyles = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.DISABLE_STYLES);
                 var msg = prettifyMessage(details, !disableStyles);
                 if (msg) {
                     logs.push({
@@ -334,7 +491,9 @@ function showLogs() {
         }
     }
     if (typeof controller == 'object') {
-        clear();
+        if (controller) {
+            controller.clearScreen();
+        }
         if (logs.length) {
             if (logs_history_with_filters.excluded) {
                 controller.commandResult(sprintf('Excluded %d logs \n', logs_history_with_filters.excluded), "jquery-console-message-system");
@@ -353,21 +512,6 @@ function showLogs() {
     }
 }
 
-// function splitter(data) {
-//     var i = 0;
-//     var results = _.chain(data)
-//     .map((x) => (x.match(/%/g) || []).length)
-//     .filter((x) => x)
-//     .map(function(x) {
-//         var index = i;
-//         i += x + 1;
-//         return data.slice(index, index + x + 1)
-//     })
-//     .value();
-//     results.push(data.slice(i));
-//     return results;
-// }
-
 function hashCode(str) {
     var hash = 0,
         i, chr;
@@ -380,7 +524,47 @@ function hashCode(str) {
     return hash;
 };
 
-function prettifyMessage(details , uesCustomStyles) {
+function formatTextMessage(messageObj, uesCustomStyles) {
+    var formatted_output = '';
+    for (var i = 0; i < messageObj.length; i++) {
+        var message = messageObj[i];
+
+        var hasStyleOpened = false;
+        for (var j = 0; j< message.length; j++) {
+            var nextMessage = messageObj[i+1];
+            var char = message[j];
+            var prevChar = message[j-1];
+            var nextChar = message[j+1];
+            if (char == '%' && nextChar == 'c') {
+                if (hasStyleOpened) {
+                    hasStyleOpened = false;
+                    formatted_output += `</span>`;
+                }
+                i++; // to skip next message from the loop!
+                if (uesCustomStyles) {
+                    formatted_output += `<span style="${nextMessage}">`;
+                    hasStyleOpened = true;
+                }
+
+            } else if (char == '%' && nextChar == 's') {
+                i++; // to skip next message from the loop!
+                formatted_output += nextMessage;
+
+            } else if ((char == 'c' || char == 's' ) && prevChar == '%') {
+                // escape these characters from the output
+            } else {
+                formatted_output += char;
+            }
+        }
+        if (hasStyleOpened) {
+            hasStyleOpened = false;
+            formatted_output += `</span>`;
+        }
+    }
+    return formatted_output;
+}
+
+function prettifyMessage(details, uesCustomStyles) {
     var output = details.msg + '';
     try {
         var key = hashCode(output) + (uesCustomStyles ? '1': '');
@@ -390,40 +574,10 @@ function prettifyMessage(details , uesCustomStyles) {
             var messageObj = output;
             messageObj = JSON.parse(messageObj);
 
-            if ((output.indexOf('%c') != -1 || output.indexOf('%s') != -1) && _.isArray(messageObj)) {
-                output = '';
-                for (var i = 0; i < messageObj.length; i++) {
-                    var currentMessage = messageObj[i];
-                    var remainingSlices = currentMessage;
-                    while (remainingSlices.indexOf('%c') != -1 && _.isString(messageObj[i + 1])) {
-                        var sliceStartingIndex = remainingSlices.indexOf('%c');
-                        var sliceEndingIndex = remainingSlices.slice(sliceStartingIndex + 2).indexOf('%c');
-
-                        var beginText = remainingSlices.slice(0, sliceStartingIndex);
-                        var slice = remainingSlices.slice(sliceStartingIndex + 2);
-                        i++; // to skip next element!
-                        var style = messageObj[i];
-
-                        if (sliceEndingIndex != -1) {
-                            slice = remainingSlices.slice(sliceStartingIndex + 2, sliceEndingIndex + sliceStartingIndex + 2);
-                        }
-                        while (slice.indexOf('%s') != -1) {
-                            i++; // to skip next element!
-                            slice = slice.replace('%s' , messageObj[i]);
-                        }
-                        if (uesCustomStyles) {
-                            output += `${beginText}<span style="${style}">${slice}</span>`;
-                        } else {
-                            output += `${beginText}${slice}`;
-                        }
-                        
-                        if (sliceEndingIndex != -1) {
-                            remainingSlices = remainingSlices.slice(sliceEndingIndex + sliceStartingIndex + 2);
-                        } else {
-                            remainingSlices = '';
-                        }
-                    };
-                }
+            // has extra formats
+            if (output.indexOf('%') != -1 && _.isArray(messageObj)) {
+                
+                output = formatTextMessage(messageObj, uesCustomStyles);
             } else {
                 output = messageObj;
             }
@@ -431,7 +585,8 @@ function prettifyMessage(details , uesCustomStyles) {
             _cachedMessages[key] = output;
         }
     } catch (e) {
-        // nothing
+        if (__DEBUG)
+            console.warn(e);
     }
     if (details.action == 'error' && details.url) {
         return output + ' at ' + details.url + ':' + details.line + ":" + details.col;
@@ -456,6 +611,8 @@ function showNewLogs(logsHistoryJSON) {
 }
 
 function sendMessage(params, callback) {
+    if (__DEBUG)
+        console.log('[POPUP::DEBUG] sendMessage', params, callback);
     chrome.tabs.query({
         active: true,
         currentWindow: true
@@ -472,6 +629,10 @@ function sendMessage(params, callback) {
 }
 
 function sendRuntimeMessage(params, callback) {
+
+    if (__DEBUG)
+        console.log('[POPUP::DEBUG] sendRuntimeMessage', params, callback);
+
     chrome.tabs.query({
         active: true,
         currentWindow: true
@@ -536,7 +697,12 @@ function addToHistory(command, callback) {
 
 function evaluateJSExpression(_expression, callback) {
     respone_not_received_timer = setTimeout(function() {
-        controller.commandResult(`can't access page, please reload and try again!`, 'jquery-console-message-error');
+        var isActive  = Preferences.getPreference(UserPreferencesKeys.IS_ACTIVE);
+        if (isActive) {
+            controller.commandResult(`can't access page, please reload and try again!`, 'jquery-console-message-error');
+        } else {
+            controller.commandResult(`Extension disabled, please active and reload the page again!`, 'jquery-console-message-error');
+        }
     }, 1000);
     // ...query for the active tab...
     sendMessage({
@@ -588,7 +754,8 @@ function filterLogs(arr, filters, exclude) {
                     continue;
                 }
             } catch (e) {
-
+                if (__DEBUG)
+                    console.warn(e);
             }
         }
         if (_.isEqual(arr[i + 1], arr[i])) {
@@ -607,286 +774,165 @@ function filterLogs(arr, filters, exclude) {
     return { results: results, excluded: excluded };
 }
 
-function clear() {
-    if (controller) {
-        controller.clearScreen();
+
+function updateUI() {
+    if (__DEBUG) {
+        console.log('[POPUP::DEBUG] updateUI called', 'domain:' , domain);
     }
-}
+    isRendering = true;
 
-function loadOptions() {
-    loading_counts = 0;
-    loadSwitch('enabledSwitch', 'enabled', function(result) {
-        chrome.storage.sync.get('include_filters', function(result) {
-            $('#include_filters').val(result.include_filters);
-            $('#include_filters').data('oldVal', $('#include_filters').val());
-        });
+    var isExtensionActive = Preferences.getPreference(UserPreferencesKeys.IS_ACTIVE) && domain != 'extensions';
+    $('#extensionActiveSwitch').bootstrapSwitch('state', isExtensionActive);
 
-        chrome.storage.sync.get('exclude_filters', function(result) {
-            $('#exclude_filters').val(result.exclude_filters);
-            $('#exclude_filters').data('oldVal', $('#exclude_filters').val());
-        });
-    });
+    $('#extensionNotificationSwitch').bootstrapSwitch('disabled', !isExtensionActive);
+    $('#preserveLogsSwitch').bootstrapSwitch('disabled', !isExtensionActive);
+    $('#enableLogStackSwitch').bootstrapSwitch('disabled', !isExtensionActive);
+    $('#disableCacheSwitch').bootstrapSwitch('disabled', !isExtensionActive);
+    $('#enableWarningsSwitch').bootstrapSwitch('disabled', !isExtensionActive);
+    $('#enableAlertsSwitch').bootstrapSwitch('disabled', !isExtensionActive);
+    $('#enableErrorsSwitch').bootstrapSwitch('disabled', !isExtensionActive);
 
-    loadSwitch('notificationSwitch', 'notification_enabled');
-    loadSwitch('themeSwitch', 'theme', function() {
-        loadTheme();
-    });
-    loadSwitch('domainSwitch', 'domain_notifications', function($el, data) {
-        $el.bootstrapSwitch('state', data[domain]);
-        if (!_switches.enabled || _switches.notification_enabled) {
-            $el.bootstrapSwitch('disabled', true);
-        }
-    })
-    loadSwitch('preserveLogsSwitch', 'preserveLogs')
-    loadSwitch('enableLogStackSwitch', 'enableLogStack')
-    loadSwitch('disableCacheSwitch', 'disableCache')
-    loadSwitch('enableWarningsSwitch', 'enableWarnings');
-    loadSwitch('enableAlertsSwitch', 'enableAlerts');
-    loadSwitch('enableErrorsSwitch', 'enableErrors');
-    loadSwitch('enableInfoSwitch', 'enableInfo');
+    $('#domainNotificationsSwitch').bootstrapSwitch('state', Preferences.getPreferenceForDomain(UserPreferencesKeys.SHOW_NOTIFICATIONS));
 
-    //loadSwitch('disableIFRAMESwitch','disableIFRAME')
-}
+    $('#extensionNotificationSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.SHOW_NOTIFICATIONS));
+    $('#preserveLogsSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.PRESERVE_LOGS));
+    $('#enableLogStackSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.ENABLE_LOG_STACK));
+    $('#disableCacheSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.DISABLE_CACHE));
+    $('#enableWarningsSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.SHOW_WARNINGS));
+    $('#enableAlertsSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.SHOW_ALERTS));
+    $('#enableErrorsSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.SHOW_ERRORS));
+    $('#enableInfoSwitch').bootstrapSwitch('state', Preferences.getPreference(UserPreferencesKeys.SHOW_INFO));
 
-function loadSwitch(switchName, key, callback) {
-    var $switchName = '#' + switchName;
-    chrome.storage.sync.get(key, function(result) {
-        loading_counts++;
+    var isNotificationEnabled = Preferences.getPreference(UserPreferencesKeys.SHOW_NOTIFICATIONS);
+    $('#domainNotificationsSwitch').bootstrapSwitch('disabled', isNotificationEnabled || !isExtensionActive);
 
-        _switches[key] = result[key];
-        if (__DEBUG)
-            console.log(key, ':', _switches[key]);
+    if (Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_ERRORS)) {
+        $('.js-btn-toggle').filter('[data-type="Errors"]').addClass('toggled');
+    }
+    if (Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_WARNINGS)) {
+        $('.js-btn-toggle').filter('[data-type="Warnings"]').addClass('toggled');
+    }
+    if (Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_INFO)) {
+        $('.js-btn-toggle').filter('[data-type="Info"]').addClass('toggled');
+    }
+    if (Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.EXCLUDE_LOGS)) {
+        $('.js-btn-toggle').filter('[data-type="Logs"]').addClass('toggled');
+    }
+    if (Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.DISABLE_STYLES)) {
+        $('.js-btn-toggle').filter('[data-type="Styles"]').addClass('toggled');
+    }
 
-        if (key != 'domain_notifications') {
-            $($switchName).bootstrapSwitch('state', _switches[key]);
-        }
-        if (callback && typeof callback === 'function') {
-            callback.call(this, $($switchName), _switches[key]);
-        } else {
-            if (!_switches.enabled) {
-                $($switchName).bootstrapSwitch('disabled', true);
-            }
-        }
+    var includeFilterRegex = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.FILTERS_INCLUDED);
+    if (includeFilterRegex) {
+        $('#include_filters').val(includeFilterRegex);
+        $('#include_filters').data('oldVal', $('#include_filters').val());
+    }
 
-        if (loading_counts == totalLoad) {
-            loadLogs();
-            loaded = true;
-        }
-    });
-}
-
-function saveSwitch(switchName, key, value, callback) {
-    _switches[key] = value;
-    var data = {};
-    data[key] = value;
-
-    chrome.storage.sync.set(data, function() {
-        if (__DEBUG)
-            console.log('switch saved [' + switchName + ']', key + '=', value);
-
-        if (callback && typeof callback === 'function') {
-            callback.call(this);
-        }
-    });
-}
-
-function loadTheme() {
-    if (_switches.theme)
+    var excludeFilterRegex = Preferences.getPreferenceForDomain(UserPreferencesKeys.DOMAIN_PREFRENCES.FILTERS_EXCLUDED);
+    if (excludeFilterRegex) {
+        $('#exclude_filters').val(excludeFilterRegex);
+        $('#exclude_filters').data('oldVal', $('#exclude_filters').val());
+    }
+    if (Preferences.getPreference(UserPreferencesKeys.THEME)) {
         document.getElementById('theme_css').href = './../lib/bootstrap/css/theme.min.css';
-    else
+    } else {
         document.getElementById('theme_css').href = '';
-}
-
-function saveOption(id, checked) {
-    _gaq.push(['_trackEvent', id + "_" + checked, 'switch']);
-
-    if (id === 'notificationSwitch') {
-        saveSwitch('notificationSwitch', 'notification_enabled', checked, function() {
-            if (checked) {
-                $('#domainSwitch').bootstrapSwitch('disabled', true);
-            } else {
-                $('#domainSwitch').bootstrapSwitch('disabled', false);
-            }
-
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'disable_notifications',
-                enabled: checked
-            }, function(response) {});
-        });
-    } else if (id === 'domainSwitch') {
-        if (_switches.domain_notifications) {
-            _switches.domain_notifications[domain] = checked;
-            saveSwitch('domainSwitch', 'domain_notifications', _switches.domain_notifications);
-
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'modify_domain_Notifications',
-                enabled: checked
-            }, function(response) {});
-        }
-    } else if (id === 'enabledSwitch') {
-        saveSwitch('enabledSwitch', 'enabled', checked, function() {
-            if (checked) {
-                $('#domainSwitch').bootstrapSwitch('disabled', false);
-                $('#notificationSwitch').bootstrapSwitch('disabled', false);
-                $('#preserveLogsSwitch').bootstrapSwitch('disabled', false);
-                $('#enableLogStackSwitch').bootstrapSwitch('disabled', false);
-                $('#disableCacheSwitch').bootstrapSwitch('disabled', false);
-                $('#enableWarningsSwitch').bootstrapSwitch('disabled', false);
-                $('#enableAlertsSwitch').bootstrapSwitch('disabled', false);
-                $('#enableErrorsSwitch').bootstrapSwitch('disabled', false);
-            } else {
-                $('#domainSwitch').bootstrapSwitch('disabled', true);
-                $('#notificationSwitch').bootstrapSwitch('disabled', true);
-                $('#preserveLogsSwitch').bootstrapSwitch('disabled', true);
-                $('#enableLogStackSwitch').bootstrapSwitch('disabled', true);
-                $('#disableCacheSwitch').bootstrapSwitch('disabled', true);
-                $('#enableWarningsSwitch').bootstrapSwitch('disabled', true);
-                $('#enableAlertsSwitch').bootstrapSwitch('disabled', true);
-                $('#enableErrorsSwitch').bootstrapSwitch('disabled', true);
-            }
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'disable_extension',
-                enabled: checked
-            }, function(response) {});
-        });
-    } else if (id === 'preserveLogsSwitch') {
-        saveSwitch('preserveLogsSwitch', 'preserveLogs', checked, function() {
-            loadLogs();
-        });
-    } else if (id === 'enableLogStackSwitch') {
-        saveSwitch('enableLogStackSwitch', 'enableLogStack', checked, function() {
-            loadLogs();
-        });
-    } else if (id === 'disableCacheSwitch') {
-        saveSwitch('disableCacheSwitch', 'disableCache', checked, function() {
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'disable_cache',
-                enabled: checked
-            }, function(response) {});
-        });
-    } else if (id === 'enableWarningsSwitch') {
-        saveSwitch('enableWarningsSwitch', 'enableWarnings', checked, function() {
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'enable_warnings',
-                enabled: checked
-            }, function(response) {});
-        });
-
-    } else if (id === 'themeSwitch') {
-        saveSwitch('themeSwitch', 'theme', checked, function() {
-            loadTheme();
-        });
-    } else if (id === 'enableAlertsSwitch') {
-        saveSwitch('enableAlertsSwitch', 'enableAlerts', checked, function() {
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'enable_alerts',
-                enabled: checked
-            }, function(response) {});
-        });
-    } else if (id === 'enableErrorsSwitch') {
-        saveSwitch('enableErrorsSwitch', 'enableErrors', checked, function() {
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'enable_errors',
-                enabled: checked
-            }, function(response) {});
-
-        });
-    } else if (id === 'enableInfoSwitch') {
-        saveSwitch('enableInfoSwitch', 'enableInfo', checked, function() {
-            sendRuntimeMessage({
-                from: 'popup',
-                subject: 'enable_info',
-                enabled: checked
-            }, function(response) {});
-
-        });
-    } else if (id === 'disableConsoleErrorsSwitch') {
-        saveSwitch('disableConsoleErrorsSwitch', 'disableConsoleErrors', checked, function() {});
     }
-    //  else if (id === 'disableIFRAMESwitch') {
-    //  saveSwitch('disableIFRAMESwitch', 'disableIFRAME', checked, function () {});
-    // }
+    isRendering = false;
 }
 
-// Listen for messages
-function listen() {
-    chrome.runtime.onMessage.addListener(function(request, sender, response) {
-        try {
-            if (__DEBUG) {
-                console.log('[POPUP::DEBUG] chrome.runtime.onMessage:', request, sender, response);
-            }
-            // If the received message has the expected format...
-            if (request.from === 'content' && request.subject === 'console_action') {
-                loadLogs();
-            } else if (request.from === 'content' && request.subject === 'logs_all_history_found') {
-                init(request.logsHistoryJSON);
-            } else if (request.from === 'content' && request.subject === 'logs_history_found') {
-                if (!logs_history) {
+
+// init
+chrome.tabs.query({
+        active: true,
+        currentWindow: true
+    },
+    function(tabs) {
+        if (__DEBUG)
+            console.log('[POPUP::DEBUG] tab query called!', tabs);
+        var parser = document.createElement('a');
+        parser.href = tabs[0].url;
+        domain = parser.hostname;
+
+        Preferences.setDomain(domain);
+
+        (function() {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = 'https://ssl.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+
+        _gaq.push(['_setAccount', 'UA-82270161-1']);
+
+        _gaq.push(['_trackEvent', 'popup', 'opened']);
+
+        Preferences.load(function (success) {
+            updateUI();
+            loadLogs();
+            loadCommandsHistory();
+        })
+        
+        chrome.runtime.onMessage.addListener(function(request, sender, response) {
+            try {
+                if (__DEBUG) {
+                    console.log('[POPUP::DEBUG] chrome.runtime.onMessage:', request, sender, response);
+                }
+                // If the received message has the expected format...
+                if (request.from === 'content' && request.subject === 'console_action') {
+                    loadLogs();
+                } else if (request.from === 'content' && request.subject === 'logs_all_history_found') {
                     init(request.logsHistoryJSON);
-                } else {
-                    showNewLogs(request.logsHistoryJSON);
-                }
-            } else if (request.from === 'background' && request.subject === 'preserved_logs') {
-                if (request.logsHistoryJSON) {
-                    if (!logs_history) {
+                } else if (request.from === 'content' && request.subject === 'logs_history_found') {
+                    if (!logs_history || !logs_history.length) {
                         init(request.logsHistoryJSON);
                     } else {
-                        init(request.logsHistoryJSON);
+                        showNewLogs(request.logsHistoryJSON);
                     }
-                }
-            } else if (request.from === 'content' && request.subject === 'expression_found') {
-                clearTimeout(respone_not_received_timer);
-                respone_not_received_timer = -1;
+                } else if (request.from === 'background' && request.subject === 'preserved_logs') {
+                    if (request.logsHistoryJSON) {
+                        if (!logs_history) {
+                            init(request.logsHistoryJSON);
+                        } else {
+                            init(request.logsHistoryJSON);
+                        }
+                    }
+                } else if (request.from === 'content' && request.subject === 'expression_found') {
+                    clearTimeout(respone_not_received_timer);
+                    respone_not_received_timer = -1;
 
-                if (request.output) {
-                    var data = JSON.parse(request.output);
-                    if (data == "undefined" || (_.isArray(data) && !data.length)) {
-                        controller.commandResult('');
-                        // return Promise.resolve("Dummy response to keep the console quiet");
-                        return true;
-                    }
-                    if (typeof data === 'string' && (data.indexOf('ReferenceError') > 0)) {
-                        controller.commandResult(data, 'jquery-console-message-error');
-                    } else if (typeof data === 'string' && (data.indexOf('SyntaxError') > 0)) {
-                        controller.commandResult(data, 'jquery-console-message-error');
-                    } else if (typeof data === 'string' && (data.indexOf('TypeError') > 0)) {
-                        controller.commandResult(data, 'jquery-console-message-error');
+                    if (request.output) {
+                        var data = JSON.parse(request.output);
+                        if (data == "undefined" || (_.isArray(data) && !data.length)) {
+                            controller.commandResult('');
+                            // return Promise.resolve("Dummy response to keep the console quiet");
+                            return true;
+                        }
+                        if (typeof data === 'string' && (data.indexOf('ReferenceError') > 0)) {
+                            controller.commandResult(data, 'jquery-console-message-error');
+                        } else if (typeof data === 'string' && (data.indexOf('SyntaxError') > 0)) {
+                            controller.commandResult(data, 'jquery-console-message-error');
+                        } else if (typeof data === 'string' && (data.indexOf('TypeError') > 0)) {
+                            controller.commandResult(data, 'jquery-console-message-error');
+                        } else {
+                            controller.commandResult(data, 'jquery-console-message-value', 0, request.expression);
+                        }
                     } else {
-                        controller.commandResult(data, 'jquery-console-message-value', 0, request.expression);
+                        //  controller.commandResult('undefined', 'jquery-console-message-error');
                     }
-                } else {
-                    //  controller.commandResult('undefined', 'jquery-console-message-error');
                 }
+            } catch (e) {
+                if (__DEBUG)
+                    console.warn(e);
+            } finally {
+                // return Promise.resolve("Dummy response to keep the console quiet"); 
             }
-        } catch (e) {
-
-        } finally {
-            // return Promise.resolve("Dummy response to keep the console quiet"); 
-        }
-        return true;
-    });
-}
-
-_gaq = [];
-_gaq.push(['_setAccount', 'UA-82270161-1']);
-
-_gaq.push(['_trackEvent', 'popup', 'opened']);
-
-(function() {
-    var ga = document.createElement('script');
-    ga.type = 'text/javascript';
-    ga.async = true;
-    ga.src = 'https://ssl.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(ga, s);
-})();
+            return true;
+        });
+    }
+);
 
 if (__DEBUG)
-    console.log('popup.js opened!');
+    console.log('[POPUP::DEBUG] completed!');
